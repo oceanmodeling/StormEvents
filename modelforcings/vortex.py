@@ -109,7 +109,7 @@ class VortexForcing:
         self.__filename = filename
 
     def __str__(self):
-        record_number = self.__generate_record_numbers()
+        record_numbers = self.record_numbers
         lines = []
 
         dataframe = self.data
@@ -196,7 +196,7 @@ class VortexForcing:
             )
 
             # from this point forwards it's all aswip
-            line.append(f'{record_number[i]:>4}')
+            line.append(f'{record_numbers[i]:>4}')
 
             lines.append(','.join(line))
 
@@ -688,14 +688,12 @@ class VortexForcing:
         # get the union of polygons
         return ops.unary_union(convex_hulls)
 
-    def __generate_record_numbers(self):
-        record_number = [1]
-        for i in range(1, len(self.datetime)):
-            if self.datetime.iloc[i] == self.datetime.iloc[i - 1]:
-                record_number.append(record_number[-1])
-            else:
-                record_number.append(record_number[-1] + 1)
-        return record_number
+    @property
+    def record_numbers(self) -> numpy.ndarray:
+        record_numbers = numpy.empty((len(self.data)))
+        for index, record_datetime in enumerate(self.data['datetime'].unique()):
+            record_numbers[self.data['datetime'] == record_datetime] = index + 1
+        return record_numbers
 
     @property
     def __file_end_date(self):
