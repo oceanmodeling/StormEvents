@@ -9,15 +9,18 @@
 ```python
 from modelforcings.vortex import VortexForcing
 
-# retrieve vortex data for Florence 2018 from the Internet
-vortex_florence2018 = VortexForcing('irma2017')
+# retrieve vortex data from the Internet from its ID
+vortex = VortexForcing('AL112017')
+
+# you can also use the storm name and year in the lookup
+vortex = VortexForcing('irma2017')
 
 # write to a file in the ADCIRC `fort.22` format
-vortex_florence2018.write('fort.22')
+vortex.write('fort.22')
 
 # read vortex data from an existing ATCF track file (`*.trk`)
-vortex_irma2017 = VortexForcing.from_atcf_file('irma2017_atcf.trk')
+vortex = VortexForcing.from_atcf_file('atcf.trk')
 
 # read vortex data from an existing file in the ADCIRC `fort.22` format
-vortex_from_fort22 = VortexForcing.from_atcf_file('fort.22')
+vortex = VortexForcing.from_atcf_file('fort.22')
 ```
