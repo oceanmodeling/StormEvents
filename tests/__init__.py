@@ -1,4 +1,4 @@
-from difflib import Differ
+import os
 from os import PathLike
 from pathlib import Path
 import re
@@ -31,21 +31,24 @@ def check_reference_directory(
                 test_lines = list(test_file.readlines())
                 reference_lines = list(reference_file.readlines())
 
-                diff = '\n'.join(Differ().compare(test_lines, reference_lines))
-                message = f'"{test_filename}" != "{reference_filename}"\n{diff}'
-
-                assert len(test_lines) == len(reference_lines), message
-
                 lines_to_skip = set()
                 for file_mask, line_indices in skip_lines.items():
-                    if file_mask in str(test_filename) or re.match(
-                        file_mask, str(test_filename)
+                    if (
+                        file_mask in str(test_filename)
+                        or re.match(file_mask, str(test_filename))
+                        and len(test_lines) > 0
                     ):
-                        lines_to_skip.update(
-                            line_index % len(test_lines) for line_index in line_indices
-                        )
+                        try:
+                            lines_to_skip.update(
+                                line_index % len(test_lines) for line_index in line_indices
+                            )
+                        except ZeroDivisionError:
+                            continue
 
                 for line_index in sorted(lines_to_skip, reverse=True):
                     del test_lines[line_index], reference_lines[line_index]
 
-                assert '\n'.join(test_lines) == '\n'.join(reference_lines), message
+                cwd = Path.cwd()
+                assert '\n'.join(test_lines) == '\n'.join(
+                    reference_lines
+                ), f'"{os.path.relpath(test_filename, cwd)}" != "{os.path.relpath(reference_filename, cwd)}"'
