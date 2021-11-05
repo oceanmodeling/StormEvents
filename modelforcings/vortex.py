@@ -690,7 +690,7 @@ class VortexForcing:
 
     @property
     def record_numbers(self) -> numpy.ndarray:
-        record_numbers = numpy.empty((len(self.data)))
+        record_numbers = numpy.empty((len(self.data)), dtype=int)
         for index, record_datetime in enumerate(self.data['datetime'].unique()):
             record_numbers[self.data['datetime'] == record_datetime] = index + 1
         return record_numbers
@@ -793,6 +793,9 @@ class VortexForcing:
             record_type=None,
             filename=filename,
         )
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}('{self.storm_id}')"
 
 
 def convert_value(value: Any, to_type: type, round_digits: int = None) -> Any:
