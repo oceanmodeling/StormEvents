@@ -29,7 +29,7 @@ vortex.write('fort.22')
 vortex = VortexForcing.from_atcf_file('atcf.trk')
 
 # read vortex data from an existing file in the ADCIRC `fort.22` format
-vortex = VortexForcing.from_atcf_file('fort.22')
+vortex = VortexForcing.from_fort22('fort.22')
 ```
 
 ## Acknowledgements
