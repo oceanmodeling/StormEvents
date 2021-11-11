@@ -31,3 +31,7 @@ vortex = VortexForcing.from_atcf_file('atcf.trk')
 # read vortex data from an existing file in the ADCIRC `fort.22` format
 vortex = VortexForcing.from_atcf_file('fort.22')
 ```
+
+## Acknowledgements
+
+This code was initially written by @jreniel for [`adcircpy`](https://github.com/zacharyburnettNOAA/adcircpy). 
