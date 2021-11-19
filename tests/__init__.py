@@ -2,6 +2,7 @@ import os
 from os import PathLike
 from pathlib import Path
 import re
+from typing import Dict, List
 
 DATA_DIRECTORY = Path(__file__).parent.absolute().resolve() / 'data'
 INPUT_DIRECTORY = DATA_DIRECTORY / 'input'
@@ -10,7 +11,9 @@ REFERENCE_DIRECTORY = DATA_DIRECTORY / 'reference'
 
 
 def check_reference_directory(
-    test_directory: PathLike, reference_directory: PathLike, skip_lines: {str: [int]} = None
+    test_directory: PathLike,
+    reference_directory: PathLike,
+    skip_lines: Dict[str, List[int]] = None,
 ):
     if not isinstance(test_directory, Path):
         test_directory = Path(test_directory)
