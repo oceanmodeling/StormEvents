@@ -4,4 +4,3 @@
    :hidden:
 
    vortex
-   utilities
