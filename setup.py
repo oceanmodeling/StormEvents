@@ -182,5 +182,6 @@ setup(
     extras_require={
         'testing': ['FileLock', 'pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist',],
         'development': ['dunamai', 'flake8', 'isort', 'oitnb'],
+        'documentation': ['dunamai', 'm2r2', 'sphinx', 'sphinx-rtd-theme'],
     },
 )
