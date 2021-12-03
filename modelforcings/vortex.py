@@ -880,11 +880,16 @@ def get_atcf_entry(
     elif storm_name is not None:
         rows = storm_table[storm_table[0].str.contains(storm_name.upper())]
     else:
-        raise ValueError('need either storm name or basin + storm number')
+        raise ValueError('need either storm name + year OR basin + storm number + year')
 
     if len(rows) > 0:
         rows = rows[rows[8] == int(year)]
-        return list(rows.iterrows())[0][1]
+        if len(rows) > 0:
+            return list(rows.iterrows())[0][1]
+        else:
+            raise ValueError(
+                f'no storms with given info ("{storm_name}" / "{basin}{storm_number}") found in year "{year}"'
+            )
 
 
 def get_atcf_id(storm_name: str, year: int) -> str:
