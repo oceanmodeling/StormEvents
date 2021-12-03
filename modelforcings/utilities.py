@@ -20,30 +20,29 @@ def get_logger(
     if logger.level == logging.NOTSET and len(logger.handlers) == 0:
         # check if logger has a parent
         if '.' in name:
+            if isinstance(logger.parent, logging.RootLogger):
+                for existing_console_handler in [
+                    handler for handler in logger.parent.handlers if not isinstance(handler, logging.FileHandler)
+                ]:
+                    logger.parent.removeHandler(existing_console_handler)
             logger.parent = get_logger(name.rsplit('.', 1)[0])
         else:
             # otherwise create a new split-console logger
-            logger.setLevel(logging.DEBUG)
             if console_level != logging.NOTSET:
-                if console_level <= logging.INFO:
+                for existing_console_handler in [
+                    handler for handler in logger.handlers if not isinstance(handler, logging.FileHandler)
+                ]:
+                    logger.removeHandler(existing_console_handler)
 
-                    def logging_output_filter(record):
-                        return record.levelno <= logging.INFO
-
-                    console_output = logging.StreamHandler(sys.stdout)
-                    console_output.setLevel(console_level)
-                    console_output.addFilter(logging_output_filter)
-                    logger.addHandler(console_output)
-
-                console_errors = logging.StreamHandler(sys.stderr)
-                console_errors.setLevel(max((console_level, logging.WARNING)))
-                logger.addHandler(console_errors)
+                console_output = logging.StreamHandler(sys.stdout)
+                console_output.setLevel(console_level)
+                logger.addHandler(console_output)
 
     if log_filename is not None:
         file_handler = logging.FileHandler(log_filename)
         file_handler.setLevel(file_level)
         for existing_file_handler in [
-            handler for handler in logger.handlers if type(handler) is logging.FileHandler
+            handler for handler in logger.handlers if isinstance(handler, logging.FileHandler)
         ]:
             logger.removeHandler(existing_file_handler)
         logger.addHandler(file_handler)
