@@ -10,6 +10,17 @@ def get_logger(
     console_level: int = None,
     log_format: str = None,
 ) -> logging.Logger:
+    """
+    instantiate logger instance
+
+    :param name: name of logger
+    :param log_filename: path to log file
+    :param file_level: minimum log level to write to log file
+    :param console_level: minimum log level to print to console
+    :param log_format: logger message format
+    :return: instance of a Logger object
+    """
+
     if file_level is None:
         file_level = logging.DEBUG
     if console_level is None:
