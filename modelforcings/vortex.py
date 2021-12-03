@@ -881,7 +881,7 @@ def get_atcf_entry(
         ]
     elif storm_name is not None:
         row = storm_table[
-            (storm_table[0] == f'{storm_name.upper():>10}') & (storm_table[8] == int(year))
+            (storm_table[0].str.strip() == storm_name.upper()) & (storm_table[8] == int(year))
         ]
     else:
         raise ValueError('need either storm name or basin + storm number')
