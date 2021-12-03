@@ -874,20 +874,17 @@ def get_atcf_entry(
         raise ConnectionError(f'cannot connect to "{url}"')
 
     if basin is not None and storm_number is not None:
-        row = storm_table[
-            (storm_table[1] == f'{basin.upper():>3}')
-            & (storm_table[7] == storm_number)
-            & (storm_table[8] == int(year))
+        rows = storm_table[
+            (storm_table[1] == f'{basin.upper():>3}') & (storm_table[7] == storm_number)
         ]
     elif storm_name is not None:
-        row = storm_table[
-            (storm_table[0].str.strip() == storm_name.upper()) & (storm_table[8] == int(year))
-        ]
+        rows = storm_table[storm_table[0].str.contains(storm_name.upper())]
     else:
         raise ValueError('need either storm name or basin + storm number')
 
-    if len(row) > 0:
-        return list(row.iterrows())[0][1]
+    if len(rows) > 0:
+        rows = rows[rows[8] == int(year)]
+        return list(rows.iterrows())[0][1]
 
 
 def get_atcf_id(storm_name: str, year: int) -> str:
