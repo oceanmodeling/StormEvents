@@ -953,54 +953,55 @@ def read_atcf(track: PathLike) -> DataFrame:
     for index, row in enumerate(track):
         row = [value.strip() for value in row.split(',')]
 
-        row_data = {key: None for key in data}
-
-        row_data['basin'] = row[0]
-        row_data['storm_number'] = row[1]
-        row_data['datetime'] = datetime.strptime(row[2], '%Y%m%d%H')
-        row_data['record_type'] = row[4]
-
-        latitude = row[6]
-        if 'N' in latitude:
-            latitude = float(latitude[:-1]) * 0.1
-        elif 'S' in latitude:
-            latitude = float(latitude[:-1]) * -0.1
-        row_data['latitude'] = latitude
-
-        longitude = row[7]
-        if 'E' in longitude:
-            longitude = float(longitude[:-1]) * 0.1
-        elif 'W' in longitude:
-            longitude = float(longitude[:-1]) * -0.1
-        row_data['longitude'] = longitude
-
-        row_data['max_sustained_wind_speed'] = convert_value(
-            row[8], to_type=int, round_digits=0,
-        )
-        row_data['central_pressure'] = convert_value(row[9], to_type=int, round_digits=0)
-        row_data['development_level'] = row[10]
-        row_data['isotach'] = convert_value(row[11], to_type=int, round_digits=0)
-        row_data['quadrant'] = row[12]
-        row_data['radius_for_NEQ'] = convert_value(row[13], to_type=int, round_digits=0)
-        row_data['radius_for_SEQ'] = convert_value(row[14], to_type=int, round_digits=0)
-        row_data['radius_for_SWQ'] = convert_value(row[15], to_type=int, round_digits=0)
-        row_data['radius_for_NWQ'] = convert_value(row[16], to_type=int, round_digits=0)
-        row_data['background_pressure'] = convert_value(row[17], to_type=int, round_digits=0)
-        row_data['radius_of_last_closed_isobar'] = convert_value(
-            row[18], to_type=int, round_digits=0,
-        )
-        row_data['radius_of_maximum_winds'] = convert_value(
-            row[19], to_type=int, round_digits=0,
-        )
-        row_data['direction'] = convert_value(row[25], to_type=int)
-        row_data['speed'] = convert_value(row[26], to_type=int)
-        row_data['name'] = row[27]
-
-        for key, value in row_data.items():
-            if isinstance(data[key], Collection):
-                data[key].append(value)
-            elif data[key] is None:
-                data[key] = value
+        if len(row) >= 27:
+            row_data = {key: None for key in data}
+    
+            row_data['basin'] = row[0]
+            row_data['storm_number'] = row[1]
+            row_data['datetime'] = datetime.strptime(row[2], '%Y%m%d%H')
+            row_data['record_type'] = row[4]
+    
+            latitude = row[6]
+            if 'N' in latitude:
+                latitude = float(latitude[:-1]) * 0.1
+            elif 'S' in latitude:
+                latitude = float(latitude[:-1]) * -0.1
+            row_data['latitude'] = latitude
+    
+            longitude = row[7]
+            if 'E' in longitude:
+                longitude = float(longitude[:-1]) * 0.1
+            elif 'W' in longitude:
+                longitude = float(longitude[:-1]) * -0.1
+            row_data['longitude'] = longitude
+    
+            row_data['max_sustained_wind_speed'] = convert_value(
+                row[8], to_type=int, round_digits=0,
+            )
+            row_data['central_pressure'] = convert_value(row[9], to_type=int, round_digits=0)
+            row_data['development_level'] = row[10]
+            row_data['isotach'] = convert_value(row[11], to_type=int, round_digits=0)
+            row_data['quadrant'] = row[12]
+            row_data['radius_for_NEQ'] = convert_value(row[13], to_type=int, round_digits=0)
+            row_data['radius_for_SEQ'] = convert_value(row[14], to_type=int, round_digits=0)
+            row_data['radius_for_SWQ'] = convert_value(row[15], to_type=int, round_digits=0)
+            row_data['radius_for_NWQ'] = convert_value(row[16], to_type=int, round_digits=0)
+            row_data['background_pressure'] = convert_value(row[17], to_type=int, round_digits=0)
+            row_data['radius_of_last_closed_isobar'] = convert_value(
+                row[18], to_type=int, round_digits=0,
+            )
+            row_data['radius_of_maximum_winds'] = convert_value(
+                row[19], to_type=int, round_digits=0,
+            )
+            row_data['direction'] = convert_value(row[25], to_type=int)
+            row_data['speed'] = convert_value(row[26], to_type=int)
+            row_data['name'] = row[27]
+    
+            for key, value in row_data.items():
+                if isinstance(data[key], Collection):
+                    data[key].append(value)
+                elif data[key] is None:
+                    data[key] = value
 
     return DataFrame(data=data)
 
