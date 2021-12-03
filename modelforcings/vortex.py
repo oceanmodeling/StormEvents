@@ -9,7 +9,7 @@ from os import PathLike
 import pathlib
 import socket
 from time import sleep
-from typing import Any, Collection, TextIO, Union
+from typing import Any, Collection, List, TextIO, Union
 from urllib.error import URLError
 
 from dateutil.parser import parse as parse_date
@@ -606,7 +606,7 @@ class VortexForcing:
     def dataframe(self, dataframe: DataFrame):
         self.__dataframe = dataframe
 
-    def isotachs(self, wind_speed: float, segments: int = 91) -> [Polygon]:
+    def isotachs(self, wind_speed: float, segments: int = 91) -> List[Polygon]:
         """
         Get the isotach at the given speed at every time in the dataset.
 
@@ -1044,7 +1044,7 @@ def atcf_url(file_deck: FileDeck = None, storm_id: str = None, mode: Mode = None
     return url
 
 
-def atcf_storm_ids(file_deck: FileDeck = None, mode: Mode = None) -> [str]:
+def atcf_storm_ids(file_deck: FileDeck = None, mode: Mode = None) -> List[str]:
     if file_deck is None:
         file_deck = FileDeck.a
     elif not isinstance(file_deck, FileDeck):
