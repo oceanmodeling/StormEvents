@@ -467,11 +467,12 @@ class VortexForcing:
                 if isinstance(atcf, io.BytesIO):
                     # test if Gzip file
                     atcf.seek(0)  # rewind
-                    if atcf.read(2) == b'\x1f\x8b':
-                        atcf.seek(0)  # rewind
+                    first_two_bytes = atcf.read(2)
+                    atcf.seek(0)  # rewind
+                    if first_two_bytes == b'\x1f\x8b':
                         atcf = gzip.GzipFile(fileobj=atcf)
-                    else:
-                        atcf.seek(0)  # rewind
+                    elif len(first_two_bytes) == 0:
+                        raise ValueError('empty file')
 
                 start_date = self.start_date
                 # Only accept request record type or

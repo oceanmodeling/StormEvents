@@ -6,12 +6,34 @@ import pytest
 from pytest_socket import SocketBlockedError
 
 from modelforcings.vortex import VortexForcing
-from tests import (
-    check_reference_directory,
-    INPUT_DIRECTORY,
-    OUTPUT_DIRECTORY,
-    REFERENCE_DIRECTORY,
-)
+from tests import (INPUT_DIRECTORY, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY,
+                   check_reference_directory)
+
+
+def test_vortex():
+    output_directory = OUTPUT_DIRECTORY / 'test_vortex'
+    reference_directory = REFERENCE_DIRECTORY / 'test_vortex'
+
+    if not output_directory.exists():
+        output_directory.mkdir(parents=True, exist_ok=True)
+
+    storms = [
+        'michael2018',
+        'florence2018',
+        'irma2017',
+        'maria2017',
+        'harvey2017',
+        'sandy2012',
+        'irene2011',
+        'ike2008',
+        'isabel2003',
+    ]
+
+    for storm in storms:
+        vortex = VortexForcing(storm)
+        vortex.write(output_directory / f'{storm}.fort.22')
+
+    check_reference_directory(output_directory, reference_directory)
 
 
 def test_from_fort22():
@@ -22,7 +44,8 @@ def test_from_fort22():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexForcing.from_fort22(fort22=input_directory / 'irma2017_fort.22',)
+    vortex = VortexForcing.from_fort22(
+            fort22=input_directory / 'irma2017_fort.22', )
 
     assert vortex.storm_id == 'AL112017'
     assert vortex.name == 'IRMA'
@@ -40,7 +63,8 @@ def test_from_atcf():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexForcing.from_atcf_file(atcf=input_directory / 'florence2018_atcf.trk',)
+    vortex = VortexForcing.from_atcf_file(
+            atcf=input_directory / 'florence2018_atcf.trk', )
 
     assert vortex.storm_id == 'BT02008'
     assert vortex.name == 'WRT00001'
@@ -90,15 +114,16 @@ def test_vortex_types():
     for file_deck, values in file_decks.items():
         for record_type in values['record_types']:
             cyclone = VortexForcing(
-                'al062018',
-                start_date=values['start_date'],
-                end_date=values['end_date'],
-                file_deck=file_deck,
-                record_type=record_type,
+                    'al062018',
+                    start_date=values['start_date'],
+                    end_date=values['end_date'],
+                    file_deck=file_deck,
+                    record_type=record_type,
             )
 
             cyclone.write(
-                output_directory / f'{file_deck}-deck_{record_type}.txt', overwrite=True
+                    output_directory / f'{file_deck}-deck_{record_type}.txt',
+                    overwrite=True
             )
 
     check_reference_directory(output_directory, reference_directory)
