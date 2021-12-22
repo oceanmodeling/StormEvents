@@ -566,22 +566,30 @@ class VortexForcing:
                         )
 
                         if len(line) > 23:
-                            record['name'] = line[27].strip(' ')
+                            storm_name = line[27].strip()
                         else:
-                            record['name'] = ""
+                            storm_name = ''
+
+                        record['name'] = storm_name
                     else:
+                        previous_record = records[-1]
+
                         record.update(
                             {
-                                'background_pressure': records[-1]['background_pressure'],
-                                'radius_of_last_closed_isobar': records[-1][
+                                'background_pressure': previous_record['background_pressure'],
+                                'radius_of_last_closed_isobar': previous_record[
                                     'radius_of_last_closed_isobar'
                                 ],
-                                'radius_of_maximum_winds': records[-1][
+                                'radius_of_maximum_winds': previous_record[
                                     'radius_of_maximum_winds'
                                 ],
-                                'name': records[-1]['name'],
+                                'name': previous_record['name'],
                             }
                         )
+
+                    for key, value in record.items():
+                        if isinstance(value, str) and r'\n' in value:
+                            record[key] = value.replace(r'\n', '')
 
                     records.append(record)
 
