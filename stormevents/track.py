@@ -26,14 +26,14 @@ LOGGER = get_logger(__name__)
 
 
 class FileDeck(Enum):
-    """http://hurricanes.ral.ucar.edu/realtime/"""
+    """
+    These formats specified by the Automated Tropical Cyclone Forecast (ATCF) System.
+    The contents of each type of data file is described at http://hurricanes.ral.ucar.edu/realtime/
+    """
 
     a = 'a'
-    b = 'b'
-    c = 'c'
-    d = 'd'
-    e = 'e'
-    f = 'f'
+    b = 'b'  # "best track"
+    f = 'f'  # https://www.nrlmry.navy.mil/atcf_web/docs/database/new/newfdeck.txt
 
 
 class Mode(Enum):
@@ -42,6 +42,36 @@ class Mode(Enum):
 
 
 class VortexTrack:
+    """
+    interface to an ATCF vortex track (i.e. HURDAT, best track, etc.)
+
+    .. code-block:: python
+
+        # retrieve vortex data from the Internet from its ID
+        vortex = VortexTrack('AL112017')
+
+    .. code-block:: python
+
+        # you can also use the storm name and year in the lookup
+        vortex = VortexTrack('irma2017')
+
+    .. code-block:: python
+
+        # read vortex data from an existing ATCF track file (`*.trk`)
+        vortex = VortexTrack.from_atcf_file('atcf.trk')
+
+    .. code-block:: python
+
+        # read vortex data from an existing file in the ADCIRC `fort.22` format
+        vortex = VortexTrack.from_fort22('fort.22')
+
+    .. code-block:: python
+
+        # write to a file in the ADCIRC `fort.22` format
+        vortex.write('fort.22')
+
+    """
+
     def __init__(
             self,
             storm: Union[str, PathLike, DataFrame, io.BytesIO],
@@ -164,7 +194,7 @@ class VortexTrack:
 
             if row['background_pressure'] is None:
                 row['background_pressure'] = \
-                self.data['background_pressure'].iloc[i - 1]
+                    self.data['background_pressure'].iloc[i - 1]
             if (
                     row['background_pressure'] <= row['central_pressure']
                     and 1013 > row['central_pressure']
@@ -306,7 +336,7 @@ class VortexTrack:
                 )
             if end_date <= self.start_date:
                 raise ValueError(
-                    f'end date must be after start date ({self.start_date})')
+                        f'end date must be after start date ({self.start_date})')
         self.__end_date = end_date
 
     @property
@@ -394,7 +424,7 @@ class VortexTrack:
                 record_types_list = ['BEST']
             else:
                 raise NotImplementedError(
-                    f'file deck {self.file_deck.value} not implemented')
+                        f'file deck {self.file_deck.value} not implemented')
             if record_type not in record_types_list:
                 raise ValueError(
                         f'request_record_type = {record_type} not allowed, select from {record_types_list}'
@@ -409,7 +439,7 @@ class VortexTrack:
         else:
             return self.dataframe[
                 start_date_mask & (
-                            self.dataframe['datetime'] <= self.__file_end_date)
+                        self.dataframe['datetime'] <= self.__file_end_date)
                 ]
 
     @property
@@ -514,12 +544,12 @@ class VortexTrack:
                         if minutes == "":
                             minutes = '00'
                         record['datetime'] = parse_date(
-                            line[2].strip(' ') + minutes)
+                                line[2].strip(' ') + minutes)
                     else:
                         # Add validation time to base datetime
                         minutes = '00'
                         record['datetime'] = parse_date(
-                            line[2].strip(' ') + minutes)
+                                line[2].strip(' ') + minutes)
                         if start_date is not None:
                             # Only keep records where base date == start time for advisories
                             if start_date != record['datetime']:
@@ -547,7 +577,7 @@ class VortexTrack:
                     record.update(
                             {
                                 'max_sustained_wind_speed': float(
-                                    line[8].strip(' ')),
+                                        line[8].strip(' ')),
                                 'central_pressure': float(line[9].strip(' ')),
                                 'development_level': line[10].strip(' '),
                             }
@@ -575,11 +605,11 @@ class VortexTrack:
                         record.update(
                                 {
                                     'background_pressure': int(
-                                        line[17].strip(' ')),
+                                            line[17].strip(' ')),
                                     'radius_of_last_closed_isobar': int(
-                                        line[18].strip(' ')),
+                                            line[18].strip(' ')),
                                     'radius_of_maximum_winds': int(
-                                        line[19].strip(' ')),
+                                            line[19].strip(' ')),
                                 }
                         )
 
@@ -615,7 +645,7 @@ class VortexTrack:
 
                 if len(records) == 0:
                     raise ValueError(
-                        f'no records found with type(s) "{allowed_record_types}"')
+                            f'no records found with type(s) "{allowed_record_types}"')
 
                 dataframe = DataFrame.from_records(data=records,
                                                    columns=columns)
@@ -921,13 +951,13 @@ def get_atcf_entry(
     if basin is not None and storm_number is not None:
         rows = storm_table[
             (storm_table[1] == f'{basin.upper():>3}') & (
-                        storm_table[7] == storm_number)
+                    storm_table[7] == storm_number)
             ]
     elif storm_name is not None:
         rows = storm_table[storm_table[0].str.contains(storm_name.upper())]
     else:
         raise ValueError(
-            'need either storm name + year OR basin + storm number + year')
+                'need either storm name + year OR basin + storm number + year')
 
     if len(rows) > 0:
         rows = rows[rows[8] == int(year)]
@@ -946,7 +976,7 @@ def get_atcf_id(storm_name: str, year: int) -> str:
 def get_atcf_file(storm_id: str, file_deck: FileDeck = None,
                   mode: Mode = None) -> io.BytesIO:
     url = atcf_url(file_deck=file_deck, storm_id=storm_id, mode=mode).replace(
-        'ftp://', "")
+            'ftp://', "")
     LOGGER.info(f'Downloading storm data from {url}')
 
     hostname, filename = url.split('/', 1)

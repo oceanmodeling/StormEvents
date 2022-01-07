@@ -7,11 +7,11 @@
 [![license](https://img.shields.io/github/license/zacharyburnettNOAA/StormEvents)](https://opensource.org/licenses/gpl-license)
 [![style](https://sourceforge.net/p/oitnb/code/ci/default/tree/_doc/_static/oitnb.svg?format=raw)](https://sourceforge.net/p/oitnb/code)
 
-`stormevents` provides Python interfaces for various forcings commonly used in coupled ocean modeling.
+`stormevents` provides Python interfaces for observational data surrounding named storm events.
 
 ## Usage
 
-### Vortex Data
+### Vortex Track
 
 ```python
 from stormevents.track import VortexTrack
@@ -34,4 +34,4 @@ vortex = VortexTrack.from_fort22('fort.22')
 
 ## Acknowledgements
 
-This code was initially written by @jreniel for [`adcircpy`](https://github.com/zacharyburnettNOAA/adcircpy). 
+This code was initially written by [@jreniel](https://github.com/jreniel) for [`adcircpy`](https://github.com/zacharyburnettNOAA/adcircpy). 
