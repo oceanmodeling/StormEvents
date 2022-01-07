@@ -5,7 +5,7 @@ from dateutil.parser import parse as parse_date
 import pytest
 from pytest_socket import SocketBlockedError
 
-from stormevents.vortex import VortexForcing
+from stormevents.track import VortexTrack
 from tests import (
     check_reference_directory,
     INPUT_DIRECTORY,
@@ -34,7 +34,7 @@ def test_vortex():
     ]
 
     for storm in storms:
-        vortex = VortexForcing(storm)
+        vortex = VortexTrack(storm)
         vortex.write(output_directory / f'{storm}.fort.22')
 
     check_reference_directory(output_directory, reference_directory)
@@ -48,7 +48,7 @@ def test_from_fort22():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexForcing.from_fort22(fort22=input_directory / 'irma2017_fort.22',)
+    vortex = VortexTrack.from_fort22(fort22=input_directory / 'irma2017_fort.22', )
 
     assert vortex.storm_id == 'AL112017'
     assert vortex.name == 'IRMA'
@@ -66,7 +66,7 @@ def test_from_atcf():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexForcing.from_atcf_file(atcf=input_directory / 'florence2018_atcf.trk',)
+    vortex = VortexTrack.from_atcf_file(atcf=input_directory / 'florence2018_atcf.trk', )
 
     assert vortex.storm_id == 'BT02008'
     assert vortex.name == 'WRT00001'
@@ -83,7 +83,7 @@ def test_recompute_velocity():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexForcing('irma2017')
+    vortex = VortexTrack('irma2017')
 
     vortex.dataframe['latitude'][5] += 0.1
     vortex.dataframe['longitude'][5] -= 0.1
@@ -115,7 +115,7 @@ def test_vortex_types():
 
     for file_deck, values in file_decks.items():
         for record_type in values['record_types']:
-            cyclone = VortexForcing(
+            cyclone = VortexTrack(
                 'al062018',
                 start_date=values['start_date'],
                 end_date=values['end_date'],
@@ -140,15 +140,15 @@ def test_no_internet():
         output_directory.mkdir(parents=True, exist_ok=True)
 
     with pytest.raises((ConnectionError, SocketBlockedError)):
-        VortexForcing(storm='florence2018')
+        VortexTrack(storm='florence2018')
 
     with pytest.raises((ConnectionError, SocketBlockedError)):
-        VortexForcing(storm='al062018', start_date='20180911', end_date=None)
+        VortexTrack(storm='al062018', start_date='20180911', end_date=None)
 
-    vortex_1 = VortexForcing.from_fort22(input_directory / 'fort.22')
+    vortex_1 = VortexTrack.from_fort22(input_directory / 'fort.22')
     vortex_1.write(output_directory / 'vortex_1.22', overwrite=True)
 
-    vortex_2 = VortexForcing.from_fort22(vortex_1.filename)
+    vortex_2 = VortexTrack.from_fort22(vortex_1.filename)
     vortex_2.write(output_directory / 'vortex_2.22', overwrite=True)
 
     vortex_3 = copy(vortex_1)

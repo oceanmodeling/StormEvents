@@ -14,22 +14,22 @@
 ### Vortex Data
 
 ```python
-from stormevents.vortex import VortexForcing
+from stormevents.track import VortexTrack
 
 # retrieve vortex data from the Internet from its ID
-vortex = VortexForcing('AL112017')
+vortex = VortexTrack('AL112017')
 
 # you can also use the storm name and year in the lookup
-vortex = VortexForcing('irma2017')
+vortex = VortexTrack('irma2017')
 
 # write to a file in the ADCIRC `fort.22` format
 vortex.write('fort.22')
 
 # read vortex data from an existing ATCF track file (`*.trk`)
-vortex = VortexForcing.from_atcf_file('atcf.trk')
+vortex = VortexTrack.from_atcf_file('atcf.trk')
 
 # read vortex data from an existing file in the ADCIRC `fort.22` format
-vortex = VortexForcing.from_fort22('fort.22')
+vortex = VortexTrack.from_fort22('fort.22')
 ```
 
 ## Acknowledgements
