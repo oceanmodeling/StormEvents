@@ -1,4 +1,4 @@
 Vortex
 ======
 
-.. autoclass:: modelforcings.vortex.VortexForcing
+.. autoclass:: stormevents.vortex.VortexForcing

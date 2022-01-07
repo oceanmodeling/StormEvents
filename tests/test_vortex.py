@@ -5,7 +5,7 @@ from dateutil.parser import parse as parse_date
 import pytest
 from pytest_socket import SocketBlockedError
 
-from modelforcings.vortex import VortexForcing
+from stormevents.vortex import VortexForcing
 from tests import (
     check_reference_directory,
     INPUT_DIRECTORY,

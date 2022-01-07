@@ -1,20 +1,20 @@
-# ModelForcings
+# StormEvents
 
-[![tests](https://github.com/zacharyburnettNOAA/ModelForcings/workflows/tests/badge.svg)](https://github.com/zacharyburnettNOAA/ModelForcings/actions?query=workflow%3Atests)
-[![build](https://github.com/zacharyburnettNOAA/ModelForcings/workflows/build/badge.svg)](https://github.com/zacharyburnettNOAA/ModelForcings/actions?query=workflow%3Abuild)
-[![codecov](https://codecov.io/gh/zacharyburnettNOAA/ModelForcings/branch/main/graph/badge.svg?token=BQWB1QKJ3Q)](https://codecov.io/gh/zacharyburnettNOAA/ModelForcings)
-[![version](https://img.shields.io/pypi/v/ModelForcings)](https://pypi.org/project/ModelForcings)
-[![license](https://img.shields.io/github/license/zacharyburnettNOAA/ModelForcings)](https://opensource.org/licenses/gpl-license)
+[![tests](https://github.com/zacharyburnettNOAA/StormEvents/workflows/tests/badge.svg)](https://github.com/zacharyburnettNOAA/StormEvents/actions?query=workflow%3Atests)
+[![build](https://github.com/zacharyburnettNOAA/StormEvents/workflows/build/badge.svg)](https://github.com/zacharyburnettNOAA/StormEvents/actions?query=workflow%3Abuild)
+[![codecov](https://codecov.io/gh/zacharyburnettNOAA/StormEvents/branch/main/graph/badge.svg?token=BQWB1QKJ3Q)](https://codecov.io/gh/zacharyburnettNOAA/StormEvents)
+[![version](https://img.shields.io/pypi/v/StormEvents)](https://pypi.org/project/StormEvents)
+[![license](https://img.shields.io/github/license/zacharyburnettNOAA/StormEvents)](https://opensource.org/licenses/gpl-license)
 [![style](https://sourceforge.net/p/oitnb/code/ci/default/tree/_doc/_static/oitnb.svg?format=raw)](https://sourceforge.net/p/oitnb/code)
 
-`modelforcings` provides Python interfaces for various forcings commonly used in coupled ocean modeling.
+`stormevents` provides Python interfaces for various forcings commonly used in coupled ocean modeling.
 
 ## Usage
 
 ### Vortex Data
 
 ```python
-from modelforcings.vortex import VortexForcing
+from stormevents.vortex import VortexForcing
 
 # retrieve vortex data from the Internet from its ID
 vortex = VortexForcing('AL112017')

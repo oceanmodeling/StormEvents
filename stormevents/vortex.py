@@ -20,7 +20,7 @@ from pyproj import Geod
 from shapely import ops
 from shapely.geometry import Polygon
 
-from modelforcings.utilities import get_logger
+from stormevents.utilities import get_logger
 
 LOGGER = get_logger(__name__)
 
