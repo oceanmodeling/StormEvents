@@ -1,13 +1,11 @@
 from enum import Enum
 from functools import lru_cache
 import json
-import os
 import re
 from typing import Any, Dict, List
 
 from matplotlib import pyplot
 from matplotlib.axis import Axis
-import numpy
 import pandas
 import requests
 from typepigeon import convert_value
@@ -306,59 +304,3 @@ def highwatermark_storms() -> pandas.DataFrame:
                 events.at[event_id, 'nhc_code'] = storm.name
 
     return events[['name', 'year', 'nhc_code', 'usgs_name']]
-
-
-def write_high_water_marks(obs_dir, name, year):
-    url = 'https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json'
-    params = {'EventType': 2, 'EventStatus': 0}  # 2 for hurricane  # 0 for completed
-    default_filter = {'riverine': True, 'non_still_water': True}
-
-    nameyear = (name + year).lower()
-
-    out_dir = os.path.join(obs_dir, 'hwm')
-
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-
-    fname = os.path.join(out_dir, nameyear + '.csv')
-    usgs_json_file = os.path.join(out_dir, 'usgs_hwm_tmp.json')
-
-    if not os.path.exists(usgs_json_file):
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        json_data = json.loads(response.text)
-        with open(usgs_json_file, 'w') as outfile:
-            json.dump(json_data, outfile)
-    else:
-        with open(usgs_json_file) as json_file:
-            json_data = json.load(json_file)
-
-    hwm_stations = dict()
-    for data in json_data:
-        if 'elev_ft' in data.keys() and name.lower() in data['eventName'].lower():
-            hwm_stations[str(data['hwm_id'])] = data
-
-    log = pandas.DataFrame.from_dict(hwm_stations)
-
-    hwm = []
-    ii = 0
-    for key in log.keys():
-        l0 = []
-        for key0 in log[key].keys():
-            l0.append(log[key][key0])
-        hwm.append(l0)
-    #
-    hwm = numpy.array(hwm)
-    df = pandas.DataFrame(data=hwm, columns=log[key].keys())
-
-    drop_poor = False
-    if drop_poor:
-        for i in range(len(df)):
-            tt = df.hwmQualityName[i]
-            if 'poor' in tt.lower():
-                df.hwmQualityName[i] = numpy.nan
-
-        df = df.dropna()
-    df['elev_m'] = pandas.to_numeric(df['elev_ft']) * 0.3048  # in meter
-    #
-    df.to_csv(fname)
