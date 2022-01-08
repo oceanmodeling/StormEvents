@@ -5,7 +5,7 @@ from dateutil.parser import parse as parse_date
 import pytest
 from pytest_socket import SocketBlockedError
 
-from stormevents.track import VortexTrack
+from stormevents.tracks import VortexTrack
 from tests import (
     check_reference_directory,
     INPUT_DIRECTORY,
@@ -48,7 +48,7 @@ def test_from_fort22():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexTrack.from_fort22(fort22=input_directory / 'irma2017_fort.22', )
+    vortex = VortexTrack.from_fort22(fort22=input_directory / 'irma2017_fort.22',)
 
     assert vortex.storm_id == 'AL112017'
     assert vortex.name == 'IRMA'
@@ -66,7 +66,7 @@ def test_from_atcf():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexTrack.from_atcf_file(atcf=input_directory / 'florence2018_atcf.trk', )
+    vortex = VortexTrack.from_atcf_file(atcf=input_directory / 'florence2018_atcf.trk',)
 
     assert vortex.storm_id == 'BT02008'
     assert vortex.name == 'WRT00001'
