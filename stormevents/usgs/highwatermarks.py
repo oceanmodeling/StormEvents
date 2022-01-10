@@ -222,6 +222,23 @@ def usgs_highwatermark_events(
     :param event_type: type of USGS flood event
     :param event_status: status of USGS flood event
     :return: table of flood events
+
+    >>> usgs_highwatermark_storms()
+             year                         usgs_name  nhc_name  nhc_code
+    usgs_id
+    7        2013                FEMA 2013 exercise      None      None
+    8        2013                             Wilma      None      None
+    18       2012                    Isaac Aug 2012     ISAAC  al092012
+    19       2005                              Rita      None      None
+    23       2011                             Irene     IRENE  al092011
+    ...       ...                               ...       ...       ...
+    303      2020  2020 TS Marco - Hurricane  Laura     MARCO  al142020
+    304      2020              2020 Hurricane Sally     SALLY  al192020
+    305      2020              2020 Hurricane Delta     DELTA  al262020
+    310      2021       2021 Tropical Cyclone Henri     HENRI  al082021
+    312      2021         2021 Tropical Cyclone Ida       IDA  al092021
+
+    [24 rows x 3 columns]
     """
 
     if isinstance(event_type, Enum):
@@ -284,8 +301,8 @@ def usgs_highwatermark_events(
             event.append(year)
             events[event_id] = event
 
-    events = pandas.DataFrame(list(events.values()), columns=['id', 'name', 'year'],)
-    events.set_index('id', inplace=True)
+    events = pandas.DataFrame(list(events.values()), columns=['usgs_id', 'name', 'year'],)
+    events.set_index('usgs_id', inplace=True)
 
     return events
 
@@ -302,7 +319,7 @@ def usgs_highwatermark_storms() -> pandas.DataFrame:
     events = usgs_highwatermark_events(event_type=EventType.HURRICANE)
 
     events.rename(columns={'name': 'usgs_name'}, inplace=True)
-    events['name'] = None
+    events['nhc_name'] = None
     events['nhc_code'] = None
 
     storms = nhc_storms(tuple(pandas.unique(events['year'])))
@@ -319,7 +336,7 @@ def usgs_highwatermark_storms() -> pandas.DataFrame:
             ]
 
             for nhc_code, storm in storms_matching.iterrows():
-                events.at[event_id, 'name'] = storm['name']
+                events.at[event_id, 'nhc_name'] = storm['name']
                 events.at[event_id, 'nhc_code'] = storm.name
 
-    return events[['name', 'year', 'nhc_code', 'usgs_name']]
+    return events[['year', 'usgs_name', 'nhc_name', 'nhc_code']]
