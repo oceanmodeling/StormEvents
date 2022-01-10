@@ -14,7 +14,7 @@
 ### Vortex Track
 
 ```python
-from stormevents.tracks import VortexTrack
+from stormevents.nhc.track import VortexTrack
 
 # retrieve vortex data from the Internet from its ID
 vortex = VortexTrack('AL112017')

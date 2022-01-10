@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from enum import Enum
 import ftplib
 from functools import wraps
 import gzip
@@ -9,36 +8,26 @@ from os import PathLike
 import pathlib
 import socket
 from time import sleep
-from typing import Any, Collection, List, TextIO, Union
-from urllib.error import URLError
+from typing import Collection, List, TextIO, Union
 
 from dateutil.parser import parse as parse_date
 import numpy
 import pandas
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
 from shapely.geometry import Polygon
 
+from stormevents.nhc.atcf import (
+    ATCF_FileDeck,
+    atcf_id_from_storm_name,
+    ATCF_Mode,
+    atcf_url,
+    normalize_atcf_value,
+)
 from stormevents.utilities import get_logger
 
 LOGGER = get_logger(__name__)
-
-
-class FileDeck(Enum):
-    """
-    These formats specified by the Automated Tropical Cyclone Forecast (ATCF) System.
-    The contents of each type of data file is described at http://hurricanes.ral.ucar.edu/realtime/
-    """
-
-    a = 'a'
-    b = 'b'  # "best track"
-    f = 'f'  # https://www.nrlmry.navy.mil/atcf_web/docs/database/new/newfdeck.txt
-
-
-class Mode(Enum):
-    historical = 'ARCHIVE'
-    realtime = 'aid_public'
 
 
 class VortexTrack:
@@ -77,8 +66,8 @@ class VortexTrack:
         storm: Union[str, PathLike, DataFrame, io.BytesIO],
         start_date: datetime = None,
         end_date: datetime = None,
-        file_deck: FileDeck = None,
-        mode: Mode = None,
+        file_deck: ATCF_FileDeck = None,
+        mode: ATCF_Mode = None,
         record_type: str = None,
         filename: PathLike = None,
     ):
@@ -160,17 +149,19 @@ class VortexTrack:
                     f'{row["datetime"]:%Y%m%d%H}'.rjust(11),
                     f'{"":3}',
                     f'{row["record_type"]:>5}',
-                    f'{convert_value((row["datetime"] - self.start_date) / timedelta(hours=1), to_type=int):>4}',
+                    f'{normalize_atcf_value((row["datetime"] - self.start_date) / timedelta(hours=1), to_type=int):>4}',
                 ]
             )
 
-            latitude = convert_value(row['latitude'] / 0.1, to_type=int, round_digits=1)
+            latitude = normalize_atcf_value(row['latitude'] / 0.1, to_type=int, round_digits=1)
             if latitude >= 0:
                 line.append(f'{latitude:>4}N')
             else:
                 line.append(f'{latitude * -.1:>4}S')
 
-            longitude = convert_value(row['longitude'] / 0.1, to_type=int, round_digits=1)
+            longitude = normalize_atcf_value(
+                row['longitude'] / 0.1, to_type=int, round_digits=1
+            )
             if longitude >= 0:
                 line.append(f'{longitude:>5}E')
             else:
@@ -178,15 +169,15 @@ class VortexTrack:
 
             line.extend(
                 [
-                    f'{convert_value(row["max_sustained_wind_speed"], to_type=int, round_digits=0):>4}',
-                    f'{convert_value(row["central_pressure"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(row["max_sustained_wind_speed"], to_type=int, round_digits=0):>4}',
+                    f'{normalize_atcf_value(row["central_pressure"], to_type=int, round_digits=0):>5}',
                     f'{row["development_level"]:>3}',
-                    f'{convert_value(row["isotach"], to_type=int, round_digits=0):>4}',
+                    f'{normalize_atcf_value(row["isotach"], to_type=int, round_digits=0):>4}',
                     f'{row["quadrant"]:>4}',
-                    f'{convert_value(row["radius_for_NEQ"], to_type=int, round_digits=0):>5}',
-                    f'{convert_value(row["radius_for_SEQ"], to_type=int, round_digits=0):>5}',
-                    f'{convert_value(row["radius_for_SWQ"], to_type=int, round_digits=0):>5}',
-                    f'{convert_value(row["radius_for_NWQ"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(row["radius_for_NEQ"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(row["radius_for_SEQ"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(row["radius_for_SWQ"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(row["radius_for_NWQ"], to_type=int, round_digits=0):>5}',
                 ]
             )
 
@@ -201,19 +192,19 @@ class VortexTrack:
                 row['background_pressure'] <= row['central_pressure']
                 and 1013 <= row['central_pressure']
             ):
-                background_pressure = convert_value(
+                background_pressure = normalize_atcf_value(
                     row['central_pressure'] + 1, to_type=int, round_digits=0,
                 )
             else:
-                background_pressure = convert_value(
+                background_pressure = normalize_atcf_value(
                     row['background_pressure'], to_type=int, round_digits=0,
                 )
             line.append(f'{background_pressure:>5}')
 
             line.extend(
                 [
-                    f'{convert_value(row["radius_of_last_closed_isobar"], to_type=int, round_digits=0):>5}',
-                    f'{convert_value(row["radius_of_maximum_winds"], to_type=int, round_digits=0):>4}',
+                    f'{normalize_atcf_value(row["radius_of_last_closed_isobar"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(row["radius_of_maximum_winds"], to_type=int, round_digits=0):>4}',
                     f'{"":>5}',  # gust
                     f'{"":>4}',  # eye
                     f'{"":>4}',  # subregion
@@ -254,7 +245,7 @@ class VortexTrack:
                     self.storm_id = storm_id
                 except ValueError:
                     try:
-                        storm_id = get_atcf_id(
+                        storm_id = atcf_id_from_storm_name(
                             storm_name=self.__dataframe['name'].tolist()[-1],
                             year=self.__dataframe['datetime'].tolist()[-1].year,
                         )
@@ -266,10 +257,13 @@ class VortexTrack:
     @storm_id.setter
     def storm_id(self, storm_id: str):
         if storm_id is not None:
+            # check if name+year was given instead of basin+number+year
             digits = sum([1 for character in storm_id if character.isdigit()])
 
             if digits == 4:
-                atcf_id = get_atcf_id(storm_name=storm_id[:-4], year=int(storm_id[-4:]))
+                atcf_id = atcf_id_from_storm_name(
+                    storm_name=storm_id[:-4], year=int(storm_id[-4:])
+                )
                 if atcf_id is None:
                     raise ValueError(f'No storm with id: {storm_id}')
                 storm_id = atcf_id
@@ -336,7 +330,7 @@ class VortexTrack:
         return d
 
     @property
-    def file_deck(self) -> FileDeck:
+    def file_deck(self) -> ATCF_FileDeck:
         return self.__file_deck
 
     @property
@@ -380,23 +374,23 @@ class VortexTrack:
         return self.data['latitude']
 
     @file_deck.setter
-    def file_deck(self, file_deck: FileDeck):
+    def file_deck(self, file_deck: ATCF_FileDeck):
         if file_deck is None:
-            file_deck = FileDeck.a
-        elif not isinstance(file_deck, FileDeck):
-            file_deck = convert_value(file_deck, FileDeck)
+            file_deck = ATCF_FileDeck.a
+        elif not isinstance(file_deck, ATCF_FileDeck):
+            file_deck = normalize_atcf_value(file_deck, ATCF_FileDeck)
         self.__file_deck = file_deck
 
     @property
-    def mode(self) -> Mode:
+    def mode(self) -> ATCF_Mode:
         return self.__mode
 
     @mode.setter
-    def mode(self, mode: Mode):
+    def mode(self, mode: ATCF_Mode):
         if mode is None:
-            mode = Mode.historical
-        elif not isinstance(mode, Mode):
-            mode = convert_value(mode, Mode)
+            mode = ATCF_Mode.historical
+        elif not isinstance(mode, ATCF_Mode):
+            mode = normalize_atcf_value(mode, ATCF_Mode)
         self.__mode = mode
 
     @property
@@ -407,11 +401,11 @@ class VortexTrack:
     def record_type(self, record_type: str):
         # e.g. BEST, OFCL, HWRF, etc.
         if record_type is not None:
-            if self.file_deck == FileDeck.a:
+            if self.file_deck == ATCF_FileDeck.a:
                 # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
                 # there are more but they may not have enough columns
                 record_types_list = ['OFCL', 'OFCP', 'HWRF', 'HMON', 'CARQ']
-            elif self.file_deck == FileDeck.b:
+            elif self.file_deck == ATCF_FileDeck.b:
                 record_types_list = ['BEST']
             else:
                 raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
@@ -837,28 +831,6 @@ class VortexTrack:
         return f"{self.__class__.__name__}('{self.storm_id}')"
 
 
-def convert_value(value: Any, to_type: type, round_digits: int = None) -> Any:
-    if type(value).__name__ == 'Quantity':
-        value = value.magnitude
-    if issubclass(to_type, Enum):
-        try:
-            value = to_type[value]
-        except (KeyError, ValueError):
-            try:
-                value = to_type(value)
-            except (KeyError, ValueError):
-                raise ValueError(
-                    f'unrecognized entry "{value}"; must be one of {list(to_type)}'
-                )
-    elif value is not None and value != "":
-        if round_digits is not None and issubclass(to_type, (int, float)):
-            if isinstance(value, str):
-                value = float(value)
-            value = round(value, round_digits)
-        value = to_type(value)
-    return value
-
-
 def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
     """Retry calling the decorated function using an exponential backoff.
 
@@ -902,40 +874,9 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
     return deco_retry
 
 
-def get_atcf_entry(
-    year: int, basin: str = None, storm_number: int = None, storm_name: str = None,
-) -> Series:
-    url = 'ftp://ftp.nhc.noaa.gov/atcf/archive/storm.table'
-
-    try:
-        storm_table = pandas.read_csv(url, header=None)
-    except URLError:
-        raise ConnectionError(f'cannot connect to "{url}"')
-
-    if basin is not None and storm_number is not None:
-        rows = storm_table[
-            (storm_table[1] == f'{basin.upper():>3}') & (storm_table[7] == storm_number)
-        ]
-    elif storm_name is not None:
-        rows = storm_table[storm_table[0].str.contains(storm_name.upper())]
-    else:
-        raise ValueError('need either storm name + year OR basin + storm number + year')
-
-    if len(rows) > 0:
-        rows = rows[rows[8] == int(year)]
-        if len(rows) > 0:
-            return list(rows.iterrows())[0][1]
-        else:
-            raise ValueError(
-                f'no storms with given info ("{storm_name}" / "{basin}{storm_number}") found in year "{year}"'
-            )
-
-
-def get_atcf_id(storm_name: str, year: int) -> str:
-    return get_atcf_entry(storm_name=storm_name, year=year)[20].strip()
-
-
-def get_atcf_file(storm_id: str, file_deck: FileDeck = None, mode: Mode = None) -> io.BytesIO:
+def get_atcf_file(
+    storm_id: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
+) -> io.BytesIO:
     url = atcf_url(file_deck=file_deck, storm_id=storm_id, mode=mode).replace('ftp://', "")
     LOGGER.info(f'Downloading storm data from {url}')
 
@@ -1013,28 +954,38 @@ def read_atcf(track: PathLike) -> DataFrame:
                 longitude = float(longitude[:-1]) * -0.1
             row_data['longitude'] = longitude
 
-            row_data['max_sustained_wind_speed'] = convert_value(
+            row_data['max_sustained_wind_speed'] = normalize_atcf_value(
                 row[8], to_type=int, round_digits=0,
             )
-            row_data['central_pressure'] = convert_value(row[9], to_type=int, round_digits=0)
+            row_data['central_pressure'] = normalize_atcf_value(
+                row[9], to_type=int, round_digits=0
+            )
             row_data['development_level'] = row[10]
-            row_data['isotach'] = convert_value(row[11], to_type=int, round_digits=0)
+            row_data['isotach'] = normalize_atcf_value(row[11], to_type=int, round_digits=0)
             row_data['quadrant'] = row[12]
-            row_data['radius_for_NEQ'] = convert_value(row[13], to_type=int, round_digits=0)
-            row_data['radius_for_SEQ'] = convert_value(row[14], to_type=int, round_digits=0)
-            row_data['radius_for_SWQ'] = convert_value(row[15], to_type=int, round_digits=0)
-            row_data['radius_for_NWQ'] = convert_value(row[16], to_type=int, round_digits=0)
-            row_data['background_pressure'] = convert_value(
+            row_data['radius_for_NEQ'] = normalize_atcf_value(
+                row[13], to_type=int, round_digits=0
+            )
+            row_data['radius_for_SEQ'] = normalize_atcf_value(
+                row[14], to_type=int, round_digits=0
+            )
+            row_data['radius_for_SWQ'] = normalize_atcf_value(
+                row[15], to_type=int, round_digits=0
+            )
+            row_data['radius_for_NWQ'] = normalize_atcf_value(
+                row[16], to_type=int, round_digits=0
+            )
+            row_data['background_pressure'] = normalize_atcf_value(
                 row[17], to_type=int, round_digits=0
             )
-            row_data['radius_of_last_closed_isobar'] = convert_value(
+            row_data['radius_of_last_closed_isobar'] = normalize_atcf_value(
                 row[18], to_type=int, round_digits=0,
             )
-            row_data['radius_of_maximum_winds'] = convert_value(
+            row_data['radius_of_maximum_winds'] = normalize_atcf_value(
                 row[19], to_type=int, round_digits=0,
             )
-            row_data['direction'] = convert_value(row[25], to_type=int)
-            row_data['speed'] = convert_value(row[26], to_type=int)
+            row_data['direction'] = normalize_atcf_value(row[25], to_type=int)
+            row_data['speed'] = normalize_atcf_value(row[26], to_type=int)
             row_data['name'] = row[27]
 
             for key, value in row_data.items():
@@ -1044,67 +995,3 @@ def read_atcf(track: PathLike) -> DataFrame:
                     data[key] = value
 
     return DataFrame(data=data)
-
-
-def atcf_url(file_deck: FileDeck = None, storm_id: str = None, mode: Mode = None,) -> str:
-    if storm_id is not None:
-        year = int(storm_id[4:])
-    else:
-        year = None
-
-    if mode is None:
-        entry = get_atcf_entry(basin=storm_id[:2], storm_number=int(storm_id[2:4]), year=year)
-        mode = entry[18].strip()
-
-    if file_deck is not None and not isinstance(file_deck, FileDeck):
-        try:
-            file_deck = convert_value(file_deck, FileDeck)
-        except ValueError:
-            file_deck = None
-    if file_deck is None:
-        file_deck = FileDeck.a
-
-    if mode is not None and not isinstance(mode, Mode):
-        try:
-            mode = convert_value(mode, Mode)
-        except ValueError:
-            mode = None
-    if mode is None:
-        mode = Mode.realtime
-
-    if mode == Mode.historical:
-        nhc_dir = f'archive/{year}'
-        suffix = '.dat.gz'
-    elif mode == Mode.realtime:
-        if file_deck == FileDeck.a:
-            nhc_dir = 'aid_public'
-            suffix = '.dat.gz'
-        elif file_deck == FileDeck.b:
-            nhc_dir = 'btk'
-            suffix = '.dat'
-
-    url = f'ftp://ftp.nhc.noaa.gov/atcf/{nhc_dir}/'
-
-    if storm_id is not None:
-        url += f'{file_deck.value}{storm_id.lower()}{suffix}'
-
-    return url
-
-
-def atcf_storm_ids(file_deck: FileDeck = None, mode: Mode = None) -> List[str]:
-    if file_deck is None:
-        file_deck = FileDeck.a
-    elif not isinstance(file_deck, FileDeck):
-        file_deck = convert_value(file_deck, FileDeck)
-
-    url = atcf_url(file_deck=file_deck, mode=mode).replace('ftp://', "")
-    hostname, directory = url.split('/', 1)
-    ftp = ftplib.FTP(hostname, 'anonymous', "")
-
-    filenames = [
-        filename for filename, metadata in ftp.mlsd(directory) if metadata['type'] == 'file'
-    ]
-    if file_deck is not None:
-        filenames = [filename for filename in filenames if filename[0] == file_deck.value]
-
-    return sorted((filename.split('.')[0] for filename in filenames), reverse=True)

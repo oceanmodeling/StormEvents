@@ -1,6 +1,5 @@
 from enum import Enum
 from functools import lru_cache
-import json
 import re
 from typing import Any, Dict, List
 
@@ -10,7 +9,7 @@ import pandas
 import requests
 from typepigeon import convert_value
 
-from stormevents.storms import nhc_storms
+from stormevents.nhc.storms import nhc_storms
 from stormevents.utilities import get_logger
 
 LOGGER = get_logger(__name__)
@@ -114,17 +113,31 @@ class HighWaterMarks:
 
     @property
     def query(self) -> Dict[str, Any]:
+        event_type = self.event_type
+        if isinstance(event_type, Enum):
+            event_type = event_type.value
+        event_status = self.event_status
+        if isinstance(event_status, Enum):
+            event_status = event_status.value
+        hwm_type = self.hwm_type
+        if isinstance(hwm_type, Enum):
+            hwm_type = hwm_type.value
+        hwm_quality = self.hwm_quality
+        if isinstance(hwm_quality, Enum):
+            hwm_quality = hwm_quality.value
+        hwm_environment = self.hwm_environment
+        if isinstance(hwm_environment, Enum):
+            hwm_environment = hwm_environment.value
+
         return {
             'Event': self.event_id,
-            'EventType': self.event_type.value if self.event_type is not None else None,
-            'EventStatus': self.event_status.value if self.event_status is not None else None,
+            'EventType': event_type,
+            'EventStatus': event_status,
             'States': self.us_states,
             'County': self.us_counties,
-            'HWMType': self.hwm_type.value if self.hwm_type is not None else None,
-            'HWMQuality': self.hwm_quality.value if self.hwm_quality is not None else None,
-            'HWMEnvironment': self.hwm_environment.value
-            if self.hwm_environment is not None
-            else None,
+            'HWMType': hwm_type,
+            'HWMQuality': hwm_quality,
+            'HWMEnvironment': hwm_environment,
             'SurveyComplete': self.survey_completed,
             'StillWater': self.still_water,
         }
@@ -136,6 +149,7 @@ class HighWaterMarks:
             data = pandas.DataFrame(response.json())
             data.set_index('hwm_id', inplace=True)
             self.__data = data
+            self.__previous_query = self.query
         return self.__data
 
     def plot(
@@ -161,6 +175,8 @@ class HurricaneHighWaterMarks(HighWaterMarks):
         self,
         storm_name: str,
         storm_year: int,
+        us_states: List[str] = None,
+        us_counties: List[str] = None,
         hwm_type: HWMType = None,
         hwm_quality: HWMQuality = None,
         hwm_environment: HWMEnvironment = None,
@@ -170,7 +186,7 @@ class HurricaneHighWaterMarks(HighWaterMarks):
         if hwm_environment is None:
             hwm_environment = HWMEnvironment.RIVERINE
 
-        self.storms = highwatermark_storms()
+        self.storms = usgs_highwatermark_storms()
 
         event_id = self.storms[
             (self.storms['name'] == storm_name.upper()) & (self.storms['year'] == storm_year)
@@ -180,8 +196,8 @@ class HurricaneHighWaterMarks(HighWaterMarks):
             event_id=event_id,
             event_status=EventStatus.COMPLETED,
             event_type=EventType.HURRICANE,
-            us_states=None,
-            us_counties=None,
+            us_states=us_states,
+            us_counties=us_counties,
             hwm_type=hwm_type,
             hwm_quality=hwm_quality,
             hwm_environment=hwm_environment,
@@ -189,38 +205,36 @@ class HurricaneHighWaterMarks(HighWaterMarks):
             still_water=still_water,
         )
 
-    @classmethod
-    def from_storm_name(cls, name: str, year: int,) -> 'HighWaterMarks':
-        event_name, event_year, cls.params['Event'] = cls._get_event_id_from_name(name)
-        response = requests.get(cls.URL, params=cls.params)
-        response.raise_for_status()
-        json_data = json.loads(response.text)
-        hwm_stations = dict()
-        for data in json_data:
-            if 'elev_ft' in data.keys():
-                hwm_stations[str(data['hwm_id'])] = data
-        filter_dict = cls._init_filter_dict(filter_dict)
-        return cls(event_name, event_year, filter_dict=filter_dict, **hwm_stations)
-
 
 @lru_cache(maxsize=None)
-def highwatermark_events(
-    event_type: EventType, event_status: EventStatus,
+def usgs_highwatermark_events(
+    event_type: EventType, event_status: EventStatus = None,
 ) -> pandas.DataFrame:
     """
-    USGS is not standardizing event naming. Sometimes years are included,
-    but sometimes they are ommitted. The order in which the names are in
-    the response is also not standardized. Some workaround come into play
-    in this algorithm in order to identify and categorize the dataset.
+    this function collects all USGS flood events of the given type and status that have high water mark data
+
+    USGS does not standardize event naming, and they should.
+    Year, month, and storm type are not always included.
+    The order in which the names are in the response is also not standardized.
+    This function applies a workaround to fill in gaps in data.
     USGS should standardize their REST server data.
+
+    :param event_type: type of USGS flood event
+    :param event_status: status of USGS flood event
+    :return: table of flood events
     """
+
+    if isinstance(event_type, Enum):
+        event_type = event_type.value
+    if isinstance(event_status, Enum):
+        event_status = event_status.value
 
     response = requests.get(
         HighWaterMarks.URL,
         params={
             'Event': None,
-            'EventType': event_type.value,
-            'EventStatus': event_status.value,
+            'EventType': event_type,
+            'EventStatus': event_status,
             'States': None,
             'County': None,
             'HWMType': None,
@@ -277,16 +291,21 @@ def highwatermark_events(
 
 
 @lru_cache(maxsize=None)
-def highwatermark_storms() -> pandas.DataFrame:
-    events = highwatermark_events(
-        event_type=EventType.HURRICANE, event_status=EventStatus.COMPLETED,
-    )
+def usgs_highwatermark_storms() -> pandas.DataFrame:
+    """
+    this function collects USGS high water mark data for storm events and cross-correlates it with NHC storm data
+    this is useful if you want to retrieve USGS data for a specific NHC storm code
+
+    :return: table of USGS flood events with NHC storm names
+    """
+
+    events = usgs_highwatermark_events(event_type=EventType.HURRICANE)
 
     events.rename(columns={'name': 'usgs_name'}, inplace=True)
     events['name'] = None
     events['nhc_code'] = None
 
-    storms = nhc_storms()
+    storms = nhc_storms(tuple(pandas.unique(events['year'])))
 
     storm_names = pandas.unique(storms['name'])
     storm_names.sort()

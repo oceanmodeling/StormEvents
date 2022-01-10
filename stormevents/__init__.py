@@ -1,2 +1,2 @@
-from stormevents.highwatermarks import HurricaneHighWaterMarks
-from stormevents.tracks import VortexTrack
+from stormevents.nhc.track import VortexTrack
+from stormevents.usgs.highwatermarks import HurricaneHighWaterMarks

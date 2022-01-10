@@ -1,5 +1,6 @@
 from datetime import datetime
 from functools import lru_cache
+from typing import Iterable, List, Union
 
 from bs4 import BeautifulSoup
 import pandas
@@ -8,7 +9,7 @@ import requests
 RECORDS_START_YEAR = 2008
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=1)
 def nhc_storms(year: int = None) -> pandas.DataFrame:
     """
     Read list of hurricanes from NHC based on year
@@ -18,8 +19,16 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     """
 
     if year is None:
+        year = list(range(RECORDS_START_YEAR, datetime.today().year + 1))
+
+    if isinstance(year, Iterable) and not isinstance(year, str):
+        years = sorted(pandas.unique(year))
         return pandas.concat(
-            [nhc_storms(year) for year in range(RECORDS_START_YEAR, datetime.today().year + 1)]
+            [
+                nhc_storms(year)
+                for year in years
+                if year is not None and year >= RECORDS_START_YEAR
+            ]
         )
     elif not isinstance(year, int):
         year = int(year)

@@ -5,7 +5,7 @@ from dateutil.parser import parse as parse_date
 import pytest
 from pytest_socket import SocketBlockedError
 
-from stormevents.tracks import VortexTrack
+from stormevents.nhc.track import VortexTrack
 from tests import (
     check_reference_directory,
     INPUT_DIRECTORY,
