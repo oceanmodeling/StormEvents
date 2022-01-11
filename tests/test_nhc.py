@@ -2,9 +2,11 @@
 from copy import copy
 
 from dateutil.parser import parse as parse_date
+import pandas
 import pytest
 from pytest_socket import SocketBlockedError
 
+from stormevents import nhc_storms
 from stormevents.nhc.track import VortexTrack
 from tests import (
     check_reference_directory,
@@ -12,6 +14,18 @@ from tests import (
     OUTPUT_DIRECTORY,
     REFERENCE_DIRECTORY,
 )
+
+
+def test_nhc_storms():
+    reference_directory = REFERENCE_DIRECTORY / 'test_nhc_storms'
+
+    storms = nhc_storms(year=tuple(range(2008, 2018 + 1)))
+
+    reference_storms = pandas.read_csv(
+        reference_directory / 'storms.csv', index_col='nhc_code'
+    )
+
+    assert storms.equals(reference_storms)
 
 
 def test_vortex():
