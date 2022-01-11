@@ -11,7 +11,7 @@
 
 ## Usage
 
-### Vortex Track
+### NHC Vortex Tracks
 
 ```python
 from stormevents import VortexTrack
@@ -32,12 +32,12 @@ vortex = VortexTrack.from_atcf_file('atcf.trk')
 vortex = VortexTrack.from_fort22('fort.22')
 ```
 
-### NHC storms
+#### listing NHC storms
 
 ```python
 from stormevents import nhc_storms
 
-nhc_storms()
+nhc_storms = nhc_storms()
 ```
 
 ```
@@ -61,7 +61,7 @@ ep192021     SANDRA     Tropical Storm SANDRA  2021
 ```python
 from stormevents import nhc_storms
 
-nhc_storms(year=2018)
+nhc_storms_2018 = nhc_storms(year=2018)
 ```
 
 ```
@@ -85,9 +85,55 @@ ep172018      OLIVIA                Hurricane OLIVIA  2018
 ### USGS High Water Marks
 
 ```python
+from stormevents import HurricaneHighWaterMarks
+
+hwm_florence2018 = HurricaneHighWaterMarks('florence', 2018)
+
+hwm_florence2018.data
+hwm_florence2018.data.columns
+```
+
+```
+         latitude  ...  siteZone
+hwm_id             ...          
+33496   37.298440  ...       NaN
+33502   35.342089  ...       NaN
+33503   35.378963  ...       NaN
+33505   35.216282  ...       NaN
+33508   35.199859  ...       NaN
+...           ...  ...       ...
+34191   33.724722  ...       NaN
+34235   34.936308  ...          
+34840   34.145930  ...       NaN
+34871   35.424707  ...       NaN
+34876   35.301135  ...       NaN
+
+[509 rows x 51 columns]
+```
+
+```
+Index(['latitude', 'longitude', 'eventName', 'hwmTypeName', 'hwmQualityName',
+       'verticalDatumName', 'verticalMethodName', 'approvalMember',
+       'markerName', 'horizontalMethodName', 'horizontalDatumName',
+       'flagMemberName', 'surveyMemberName', 'site_no', 'siteDescription',
+       'sitePriorityName', 'networkNames', 'stateName', 'countyName',
+       'sitePermHousing', 'site_latitude', 'site_longitude', 'waterbody',
+       'site_id', 'event_id', 'hwm_type_id', 'hwm_quality_id',
+       'hwm_locationdescription', 'latitude_dd', 'longitude_dd', 'survey_date',
+       'elev_ft', 'vdatum_id', 'vcollect_method_id', 'bank', 'marker_id',
+       'hcollect_method_id', 'hwm_environment', 'flag_date', 'stillwater',
+       'hdatum_id', 'flag_member_id', 'survey_member_id', 'uncertainty',
+       'hwm_uncertainty', 'hwm_label', 'files', 'approval_id',
+       'height_above_gnd', 'hwm_notes', 'siteZone'],
+      dtype='object')
+```
+
+#### listing USGS flood storm events with high water mark data
+
+```python
 from stormevents import usgs_highwatermark_storms
 
-usgs_highwatermark_storms()
+hwm_storms = usgs_highwatermark_storms()
 ```
 
 ```

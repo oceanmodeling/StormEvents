@@ -173,8 +173,8 @@ class HighWaterMarks:
 class HurricaneHighWaterMarks(HighWaterMarks):
     def __init__(
         self,
-        storm_name: str,
-        storm_year: int,
+        name: str,
+        year: int,
         us_states: List[str] = None,
         us_counties: List[str] = None,
         hwm_type: HWMType = None,
@@ -186,10 +186,10 @@ class HurricaneHighWaterMarks(HighWaterMarks):
         if hwm_environment is None:
             hwm_environment = HWMEnvironment.RIVERINE
 
-        self.storms = usgs_highwatermark_storms()
+        storms = usgs_highwatermark_storms()
 
-        event_id = self.storms[
-            (self.storms['name'] == storm_name.upper()) & (self.storms['year'] == storm_year)
+        event_id = storms[
+            (storms['nhc_name'] == name.upper()) & (storms['year'] == year)
         ].index[0]
 
         super().__init__(
@@ -340,3 +340,10 @@ def usgs_highwatermark_storms() -> pandas.DataFrame:
                 events.at[event_id, 'nhc_code'] = storm.name
 
     return events[['year', 'usgs_name', 'nhc_name', 'nhc_code']]
+
+
+if __name__ == '__main__':
+    hwm = HurricaneHighWaterMarks('florence', 2018)
+    print(hwm.data.columns)
+
+    print('done')
