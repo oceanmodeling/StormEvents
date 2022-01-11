@@ -184,12 +184,14 @@ class VortexTrack:
             if row['background_pressure'] is None:
                 row['background_pressure'] = self.data['background_pressure'].iloc[i - 1]
             if (
-                row['background_pressure'] <= row['central_pressure']
+                not pandas.isna(row['central_pressure'])
+                and row['background_pressure'] <= row['central_pressure']
                 and 1013 > row['central_pressure']
             ):
                 background_pressure = 1013
             elif (
-                row['background_pressure'] <= row['central_pressure']
+                not pandas.isna(row['central_pressure'])
+                and row['background_pressure'] <= row['central_pressure']
                 and 1013 <= row['central_pressure']
             ):
                 background_pressure = normalize_atcf_value(

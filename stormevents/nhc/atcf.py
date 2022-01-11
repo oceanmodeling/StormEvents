@@ -139,7 +139,7 @@ def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None) ->
                 raise ValueError(
                     f'unrecognized entry "{value}"; must be one of {list(to_type)}'
                 )
-    elif value is not None and value != "":
+    elif not pandas.isna(value) and value is not None and value != "":
         if round_digits is not None and issubclass(to_type, (int, float)):
             if isinstance(value, str):
                 value = float(value)
