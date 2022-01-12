@@ -19,7 +19,7 @@ def test_usgs_highwatermark_events():
     )
 
     reference_events = pandas.read_csv(
-        reference_directory / 'florence2018.csv', index_col='usgs_id'
+        reference_directory / 'events.csv', index_col='usgs_id'
     )
 
     assert events.equals(reference_events)
@@ -31,7 +31,7 @@ def test_usgs_highwatermark_storms():
     storms = usgs_highwatermark_storms(year=tuple(range(2003, 2020 + 1)))
 
     reference_storms = pandas.read_csv(
-        reference_directory / 'florence2018.csv', index_col='usgs_id'
+        reference_directory / 'storms.csv', index_col='usgs_id'
     )
 
     assert storms.equals(reference_storms)
