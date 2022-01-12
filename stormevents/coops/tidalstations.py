@@ -2,6 +2,7 @@ import calendar
 import codecs
 from collections.abc import Mapping
 from datetime import datetime, timedelta
+from enum import Enum
 import json
 import os
 
@@ -10,9 +11,149 @@ from bs4 import BeautifulSoup
 import numpy
 import numpy as np
 import requests
+from typepigeon import convert_value
+
+
+class COOPS_Product(Enum):
+    WATER_LEVEL = (
+        'water_level'
+        # Preliminary or verified water levels, depending on availability.
+    )
+    AIR_TEMPERATURE = 'air_temperature'  # Air temperature as measured at the station.
+    WATER_TEMPERATURE = 'water_temperature'  # Water temperature as measured at the station.
+    WIND = 'wind'  # Wind speed, direction, and gusts as measured at the station.
+    AIR_PRESSURE = 'air_pressure'  # Barometric pressure as measured at the station.
+    AIR_GAP = 'air_gap'  # Air Gap (distance between a bridge and the water's surface) at the station.
+    CONDUCTIVITY = 'conductivity'  # The water's conductivity as measured at the station.
+    VISIBILITY = 'visibility'  # Visibility from the station's visibility sensor. A measure of atmospheric clarity.
+    HUMIDITY = 'humidity'  # Relative humidity as measured at the station.
+    SALINITY = 'salinity'  # Salinity and specific gravity data for the station.
+    HOURLY_HEIGHT = 'hourly_height'  # Verified hourly height water level data for the station.
+    HIGH_LOW = 'high_low'  # Verified high/low water level data for the station.
+    DAILY_MEAN = 'daily_mean'  # Verified daily mean water level data for the station.
+    MONTHLY_MEAN = 'monthly_mean'  # Verified monthly mean water level data for the station.
+    ONE_MINUTE_WATER_LEVEL = (
+        'one_minute_water_level'
+        # One minute water level data for the station.
+    )
+    PREDICTIONS = 'predictions'  # 6 minute predictions water level data for the station.*
+    DATUMS = 'datums'  # datums data for the stations.
+    CURRENTS = 'currents'  # Currents data for currents stations.
+    CURRENTS_PREDICTIONS = (
+        'currents_predictions'
+        # Currents predictions data for currents predictions stations.
+    )
+
+
+class COOPS_TidalDatum(Enum):
+    CRD = 'CRD'  # Columbia River Datum
+    IGLD = 'IGLD'  # International Great Lakes Datum
+    LWD = 'LWD'  # Great Lakes Low Water Datum (Chart Datum)
+    MHHW = 'MHHW'  # Mean Higher High Water
+    MHW = 'MHW'  # Mean High Water
+    MTL = 'MTL'  # Mean Tide Level
+    MSL = 'MSL'  # Mean Sea Level
+    MLW = 'MLW'  # Mean Low Water
+    MLLW = 'MLLW'  # Mean Lower Low Water
+    NAVD = 'NAVD'  # North American Vertical Datum
+    STND = 'STND'  # Station Datum
+
+
+class COOP_VelocityType(Enum):
+    SPEED_DIR = 'speed_dir'  # Return results for speed and dirction
+    DEFAULT = 'default'  # Return results for velocity major, mean flood direction and mean ebb dirction
+
+
+class COOPS_Units(Enum):
+    METRIC = 'metric'
+    ENGLISH = 'english'
+
+
+class COOPS_TimeZone(Enum):
+    GMT = 'gmt'  # Greenwich Mean Time
+    LST = 'lst'  # Local Standard Time. The time local to the requested station.
+    LST_LDT = 'lst_ldt'  # Local Standard/Local Daylight Time. The time local to the requested station.
+
+
+class COOPS_Interval(Enum):
+    H = 'h'  # Hourly Met data and harmonic predictions will be returned
+    HILO = 'hilo'  # High/Low tide predictions for all stations.
+
+
+class COOPS_Query:
+    URL = 'https://tidesandcurrents.noaa.gov/api/datagetter?'
+
+    def __init__(
+        self,
+        station_id: int,
+        start_date: datetime,
+        end_date: datetime,
+        product: COOPS_Product,
+        datum: COOPS_TidalDatum = None,
+        units: COOPS_Units = None,
+        time_zone: COOPS_TimeZone = None,
+        interval: COOPS_Interval = None,
+    ):
+        if datum is None:
+            datum = COOPS_TidalDatum.NAVD
+        if time_zone is None:
+            time_zone = COOPS_TimeZone.GMT
+        if interval is None:
+            interval = COOPS_Interval.H
+
+        self.station_id = station_id
+        self.start_date = start_date
+        self.end_date = end_date
+        self.product = product
+        self.datum = datum
+        self.units = units
+        self.time_zone = time_zone
+        self.interval = interval
+
+    @property
+    def query(self):
+        product = self.product
+        if isinstance(product, Enum):
+            product = product.value
+        datum = self.datum
+        if isinstance(datum, Enum):
+            datum = datum.value
+        units = self.units
+        if isinstance(units, Enum):
+            units = units.value
+        time_zone = self.time_zone
+        if isinstance(time_zone, Enum):
+            time_zone = time_zone.value
+        interval = self.interval
+        if isinstance(interval, Enum):
+            interval = interval.value
+
+        return {
+            'station': self.station_id,
+            'begin_date': f'{self.start_date:%Y%m%d %H:%M}',
+            'end_date': f'{self.end_date:%Y%m%d %H:%M}',
+            'product': product,
+            'datum': datum,
+            'units': units,
+            'time_zone': time_zone,
+            'interval': interval,
+            'format': 'json',
+            'application': 'noaa/nos/csdl/stormevents',
+        }
+
+    @property
+    def get(self):
+        return requests.get(self.URL, params=self.query)
 
 
 class TidalStations(Mapping):
+    """
+    interface with the NOAA Center for Operational Oceanographic Products and Services (CO-OPS) API
+    https://api.tidesandcurrents.noaa.gov/api/prod/
+    """
+
+    url = 'https://tidesandcurrents.noaa.gov/api/datagetter?'
+
     def __init__(self):
         self.__storage = dict()
 
@@ -132,6 +273,11 @@ class TidalStations(Mapping):
         except AttributeError:
             raise AttributeError('Must set station attribute.')
 
+    @station.setter
+    def station(self, station):
+        assert station in self.__storage.keys()
+        self.__station = station
+
     @property
     def datetime(self):
         return self.__storage[self.station]['datetime']
@@ -151,13 +297,19 @@ class TidalStations(Mapping):
     def start_date(self):
         return self.__start_date
 
+    @start_date.setter
+    def start_date(self, start_date):
+        assert isinstance(start_date, datetime)
+        self.__start_date = start_date
+
     @property
     def end_date(self):
         return self.__end_date
 
-    @property
-    def url(self):
-        return 'https://tidesandcurrents.noaa.gov/api/datagetter?'
+    @end_date.setter
+    def end_date(self, end_date):
+        assert isinstance(end_date, datetime)
+        self.__end_date = end_date
 
     @property
     def datum(self):
@@ -165,6 +317,14 @@ class TidalStations(Mapping):
             return self.__datum
         except AttributeError:
             return 'MSL'
+
+    @datum.setter
+    def datum(self, datum: COOPS_TidalDatum):
+        if not isinstance(datum, COOPS_TidalDatum):
+            datum = convert_value(datum, COOPS_TidalDatum)
+        if datum == 'NAVD88':
+            datum = 'NAVD'
+        self.__datum = datum
 
     @property
     def units(self):
@@ -179,28 +339,6 @@ class TidalStations(Mapping):
             return self.__time_zone
         except AttributeError:
             return 'gmt'
-
-    @station.setter
-    def station(self, station):
-        assert station in self.__storage.keys()
-        self.__station = station
-
-    @start_date.setter
-    def start_date(self, start_date):
-        assert isinstance(start_date, datetime)
-        self.__start_date = start_date
-
-    @end_date.setter
-    def end_date(self, end_date):
-        assert isinstance(end_date, datetime)
-        self.__end_date = end_date
-
-    @datum.setter
-    def datum(self, datum):
-        assert datum in ['MHHW', 'MHW', 'MTL', 'MSL', 'MLW', 'MLLW', 'NAVD88', 'STND']
-        if datum == 'NAVD88':
-            datum = 'NAVD'
-        self.__datum = datum
 
     # def _call_REST(self):
     #     for station in self.stations:
@@ -357,3 +495,9 @@ class RESTWrapper:
                     'metadata': metadata,
                     'datum': self._params['datum'],
                 }
+
+
+if __name__ == '__main__':
+    test = TidalStations()
+
+    print('done')

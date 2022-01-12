@@ -1,7 +1,8 @@
 from enum import Enum
 from functools import lru_cache
+from os import PathLike
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List
 
 from matplotlib import pyplot
 from matplotlib.axis import Axis
@@ -32,10 +33,11 @@ class HWMType(Enum):
 
 class HWMQuality(Enum):
     # TODO fill out other options
-    EXCELLENT = 1
-    GOOD = 2
-    FAIR = 3
-    POOR = 4
+    EXCELLENT = 1  # +/- 0.05 ft
+    GOOD = 2  # +/- 0.10 ft
+    FAIR = 3  # +/- 0.20 ft
+    POOR = 4  # +/- 0.40 ft
+    VERY_POOR = 5  # > 0.40 ft
 
 
 class HWMEnvironment(Enum):
@@ -152,6 +154,10 @@ class HighWaterMarks:
             self.__previous_query = self.query
         return self.__data
 
+    @data.setter
+    def data(self, data: pandas.DataFrame):
+        self.__data = data
+
     def plot(
         self, axis: Axis = None, show: bool = True, **kwargs,
     ):
@@ -168,6 +174,39 @@ class HighWaterMarks:
             pyplot.show()
 
         return axis
+
+    @classmethod
+    def from_name(
+        cls,
+        name: str,
+        year: int = None,
+        event_type: EventType = None,
+        event_status: EventStatus = None,
+    ) -> 'HighWaterMarks':
+        events = usgs_highwatermark_events()
+        events = events[events['usgs_name'] == name]
+        if len(events) > 0:
+            events = events[events['year'] == year]
+        event = events[0]
+        return cls(
+            event_id=event['usgs_id'], event_type=event_type, event_status=event_status,
+        )
+
+    @classmethod
+    def from_csv(
+        cls,
+        filename: PathLike,
+        event_id: int = None,
+        event_type: EventType = None,
+        event_status: EventStatus = None,
+    ) -> 'HighWaterMarks':
+        data = pandas.read_csv(filename, index_col='hwm_id')
+        instance = cls(event_id=event_id, event_type=event_type, event_status=event_status,)
+        instance.data = data
+        return instance
+
+    def __eq__(self, other: 'HighWaterMarks') -> bool:
+        return self.data.equals(other.data)
 
 
 class HurricaneHighWaterMarks(HighWaterMarks):
@@ -186,7 +225,7 @@ class HurricaneHighWaterMarks(HighWaterMarks):
         if hwm_environment is None:
             hwm_environment = HWMEnvironment.RIVERINE
 
-        storms = usgs_highwatermark_storms()
+        storms = usgs_highwatermark_storms(year=year)
 
         event_id = storms[
             (storms['nhc_name'] == name.upper()) & (storms['year'] == year)
@@ -208,7 +247,7 @@ class HurricaneHighWaterMarks(HighWaterMarks):
 
 @lru_cache(maxsize=None)
 def usgs_highwatermark_events(
-    event_type: EventType, event_status: EventStatus = None,
+    event_type: EventType = None, year: int = None, event_status: EventStatus = None,
 ) -> pandas.DataFrame:
     """
     this function collects all USGS flood events of the given type and status that have high water mark data
@@ -220,6 +259,7 @@ def usgs_highwatermark_events(
     USGS should standardize their REST server data.
 
     :param event_type: type of USGS flood event
+    :param year: year of event
     :param event_status: status of USGS flood event
     :return: table of flood events
 
@@ -241,8 +281,14 @@ def usgs_highwatermark_events(
     [24 rows x 3 columns]
     """
 
+    if event_type is None:
+        return pandas.concat(
+            [usgs_highwatermark_events(event_type) for event_type in EventType]
+        )
+
     if isinstance(event_type, Enum):
         event_type = event_type.value
+
     if isinstance(event_status, Enum):
         event_status = event_status.value
 
@@ -273,13 +319,13 @@ def usgs_highwatermark_events(
             name = entry['eventName']
             event = [event_id, name]
             if 'survey_date' in entry:
-                year = int(entry['survey_date'].split('-')[0])
+                event_year = int(entry['survey_date'].split('-')[0])
             elif 'flag_date' in entry:
-                year = int(entry['flag_date'].split('-')[0])
+                event_year = int(entry['flag_date'].split('-')[0])
             else:
                 search = re.findall('\d{4}', name)
                 if len(search) > 0:
-                    year = int(search[0])
+                    event_year = int(search[0])
                 else:
                     # otherwise, search the NHC database for the storm year
                     storms = nhc_storms()
@@ -289,26 +335,32 @@ def usgs_highwatermark_events(
                         if storm_name.lower() in name.lower():
                             years = storms[storms['name'] == storm_name]['year']
                             if len(years) == 1:
-                                year = years[0]
+                                event_year = years[0]
                             else:
                                 LOGGER.warning(
                                     f'could not find year of "{name}" in USGS high water mark database nor in NHC table'
                                 )
-                                year = None
+                                event_year = None
                             break
                     else:
-                        year = None
-            event.append(year)
+                        event_year = None
+            event.append(event_year)
             events[event_id] = event
 
     events = pandas.DataFrame(list(events.values()), columns=['usgs_id', 'name', 'year'],)
     events.set_index('usgs_id', inplace=True)
 
+    if year is not None:
+        if isinstance(year, Iterable) and not isinstance(year, str):
+            events = events[events['year'].isin(year)]
+        else:
+            events = events[events['year'] == int(year)]
+
     return events
 
 
 @lru_cache(maxsize=None)
-def usgs_highwatermark_storms() -> pandas.DataFrame:
+def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     """
     this function collects USGS high water mark data for storm events and cross-correlates it with NHC storm data
     this is useful if you want to retrieve USGS data for a specific NHC storm code
@@ -316,7 +368,7 @@ def usgs_highwatermark_storms() -> pandas.DataFrame:
     :return: table of USGS flood events with NHC storm names
     """
 
-    events = usgs_highwatermark_events(event_type=EventType.HURRICANE)
+    events = usgs_highwatermark_events(event_type=EventType.HURRICANE, year=year)
 
     events.rename(columns={'name': 'usgs_name'}, inplace=True)
     events['nhc_name'] = None
@@ -340,10 +392,3 @@ def usgs_highwatermark_storms() -> pandas.DataFrame:
                 events.at[event_id, 'nhc_code'] = storm.name
 
     return events[['year', 'usgs_name', 'nhc_name', 'nhc_code']]
-
-
-if __name__ == '__main__':
-    hwm = HurricaneHighWaterMarks('florence', 2018)
-    print(hwm.data.columns)
-
-    print('done')

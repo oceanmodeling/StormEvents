@@ -1,25 +1,23 @@
-usgs_id,year,usgs_name,nhc_name,nhc_code
-7,2013,FEMA 2013 exercise,,
-8,2013,Wilma,,
-18,2012,Isaac Aug 2012,ISAAC,al092012
-19,2005,Rita,,
-23,2011,Irene,IRENE,al092011
-24,2017,Sandy,,
-119,2015,Joaquin,JOAQUIN,al112015
-131,2016,Hermine,HERMINE,al092016
-133,2003,Isabel September 2003,,
-135,2016,Matthew October 2016,MATTHEW,al142016
-180,2017,Harvey Aug 2017,HARVEY,al092017
-182,2017,Irma September 2017,IRMA,al112017
-189,2017,Maria September 2017,MARIA,al152017
-196,2017,Nate October 2017,NATE,al162017
-281,2019,Lane August 2018,,
-283,2018,Florence Sep 2018,FLORENCE,al062018
-287,2018,Michael Oct 2018,MICHAEL,al142018
-291,2019,2019 Hurricane Dorian,DORIAN,al052019
-301,2020,2020 Hurricane Isaias,ISAIAS,al092020
-303,2020,2020 TS Marco - Hurricane  Laura,MARCO,al142020
-304,2020,2020 Hurricane Sally,SALLY,al192020
-305,2020,2020 Hurricane Delta,DELTA,al262020
-310,2021,2021 Tropical Cyclone Henri,HENRI,al082021
-312,2021,2021 Tropical Cyclone Ida,IDA,al092021
+usgs_id,year,usgs_name                       ,nhc_name,nhc_code
+7      ,2013,FEMA 2013 exercise              ,        ,
+8      ,2013,Wilma                           ,        ,
+18     ,2012,Isaac Aug 2012                  ,ISAAC   ,al092012
+19     ,2005,Rita                            ,        ,
+23     ,2011,Irene                           ,IRENE   ,al092011
+24     ,2017,Sandy                           ,        ,
+119    ,2015,Joaquin                         ,JOAQUIN ,al112015
+131    ,2016,Hermine                         ,HERMINE ,al092016
+133    ,2003,Isabel September 2003           ,        ,
+135    ,2016,Matthew October 2016            ,MATTHEW ,al142016
+180    ,2017,Harvey Aug 2017                 ,HARVEY  ,al092017
+182    ,2017,Irma September 2017             ,IRMA    ,al112017
+189    ,2017,Maria September 2017            ,MARIA   ,al152017
+196    ,2017,Nate October 2017               ,NATE    ,al162017
+281    ,2019,Lane August 2018                ,        ,
+283    ,2018,Florence Sep 2018               ,FLORENCE,al062018
+287    ,2018,Michael Oct 2018                ,MICHAEL ,al142018
+291    ,2019,2019 Hurricane Dorian           ,DORIAN  ,al052019
+301    ,2020,2020 Hurricane Isaias           ,ISAIAS  ,al092020
+303    ,2020,2020 TS Marco - Hurricane  Laura,MARCO   ,al142020
+304    ,2020,2020 Hurricane Sally            ,SALLY   ,al192020
+305    ,2020,2020 Hurricane Delta            ,DELTA   ,al262020

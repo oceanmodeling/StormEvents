@@ -26,12 +26,12 @@ jobs:
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}-
       - name: Install wheel
         run: pip install wheel
-#      - name: Run setup.py on Windows
-#        if: contains(matrix.os, 'windows')
-#        run: python setup.py install
-#      - name: Install netCDF4 library on Linux
-#        if: contains(matrix.os, 'ubuntu')
-#        run: sudo apt-get update -y && sudo apt-get install -y libnetcdf-dev libnetcdff-dev
+      #      - name: Run setup.py on Windows
+      #        if: contains(matrix.os, 'windows')
+      #        run: python setup.py install
+      #      - name: Install netCDF4 library on Linux
+      #        if: contains(matrix.os, 'ubuntu')
+      #        run: sudo apt-get update -y && sudo apt-get install -y libnetcdf-dev libnetcdff-dev
       - name: Install dependencies
         run: |
           pip install flake8
