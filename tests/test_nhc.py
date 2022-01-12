@@ -22,7 +22,7 @@ def test_nhc_storms():
     storms = nhc_storms(year=tuple(range(2008, 2020 + 1)))
 
     reference_storms = pandas.read_csv(
-        reference_directory / 'florence2018.csv', index_col='nhc_code'
+        reference_directory / 'storms.csv', index_col='nhc_code'
     )
 
     assert storms.equals(reference_storms)
