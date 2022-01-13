@@ -3,13 +3,17 @@ import codecs
 from collections.abc import Mapping
 from datetime import datetime, timedelta
 from enum import Enum
+from functools import lru_cache
 import json
 import os
 
 import appdirs
+import bs4
 from bs4 import BeautifulSoup
 import numpy
 import numpy as np
+import pandas
+from pandas import DataFrame
 import requests
 from typepigeon import convert_value
 
@@ -144,6 +148,11 @@ class COOPS_Query:
     @property
     def get(self):
         return requests.get(self.URL, params=self.query)
+
+
+class COOPS_StationType(Enum):
+    CURRENT = 'current'
+    HISTORICAL = 'historical'
 
 
 class TidalStations(Mapping):
@@ -497,7 +506,42 @@ class RESTWrapper:
                 }
 
 
-if __name__ == '__main__':
-    test = TidalStations()
+@lru_cache(maxsize=1)
+def coops_stations_html_tables() -> bs4.element.ResultSet:
+    response = requests.get(
+        'https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current',
+    )
+    soup = BeautifulSoup(response.content, features='html.parser')
+    return soup.find_all('div', {'class': 'table-responsive'})
 
-    print('done')
+
+@lru_cache(maxsize=1)
+def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
+    if station_type is None:
+        station_type = COOPS_StationType.CURRENT
+
+    column_types = {'NOS ID': int, 'Latitude': float, 'Longitude': float}
+
+    if station_type == COOPS_StationType.CURRENT:
+        table_id = 'NWSTable'
+        table_index = 0
+    else:
+        table_id = 'HistNWSTable'
+        table_index = 1
+
+    tables = coops_stations_html_tables()
+
+    stations_table = tables[table_index].find('table', {'id': table_id}).find_all('tr')
+
+    stations_columns = [field.text for field in stations_table[0].find_all('th')]
+    stations = []
+    for station in stations_table[1:]:
+        stations.append([value.text.strip() for value in station.find_all('td')])
+
+    stations = DataFrame.from_records(stations, columns=stations_columns)
+    stations = stations.astype(column_types)
+
+    if station_type == COOPS_StationType.HISTORICAL:
+        stations['Removed Date/Time'] = pandas.to_datetime(stations['Removed Date/Time'])
+
+    return stations
