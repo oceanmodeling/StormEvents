@@ -1,21 +1,19 @@
-import calendar
-import codecs
-from collections.abc import Mapping
-from datetime import datetime, timedelta
+"""
+interface with the NOAA Center for Operational Oceanographic Products and Services (CO-OPS) API
+https://api.tidesandcurrents.noaa.gov/api/prod/
+"""
+
+from datetime import datetime
 from enum import Enum
 from functools import lru_cache
-import json
-import os
+from typing import Union
 
-import appdirs
 import bs4
 from bs4 import BeautifulSoup
-import numpy
-import numpy as np
 import pandas
 from pandas import DataFrame
 import requests
-from typepigeon import convert_value
+from shapely.geometry import MultiPolygon, Point, Polygon
 
 
 class COOPS_Product(Enum):
@@ -84,28 +82,100 @@ class COOPS_Interval(Enum):
     HILO = 'hilo'  # High/Low tide predictions for all stations.
 
 
+class COOPS_StationType(Enum):
+    CURRENT = 'current'
+    HISTORICAL = 'historical'
+
+
+class COOPS_Station:
+    def __init__(self, id: int):
+        stations = coops_stations()
+        if id not in stations.index:
+            if id in stations['NWS ID'].values:
+                id = stations.index[stations['NWS ID'] == id][0]
+            else:
+                raise ValueError(f'NWS id "{id}" not found')
+        self.id = id
+
+    @property
+    @lru_cache(maxsize=1)
+    def constituents(self) -> DataFrame:
+        url = f'https://tidesandcurrents.noaa.gov/harcon.html?id={self.id}'
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, features='html.parser')
+        table = soup.find_all('table', {'class': 'table table-striped'})[0]
+        columns = [field.text for field in
+                   table.find('thead').find('tr').find_all('th')]
+        constituents = []
+        for row in table.find_all('tr')[1:]:
+            constituents.append([entry.text for entry in row.find_all('td')])
+        constituents = DataFrame.from_records(constituents, columns=columns)
+        constituents.rename(columns={'Constituent #': '#'}, inplace=True)
+        constituents = constituents.astype(
+                {'#': int, 'Amplitude': float, 'Phase': float, 'Speed': float}
+        )
+        constituents.set_index('#', inplace=True)
+        return constituents
+
+    def get(
+            self,
+            start_date: datetime,
+            end_date: datetime = None,
+            product: COOPS_Product = None,
+            datum: COOPS_TidalDatum = None,
+            units: COOPS_Units = None,
+            time_zone: COOPS_TimeZone = None,
+            interval: COOPS_Interval = None,
+    ) -> DataFrame:
+        query = COOPS_Query(
+                station=self,
+                start_date=start_date,
+                end_date=end_date,
+                product=product,
+                datum=datum,
+                units=units,
+                time_zone=time_zone,
+                interval=interval,
+        )
+
+        return query.data
+
+
 class COOPS_Query:
+    """
+    interface with the NOAA Center for Operational Oceanographic Products and Services (CO-OPS) API
+    https://api.tidesandcurrents.noaa.gov/api/prod/
+    """
+
     URL = 'https://tidesandcurrents.noaa.gov/api/datagetter?'
 
     def __init__(
-        self,
-        station_id: int,
-        start_date: datetime,
-        end_date: datetime,
-        product: COOPS_Product,
-        datum: COOPS_TidalDatum = None,
-        units: COOPS_Units = None,
-        time_zone: COOPS_TimeZone = None,
-        interval: COOPS_Interval = None,
+            self,
+            station: COOPS_Station,
+            start_date: datetime,
+            end_date: datetime = None,
+            product: COOPS_Product = None,
+            datum: COOPS_TidalDatum = None,
+            units: COOPS_Units = None,
+            time_zone: COOPS_TimeZone = None,
+            interval: COOPS_Interval = None,
     ):
+        if isinstance(station, COOPS_Station):
+            station = station.id
+        if end_date is None:
+            end_date = datetime.today()
+        if product is None:
+            product = COOPS_Product.WATER_LEVEL
         if datum is None:
-            datum = COOPS_TidalDatum.NAVD
+            datum = COOPS_TidalDatum.MLLW
+        if units is None:
+            units = COOPS_Units.METRIC
         if time_zone is None:
             time_zone = COOPS_TimeZone.GMT
         if interval is None:
             interval = COOPS_Interval.H
 
-        self.station_id = station_id
+        self.id = station
         self.start_date = start_date
         self.end_date = end_date
         self.product = product
@@ -113,6 +183,8 @@ class COOPS_Query:
         self.units = units
         self.time_zone = time_zone
         self.interval = interval
+
+        self.__previous_query = None
 
     @property
     def query(self):
@@ -133,7 +205,7 @@ class COOPS_Query:
             interval = interval.value
 
         return {
-            'station': self.station_id,
+            'station': self.id,
             'begin_date': f'{self.start_date:%Y%m%d %H:%M}',
             'end_date': f'{self.end_date:%Y%m%d %H:%M}',
             'product': product,
@@ -146,370 +218,22 @@ class COOPS_Query:
         }
 
     @property
-    def get(self):
-        return requests.get(self.URL, params=self.query)
-
-
-class COOPS_StationType(Enum):
-    CURRENT = 'current'
-    HISTORICAL = 'historical'
-
-
-class TidalStations(Mapping):
-    """
-    interface with the NOAA Center for Operational Oceanographic Products and Services (CO-OPS) API
-    https://api.tidesandcurrents.noaa.gov/api/prod/
-    """
-
-    url = 'https://tidesandcurrents.noaa.gov/api/datagetter?'
-
-    def __init__(self):
-        self.__storage = dict()
-
-    def __getitem__(self, key):
-        return self.__storage[key]
-
-    def __iter__(self):
-        return iter(self.__storage)
-
-    def __len__(self):
-        return len(self.__storage.keys())
-
-    def add_station(self, station_id, start_date, end_date):
-        self.__storage[station_id] = self.__fetch_station_data(
-            station_id, start_date, end_date
-        )
-
-    def __fetch_station_data(self, station_id, start_date, end_date):
-        responses = list()
-        for _start_date, _end_date in self.__get_datetime_segments(start_date, end_date):
-            params = self.__get_params(station_id, _start_date, _end_date)
-            try:
-                r = requests.get(self.url, params=params, timeout=10.0)
-                r.raise_for_status()
-            except requests.exceptions.HTTPError as errh:
-                print('Http Error:', errh)
-            except requests.exceptions.ConnectionError as errc:
-                print('Error Connecting:', errc)
-            except requests.exceptions.Timeout as errt:
-                print('Timeout Error:', errt)
-            except requests.exceptions.RequestException as err:
-                print('Unknown error.', err)
-            responses.append(r)
-        data = dict()
-        data['datetime'] = list()
-        data['values'] = list()
-        for i, response in enumerate(responses):
-            json_data = json.loads(response.text)
-            if 'error' in json_data.keys():
-                _start_date, _end_date = list(
-                    self.__get_datetime_segments(start_date, end_date)
-                )[i]
-                data['datetime'].append(_start_date)
-                data['values'].append(np.nan)
-                data['datetime'].append(_end_date)
-                data['values'].append(np.nan)
-                continue
-            if 'x' not in data.keys():
-                data['x'] = float(json_data['metadata']['lon'])
-            if 'y' not in data.keys():
-                data['y'] = float(json_data['metadata']['lat'])
-            if 'name' not in data.keys():
-                data['name'] = json_data['metadata']['name']
-            for _data in json_data['data']:
-                data['datetime'].append(datetime.strptime(_data['t'], '%Y-%m-%d %H:%M'))
-                try:
-                    data['values'].append(float(_data['v']))
-                except ValueError:
-                    data['values'].append(np.nan)
-        if 'name' not in data.keys():
-            data['name'] = ""
-        return data
-
-    def __get_params(self, station_id, start_date, end_date):
-        params = {
-            'station': station_id,
-            'begin_date': start_date.strftime('%Y%m%d %H:%M'),
-            'end_date': end_date.strftime('%Y%m%d %H:%M'),
-            'product': 'water_level',
-            'datum': self.datum,
-            'units': self.units,
-            'time_zone': self.time_zone,
-            'format': 'json',
-            'application': 'noaa/nos/csdl/stormevent',
-        }
-        return params
-
-    def __get_datetime_segments(self, start_date, end_date):
-        """
-        https://www.ianwootten.co.uk/2014/07/01/splitting-a-date-range-in-python/
-        """
-
-        segments = [(start_date, end_date)]
-        interval = 2
-        while np.any(
-            [
-                (_end_date - _start_date) > timedelta(days=31)
-                for _start_date, _end_date in segments
-            ]
-        ):
-            segments = [
-                (from_datetime, to_datetime)
-                for from_datetime, to_datetime in self.__get_datespan(
-                    start_date, end_date, interval
-                )
-            ]
-            interval += 1
-        for _start_date, _end_date in segments:
-            yield _start_date, _end_date
-
-    def __get_datespan(self, startdate, enddate, interval):
-        start_epoch = calendar.timegm(startdate.timetuple())
-        end_epoch = calendar.timegm(enddate.timetuple())
-        date_diff = end_epoch - start_epoch
-        step = date_diff / interval
-        delta = timedelta(seconds=step)
-        currentdate = startdate
-        while currentdate + delta <= enddate:
-            todate = currentdate + delta
-            yield currentdate, todate
-            currentdate += delta
-
-    @property
-    def station(self):
-        try:
-            return self.__station
-        except AttributeError:
-            raise AttributeError('Must set station attribute.')
-
-    @station.setter
-    def station(self, station):
-        assert station in self.__storage.keys()
-        self.__station = station
-
-    @property
-    def datetime(self):
-        return self.__storage[self.station]['datetime']
-
-    @property
-    def values(self):
-        return self.__storage[self.station]['values']
-
-    @property
-    def name(self):
-        try:
-            return self.__storage[self.station]['name']
-        except KeyError:
-            return ""
-
-    @property
-    def start_date(self):
-        return self.__start_date
-
-    @start_date.setter
-    def start_date(self, start_date):
-        assert isinstance(start_date, datetime)
-        self.__start_date = start_date
-
-    @property
-    def end_date(self):
-        return self.__end_date
-
-    @end_date.setter
-    def end_date(self, end_date):
-        assert isinstance(end_date, datetime)
-        self.__end_date = end_date
-
-    @property
-    def datum(self):
-        try:
-            return self.__datum
-        except AttributeError:
-            return 'MSL'
-
-    @datum.setter
-    def datum(self, datum: COOPS_TidalDatum):
-        if not isinstance(datum, COOPS_TidalDatum):
-            datum = convert_value(datum, COOPS_TidalDatum)
-        if datum == 'NAVD88':
-            datum = 'NAVD'
-        self.__datum = datum
-
-    @property
-    def units(self):
-        try:
-            return self.__units
-        except AttributeError:
-            return 'metric'
-
-    @property
-    def time_zone(self):
-        try:
-            return self.__time_zone
-        except AttributeError:
-            return 'gmt'
-
-    # def _call_REST(self):
-    #     for station in self.stations:
-    #         self._params['station'] = station
-    #         response = requests.get(self._url, params=self._params)
-    #         response.raise_for_status()
-    #         data = json.loads(response.text)
-    #         if "data" in data.keys():
-    #             time = list()
-    #             values=list()
-    #             s=list()
-    #             metadata=data['metadata']
-    #             for datapoint in data['data']:
-    #                 time.append(datetime.strptime(datapoint['t'], '%Y-%m-%d %H:%M'))
-    #                 try:
-    #                         val = float(datapoint['v'])
-    #                 except:
-    #                         val = np.nan
-    #                 values.append(val)
-    #                 try:
-    #                         _s=float(datapoint['s'])
-    #                 except:
-    #                         _s=np.nan
-    #                 s.append(_s)
-    #             self[station] = { "time"     : np.asarray(time),
-    #                                                 "zeta"     : np.ma.masked_invalid(values),
-    #                                                 "s"        : np.ma.masked_invalid(s),
-    #                                                 "metadata" : metadata,
-    #                                                 "datum"    : self._params["datum"]}
-
-
-class HarmonicConstituents(dict):
-    _rebuild = False
-
-    def __init__(self, stations):
-        super(HarmonicConstituents, self).__init__()
-        self._stations = stations
-        self._url = 'https://tidesandcurrents.noaa.gov/harcon.html?id='
-        self._init_cache()
-        self._init_stations()
-
-    def _init_cache(self):
-        self._cachedir = appdirs.user_cache_dir('harmonic_constituents')
-        self._harmConstCache = self._cachedir + '/harm_const.json'
-        if os.path.isfile(self._harmConstCache):
-            self._cache = json.loads(open(self._harmConstCache, 'r').readlines()[0])
-        else:
-            self._cache = dict()
-
-    def _init_stations(self):
-        for station in self._stations:
-            if station not in list(self._cache.keys()):
-                self._add_station_to_cache(station)
-            self[station] = self._cache[station]
-
-    def _add_station_to_cache(self, station):
-        # Parse from html, not available through rest.
-        url = self._url + station
-        soup = BeautifulSoup(requests.get(url).text, 'html.parser')
-        table = soup.find('table')
-        if table is not None:
-            headings = [th.get_text().strip() for th in table.find('tr').find_all('th')]
-            datasets = list()
-            for row in table.find_all('tr')[1:]:
-                datasets.append(
-                    dict(zip(headings, (td.get_text() for td in row.find_all('td'))))
-                )
-            for dataset in datasets:
-                if station not in self._cache.keys():
-                    self._cache[station] = dict()
-                if float(dataset['Amplitude']) != 0.0:
-                    self._cache[station][dataset['Name']] = {
-                        'amplitude': float(dataset['Amplitude']) / 3.28084,
-                        'phase': float(dataset['Phase']),
-                        'speed': float(dataset['Speed']),
-                        'description': dataset['Description'],
-                        'units': 'meters',
-                    }
-        else:
-            self._cache[station] = None
-        self._rebuild = True
-
-    def __del__(self):
-        if self._rebuild is True:
-            with open(self._harmConstCache, 'wb') as f:
-                json.dump(self._cache, codecs.getwriter('utf-8')(f), ensure_ascii=False)
-
-
-class RESTWrapper:
-    def __init__(
-        self,
-        product,
-        start_date,
-        end_date,
-        format='json',
-        units='metric',
-        time_zone='gmt',
-        datum='msl',
-    ):
-        self._product = product
-
-        self._init_params()
-        self._call_REST()
-
-    def __getitem__(self, key):
-        return self._storage[key]
-
-    def __iter__(self):
-        return iter(self._storage)
-
-    def __len__(self):
-        return len(self._storage.keys())
-
-    def _init_params(self):
-        self._params = {
-            'format': 'json',
-            'units': 'metric',
-            'time_zone': 'gmt',
-            'application': 'StormEvent',
-            'datum': 'msl',
-            'product': 'water_level',
-        }
-        self._url = 'https://tidesandcurrents.noaa.gov/api/datagetter?'
-        self._params['begin_date'] = self.start_date.strftime('%Y%m%d %H:%M')
-        self._params['end_date'] = self.end_date.strftime('%Y%m%d %H:%M')
-
-    def _call_REST(self):
-        for station in self.stations:
-            self._params['station'] = station
-            response = requests.get(self._url, params=self._params)
-            response.raise_for_status()
-            data = json.loads(response.text)
-            if 'data' in data.keys():
-                time = list()
-                values = list()
-                s = list()
-                metadata = data['metadata']
-                for datapoint in data['data']:
-                    time.append(datetime.strptime(datapoint['t'], '%Y-%m-%d %H:%M'))
-                    try:
-                        val = float(datapoint['v'])
-                    except:
-                        val = numpy.nan
-                    values.append(val)
-                    try:
-                        _s = float(datapoint['s'])
-                    except:
-                        _s = numpy.nan
-                    s.append(_s)
-                self[station] = {
-                    'time': numpy.asarray(time),
-                    'zeta': numpy.ma.masked_invalid(values),
-                    's': numpy.ma.masked_invalid(s),
-                    'metadata': metadata,
-                    'datum': self._params['datum'],
-                }
+    def data(self) -> DataFrame:
+        if self.__previous_query is None or self.query != self.__previous_query:
+            response = requests.get(self.URL, params=self.query)
+            data = DataFrame.from_records(
+                    response.json()['data'], columns=['t', 'v', 's', 'f', 'q'],
+            )
+            data = data.astype({'v': float, 's': float})
+            data['t'] = pandas.to_datetime(data['t'])
+            self.__data = data
+        return self.__data
 
 
 @lru_cache(maxsize=1)
-def coops_stations_html_tables() -> bs4.element.ResultSet:
+def __coops_stations_html_tables() -> bs4.element.ResultSet:
     response = requests.get(
-        'https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current',
+            'https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current',
     )
     soup = BeautifulSoup(response.content, features='html.parser')
     return soup.find_all('div', {'class': 'table-responsive'})
@@ -517,8 +241,23 @@ def coops_stations_html_tables() -> bs4.element.ResultSet:
 
 @lru_cache(maxsize=1)
 def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
+    """
+    retrieve a list of CO-OPS stations with associated metadata
+
+    :param station_type: one of ``current`` or ``historical``
+    :return: data frame of stations
+
+    .. code-block:: python
+
+        stations = coops_stations()
+
+    """
+
     if station_type is None:
-        station_type = COOPS_StationType.CURRENT
+        return pandas.concat(
+                [coops_stations(station_type) for station_type in
+                 COOPS_StationType]
+        )
 
     column_types = {'NOS ID': int, 'Latitude': float, 'Longitude': float}
 
@@ -529,19 +268,106 @@ def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
         table_id = 'HistNWSTable'
         table_index = 1
 
-    tables = coops_stations_html_tables()
+    tables = __coops_stations_html_tables()
 
-    stations_table = tables[table_index].find('table', {'id': table_id}).find_all('tr')
+    stations_table = tables[table_index].find('table',
+                                              {'id': table_id}).find_all('tr')
 
-    stations_columns = [field.text for field in stations_table[0].find_all('th')]
+    stations_columns = [field.text for field in
+                        stations_table[0].find_all('th')]
     stations = []
     for station in stations_table[1:]:
-        stations.append([value.text.strip() for value in station.find_all('td')])
+        stations.append(
+                [value.text.strip() for value in station.find_all('td')])
 
     stations = DataFrame.from_records(stations, columns=stations_columns)
     stations = stations.astype(column_types)
+    stations.set_index('NOS ID', inplace=True)
 
     if station_type == COOPS_StationType.HISTORICAL:
-        stations['Removed Date/Time'] = pandas.to_datetime(stations['Removed Date/Time'])
+        stations['Removed Date/Time'] = pandas.to_datetime(
+                stations['Removed Date/Time'])
 
     return stations
+
+
+def coops_stations_within_region(
+        region: Polygon,
+        station_type: COOPS_StationType = None,
+) -> ['COOPS_Station']:
+    """
+    retrieve all stations within the specified region of interest
+
+    :param region: polygon or multipolygon denoting region of interest
+    :param station_type: one of ``current`` or ``historical``
+    :return: data frame of stations within the specified region
+
+    .. code-block:: python
+
+        from shapely.geometry import Polygon
+
+        polygon = Polygon(...)
+
+        stations = coops_stations_within_region(region=polygon)
+
+    """
+
+    all_stations = coops_stations(station_type)
+    points = [Point(*row) for row in all_stations[['Longitude', 'Latitude']]]
+
+    return [
+        COOPS_Station(id=all_stations.iloc[index]['NOS ID'])
+        for index, point in enumerate(points) if point.within(region)
+    ]
+
+
+def coops_data_within_region(
+        region: Union[Polygon, MultiPolygon],
+        start_date: datetime,
+        end_date: datetime = None,
+        product: COOPS_Product = None,
+        datum: COOPS_TidalDatum = None,
+        units: COOPS_Units = None,
+        time_zone: COOPS_TimeZone = None,
+        interval: COOPS_Interval = None,
+):
+    """
+    retrieve CO-OPS data from within the specified region of interest
+
+    :param region: polygon or multipolygon denoting region of interest
+    :param start_date: start date of CO-OPS query
+    :param end_date: start date of CO-OPS query
+    :param product: CO-OPS product
+    :param datum: tidal datum
+    :param units: one of ``metric`` or ``english``
+    :param time_zone: station time zone
+    :param interval: data time interval
+    :return: data frame of data within the specified region
+
+    .. code-block:: python
+
+        from datetime import datetime, timedelta
+
+        from shapely.geometry import MultiPolygon
+
+        polygon = MultiPolygon(...)
+
+        coops_data_within_region(region=polygon, start_date=datetime.now() - timedelta(days=2), end_date=datetime.now())
+
+    """
+
+    stations = coops_stations_within_region(region=region)
+    return pandas.concat(
+            [
+                station.get(
+                        start_date=start_date,
+                        end_date=end_date,
+                        product=product,
+                        datum=datum,
+                        units=units,
+                        time_zone=time_zone,
+                        interval=interval,
+                )
+                for station in stations
+            ]
+    )

@@ -643,7 +643,7 @@ class VortexTrack:
 
     def isotachs(self, wind_speed: float, segments: int = 91) -> List[Polygon]:
         """
-        Get the isotach at the given speed at every time in the dataset.
+        calculate the isotach at the given speed at every time in the dataset
 
         :param wind_speed: wind speed to extract (in knots)
         :param segments: number of discretization points per quadrant
@@ -699,7 +699,7 @@ class VortexTrack:
 
     def wind_swath(self, isotach: int, segments: int = 91) -> Polygon:
         """
-        extracts the wind swath of the BestTrackForcing class object as a Polygon object
+        extract the wind swath of the BestTrackForcing class object as a Polygon object
 
         :param isotach: the wind swath to extract (34-kt, 50-kt, or 64-kt)
         :param segments: number of discretization points per quadrant (default = 91)

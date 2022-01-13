@@ -3,4 +3,6 @@
 .. toctree::
    :hidden:
 
-   vortex
+   nhc
+   usgs
+   coops

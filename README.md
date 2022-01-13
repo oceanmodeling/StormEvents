@@ -11,7 +11,9 @@
 
 ## Usage
 
-### NHC Vortex Tracks
+### National Hurricane Center (NHC)
+
+#### storm track
 
 ```python
 from stormevents import VortexTrack
@@ -32,7 +34,7 @@ vortex = VortexTrack.from_atcf_file('atcf.trk')
 vortex = VortexTrack.from_fort22('fort.22')
 ```
 
-#### listing NHC storms
+#### storm list
 
 ```python
 from stormevents import nhc_storms
@@ -82,7 +84,9 @@ ep172018      OLIVIA                Hurricane OLIVIA  2018
 [47 rows x 3 columns]
 ```
 
-### USGS High Water Marks
+### United States Geological Survey (USGS)
+
+#### flood high water marks
 
 ```python
 from stormevents import HurricaneHighWaterMarks
@@ -128,7 +132,7 @@ Index(['latitude', 'longitude', 'eventName', 'hwmTypeName', 'hwmQualityName',
       dtype='object')
 ```
 
-#### listing USGS flood storm events with high water mark data
+#### storm flood event list
 
 ```python
 from stormevents import usgs_highwatermark_storms
@@ -152,6 +156,40 @@ usgs_id
 312      2021         2021 Tropical Cyclone Ida       IDA  al092021
 
 [24 rows x 3 columns]
+```
+
+### Center for Operational Oceanographic Products and Services (CO-OPS)
+
+#### list tidal stations
+
+```python
+from stormevents.coops.tidalstations import coops_stations
+
+stations = coops_stations()
+```
+
+#### list tidal stations within a region
+
+```python
+from shapely.geometry import Polygon
+from stormevents.coops.tidalstations import coops_stations_within_region
+
+polygon = Polygon(...)
+
+stations = coops_stations_within_region(region=polygon)
+```
+
+#### retrieve tidal data from a region
+
+```python
+from datetime import datetime, timedelta
+
+from shapely.geometry import MultiPolygon
+from stormevents.coops.tidalstations import coops_data_within_region
+
+polygon = MultiPolygon(...)
+
+coops_data_within_region(region=polygon, start_date=datetime.now() - timedelta(days=2), end_date=datetime.now())
 ```
 
 ## Acknowledgements
