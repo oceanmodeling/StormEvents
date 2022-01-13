@@ -68,7 +68,7 @@ setup(
         'pyproj>=2.6',
         'requests',
         'shapely',
-        'typepigeon',
+        'typepigeon>=1.0.5',
     ],
     # test and development dependencies
     extras_require={
