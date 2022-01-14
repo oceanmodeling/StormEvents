@@ -1,5 +1,5 @@
-``StormEvent`` class
-====================
+``StormEvent`` object
+=====================
 
 
 .. autoclass:: stormevents.stormevent.StormEvent

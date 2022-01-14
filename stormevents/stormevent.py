@@ -25,19 +25,33 @@ from stormevents.usgs import StormHighWaterMarks, usgs_highwatermark_storms
 class StormEvent:
     """
     The ``StormEvent`` class can be used to retrieve data related to any arbitrary named storm event.
+
     You can instantiate a new ``StormEvent`` object from the NHC storm name and year
-    (i.e. ``FLORENCE 2018``, the NHC storm code (i.e. ``AL062018``), or the USGS flood event ID (i.e. ``304``).
+    (i.e. ``FLORENCE 2018``),
 
     .. code-block:: python
 
         from stormevents import StormEvent
 
         florence2018 = StormEvent('florence', 2018)
+
+    or from the NHC storm code (i.e. ``AL062018``),
+
+    .. code-block:: python
+
+        from stormevents import StormEvent
+
         paine2016 = StormEvent.from_nhc_code('EP172016')
+
+    or from the USGS flood event ID (i.e. ``283``).
+
+    .. code-block:: python
+
+        from stormevents import StormEvent
+
         sally2020 = StormEvent.from_usgs_id(304)
 
-    You can then retrieve track data from NHC, high-water mark data from USGS, and water level products from CO-OPS for this storm.
-    By default, these functions operate within the time interval defined by the NHC best track.
+    For this storm, you can then retrieve track data from NHC,
 
     .. code-block:: python
 
@@ -46,9 +60,28 @@ class StormEvent:
         florence2018 = StormEvent('florence', 2018)
 
         track = florence2018.track()
+
+    high-water mark data from USGS,
+
+    .. code-block:: python
+
+        from stormevents import StormEvent
+
+        florence2018 = StormEvent('florence', 2018)
+
         high_water_marks = florence2018.high_water_marks()
+
+    and water level products from CO-OPS for this storm.
+
+    .. code-block:: python
+
+        from stormevents import StormEvent
+
+        florence2018 = StormEvent('florence', 2018)
+
         water_levels = florence2018.tidal_data_within_isotach(isotach=34)
 
+    By default, these functions operate within the time interval defined by the NHC best track.
     """
 
     def __init__(self, name: str, year: int):

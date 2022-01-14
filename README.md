@@ -28,7 +28,7 @@ from stormevents import StormEvent
 florence2018 = StormEvent('florence', 2018)
 ```
 
-the NHC storm code (i.e. `AL062018`),
+or from the NHC storm code (i.e. `AL062018`),
 
 ```python
 from stormevents import StormEvent
@@ -36,7 +36,7 @@ from stormevents import StormEvent
 paine2016 = StormEvent.from_nhc_code('EP172016')
 ```
 
-or the USGS flood event ID (i.e. `304`).
+or from the USGS flood event ID (i.e. `283`).
 
 ```python
 from stormevents import StormEvent
