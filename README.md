@@ -11,6 +11,33 @@
 
 ## Usage
 
+### storm interface
+
+you can instantiate a new `StormEvent` object from the NHC storm name and year
+(i.e. `FLORENCE 2018`, the NHC storm code (i.e. `AL062018`), or the USGS flood event ID (i.e. `304`).
+
+```python
+from stormevents import StormEvent
+
+florence2018 = StormEvent('florence', 2018)
+paine2016 = StormEvent.from_nhc_code('EP172016')
+sally2020 = StormEvent.from_usgs_id(304)
+```
+
+you can then retrieve track data from NHC, high-water mark data from USGS, and water level products from CO-OPS for this storm
+
+by default, these functions operate within the time interval defined by the NHC best track
+
+```python
+from stormevents import StormEvent
+
+florence2018 = StormEvent('florence', 2018)
+
+track = florence2018.track()
+high_water_marks = florence2018.high_water_marks()
+water_levels = florence2018.tidal_data_within_isotach(isotach=34)
+```
+
 ### vortex tracks from the National Hurricane Center (NHC)
 
 #### list storm events defined by the NHC since 2008
@@ -37,30 +64,6 @@ ep182021      TERRY      Tropical Storm TERRY  2021
 ep192021     SANDRA     Tropical Storm SANDRA  2021
 
 [523 rows x 3 columns]
-```
-
-```python
-from stormevents.nhc import nhc_storms
-
-nhc_storms_2018 = nhc_storms(year=2018)
-```
-
-```
-                name                       long_name  year
-nhc_code                                                        
-al012018     ALBERTO       Subtropical Storm ALBERTO  2018
-al022018       BERYL                 Hurricane BERYL  2018
-al032018       CHRIS                 Hurricane CHRIS  2018
-al042018       DEBBY            Tropical Storm DEBBY  2018
-al052018     ERNESTO          Tropical Storm ERNESTO  2018
-...              ...                             ...   ...
-ep102018      HECTOR                Hurricane HECTOR  2018
-ep142018        LANE                  Hurricane LANE  2018
-ep152018      MIRIAM                Hurricane MIRIAM  2018
-ep162018      NORMAN                Hurricane NORMAN  2018
-ep172018      OLIVIA                Hurricane OLIVIA  2018
-
-[47 rows x 3 columns]
 ```
 
 #### retrieve spatial storm tracks provided by the NHC

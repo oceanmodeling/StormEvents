@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 import pandas
 from pandas import DataFrame
 import requests
-from shapely.geometry import MultiPolygon, Point, Polygon
+from shapely.geometry import box, MultiPolygon, Point, Polygon
 
 
 class COOPS_Product(Enum):
@@ -178,7 +178,7 @@ class COOPS_Query:
         if interval is None:
             interval = COOPS_Interval.H
 
-        self.id = station
+        self.station = station
         self.start_date = start_date
         self.end_date = end_date
         self.product = product
@@ -188,9 +188,15 @@ class COOPS_Query:
         self.interval = interval
 
         self.__previous_query = None
+        self.__error = None
 
     @property
     def query(self):
+        self.__error = None
+
+        start_date = self.start_date
+        if start_date is not None and not isinstance(start_date, str):
+            start_date = f'{self.start_date:%Y%m%d %H:%M}'
         product = self.product
         if isinstance(product, Enum):
             product = product.value
@@ -208,8 +214,8 @@ class COOPS_Query:
             interval = interval.value
 
         return {
-            'station': self.id,
-            'begin_date': f'{self.start_date:%Y%m%d %H:%M}',
+            'station': self.station,
+            'begin_date': start_date,
             'end_date': f'{self.end_date:%Y%m%d %H:%M}',
             'product': product,
             'datum': datum,
@@ -224,11 +230,18 @@ class COOPS_Query:
     def data(self) -> DataFrame:
         if self.__previous_query is None or self.query != self.__previous_query:
             response = requests.get(self.URL, params=self.query)
-            data = DataFrame.from_records(
-                response.json()['data'], columns=['t', 'v', 's', 'f', 'q'],
-            )
-            data = data.astype({'v': float, 's': float})
-            data['t'] = pandas.to_datetime(data['t'])
+            response.raise_for_status()
+            data = response.json()
+            fields = ['t', 'v', 's', 'f', 'q']
+            if 'error' not in data:
+                data = DataFrame.from_records(data['data'], columns=fields)
+                data = data.astype({'v': float, 's': float}, errors='ignore')
+                data['t'] = pandas.to_datetime(data['t'])
+                data['station'] = self.station
+                data = data[['station'] + fields]
+            else:
+                self.__error = data['error']['message']
+                data = DataFrame(columns=['station'] + fields)
             self.__data = data
         return self.__data
 
@@ -264,7 +277,6 @@ def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
     8637689  YKTV2  37.22650  ...  Yorktown USCG Training Center 2014-12-12 15:29:00
     9414458  ZSMC1  37.58000  ...               San Mateo Bridge 2005-04-05 00:00:00
     9414458  ZSMC1  37.58000  ...               San Mateo Bridge 2005-04-05 23:59:00
-    [7877 rows x 6 columns]
     """
 
     if station_type is None:
@@ -321,13 +333,20 @@ def coops_stations_within_region(
     """
 
     all_stations = coops_stations(station_type)
-    points = [Point(*row) for row in all_stations[['Longitude', 'Latitude']]]
+    points = [Point(*row) for row in all_stations[['Longitude', 'Latitude']].values]
 
-    return [
-        COOPS_Station(id=all_stations.iloc[index]['NOS ID'])
-        for index, point in enumerate(points)
-        if point.within(region)
+    stations_within_region = all_stations.iloc[
+        [index for index, point in enumerate(points) if point.within(region)]
     ]
+
+    return [COOPS_Station(id=nos_id) for nos_id in stations_within_region.index]
+
+
+def coops_stations_within_bounding_box(
+    minx: float, miny: float, maxx: float, maxy: float, station_type: COOPS_StationType = None,
+) -> List[COOPS_Station]:
+    region = box(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
+    return coops_stations_within_region(region=region, station_type=station_type)
 
 
 def coops_data_within_region(
@@ -339,6 +358,7 @@ def coops_data_within_region(
     units: COOPS_Units = None,
     time_zone: COOPS_TimeZone = None,
     interval: COOPS_Interval = None,
+    station_type: COOPS_StationType = None,
 ):
     """
     retrieve CO-OPS data from within the specified region of interest
@@ -351,6 +371,7 @@ def coops_data_within_region(
     :param units: one of ``metric`` or ``english``
     :param time_zone: station time zone
     :param interval: data time interval
+    :param station_type: either ``current`` or ``historical``
     :return: data frame of data within the specified region
 
     .. code-block:: python
@@ -365,7 +386,7 @@ def coops_data_within_region(
 
     """
 
-    stations = coops_stations_within_region(region=region)
+    stations = coops_stations_within_region(region=region, station_type=station_type)
     return pandas.concat(
         [
             station.get(

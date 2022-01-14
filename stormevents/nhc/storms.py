@@ -31,7 +31,6 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     ep172021       RICK            Hurricane RICK  2021
     ep182021      TERRY      Tropical Storm TERRY  2021
     ep192021     SANDRA     Tropical Storm SANDRA  2021
-    [523 rows x 3 columns]
     """
 
     if year is None:

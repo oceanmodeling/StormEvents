@@ -18,6 +18,7 @@ from pyproj import Geod
 from shapely import ops
 from shapely.geometry import Polygon
 
+from stormevents.nhc import nhc_storms
 from stormevents.nhc.atcf import (
     ATCF_FileDeck,
     atcf_id_from_storm_name,
@@ -76,6 +77,7 @@ class VortexTrack:
 
         self.__atcf = None
         self.__storm_id = None
+        self.__name = None
         self.__start_date = start_date  # initially used to filter A-deck here
         self.__end_date = None
         self.__file_deck = None
@@ -116,6 +118,32 @@ class VortexTrack:
         # use start and end dates to mask dataframe here
         self.start_date = start_date
         self.end_date = end_date
+
+    @classmethod
+    def from_storm_name(
+        cls,
+        name: str,
+        year: int,
+        start_date: datetime = None,
+        end_date: datetime = None,
+        file_deck: ATCF_FileDeck = None,
+        mode: ATCF_Mode = None,
+        record_type: str = None,
+        filename: PathLike = None,
+    ):
+        year = int(year)
+        atcf_id = atcf_id_from_storm_name(storm_name=name, year=year)
+        if atcf_id is None:
+            raise ValueError(f'No storm found with name "{name}" in {year}')
+        return cls(
+            storm=atcf_id,
+            start_date=start_date,
+            end_date=end_date,
+            file_deck=file_deck,
+            mode=mode,
+            record_type=record_type,
+            filename=filename,
+        )
 
     @property
     def filename(self) -> pathlib.Path:
@@ -337,7 +365,18 @@ class VortexTrack:
 
     @property
     def name(self) -> str:
-        return self.data['name'].value_counts()[:].index.tolist()[0]
+        if self.__name is None:
+            name = self.data['name'].value_counts()[:].index.tolist()[0]
+
+            if name.strip() == '':
+                storms = nhc_storms(year=self.year)
+                if self.storm_id.lower() in storms.index:
+                    storm = storms.loc[self.storm_id.lower()]
+                    name = storm['name'].lower()
+
+            self.__name = name
+
+        return self.__name
 
     @property
     def basin(self) -> str:
@@ -418,7 +457,11 @@ class VortexTrack:
         self.__record_type = record_type
 
     @property
-    def data(self):
+    def data(self) -> DataFrame:
+        """
+        retrieve track data for the given parameters as a data frame
+        """
+
         start_date_mask = self.dataframe['datetime'] >= self.start_date
         if self.end_date is None:
             return self.dataframe[start_date_mask]
@@ -751,8 +794,6 @@ class VortexTrack:
 
     @staticmethod
     def __compute_velocity(data: DataFrame) -> DataFrame:
-        """Output has units of meters per second."""
-
         geodetic = Geod(ellps='WGS84')
 
         unique_datetimes = numpy.unique(data['datetime'])
@@ -793,12 +834,17 @@ class VortexTrack:
                 data['speed'] = data['speed'].astype('float', copy=False)
                 data['direction'] = data['direction'].astype('float', copy=False)
 
+        # Output has units of meters per second.
         return data
 
     @classmethod
     def from_fort22(
         cls, fort22: PathLike, start_date: datetime = None, end_date: datetime = None,
     ) -> 'VortexTrack':
+        """
+        read a ``fort.22`` file
+        """
+
         filename = None
         if pathlib.Path(fort22).exists():
             filename = fort22
@@ -816,6 +862,10 @@ class VortexTrack:
     def from_atcf_file(
         cls, atcf: PathLike, start_date: datetime = None, end_date: datetime = None,
     ) -> 'VortexTrack':
+        """
+        read an ATCF file
+        """
+
         filename = None
         if pathlib.Path(atcf).exists():
             filename = atcf

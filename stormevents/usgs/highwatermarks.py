@@ -45,6 +45,12 @@ class HWMEnvironment(Enum):
 
 
 class HighWaterMarks:
+    """
+    interface with the USGS high-water mark (HWM) Short-Term Network deployment service
+
+    https://stn.wim.usgs.gov/stnweb/#!/
+    """
+
     URL = 'https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json'
 
     def __init__(
@@ -60,6 +66,21 @@ class HighWaterMarks:
         survey_completed: bool = True,
         still_water: bool = False,
     ):
+        """
+        representation of high-water mark (HWM) surveys for an arbitrary flood event
+
+        :param event_id: USGS event ID
+        :param event_type: type of flood event
+        :param event_status: whether flood event had completed
+        :param us_states: U.S. states in which to query
+        :param us_counties: U.S. counties in which to query
+        :param hwm_type: HWM type filter
+        :param hwm_quality: HWM quality filter
+        :param hwm_environment: HWM environment filter
+        :param survey_completed: whether HWM survey should be complete
+        :param still_water: HWM still water filter
+        """
+
         if event_status is None:
             event_status = EventStatus.COMPLETED
         if hwm_environment is None:
@@ -220,6 +241,20 @@ class StormHighWaterMarks(HighWaterMarks):
         survey_completed: bool = True,
         still_water: bool = False,
     ):
+        """
+        representation of high-water mark (HWM) surveys for a named storm event
+
+        :param name: storm name
+        :param year: storm year
+        :param us_states: U.S. states in which to query
+        :param us_counties: U.S. counties in which to query
+        :param hwm_type: HWM type filter
+        :param hwm_quality: HWM quality filter
+        :param hwm_environment: HWM environment filter
+        :param survey_completed: whether HWM survey should be complete
+        :param still_water: HWM still water filter
+        """
+
         if hwm_environment is None:
             hwm_environment = HWMEnvironment.RIVERINE
 
@@ -347,6 +382,7 @@ def usgs_highwatermark_events(
 def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     """
     this function collects USGS high water mark data for storm events and cross-correlates it with NHC storm data
+
     this is useful if you want to retrieve USGS data for a specific NHC storm code
 
     :return: table of USGS flood events with NHC storm names
@@ -365,7 +401,6 @@ def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     305      2020              2020 Hurricane Delta     DELTA  al262020
     310      2021       2021 Tropical Cyclone Henri     HENRI  al082021
     312      2021         2021 Tropical Cyclone Ida       IDA  al092021
-    [24 rows x 3 columns]
     """
 
     events = usgs_highwatermark_events(event_type=EventType.HURRICANE, year=year)

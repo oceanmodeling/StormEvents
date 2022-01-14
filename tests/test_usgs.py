@@ -34,7 +34,7 @@ def test_usgs_highwatermark_storms():
 
 
 def test_HurricaneHighWaterMarks():
-    reference_directory = REFERENCE_DIRECTORY / 'test_HurricaneHighWaterMarks'
+    reference_directory = REFERENCE_DIRECTORY / 'test_StormHighWaterMarks'
 
     hwm_florence2018 = HighWaterMarks.from_csv(reference_directory / 'florence2018.csv')
 

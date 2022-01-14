@@ -40,5 +40,5 @@ def test_COOPS_Station():
 
     pandas.testing.assert_frame_equal(station_1_constituents, station_1_reference_constituents)
     pandas.testing.assert_frame_equal(station_2_constituents, station_2_reference_constituents)
-    assert station_1_data.columns.to_list() == ['t', 'v', 's', 'f', 'q']
-    assert station_2_data.columns.to_list() == ['t', 'v', 's', 'f', 'q']
+    assert station_1_data.columns.to_list() == ['station', 't', 'v', 's', 'f', 'q']
+    assert station_2_data.columns.to_list() == ['station', 't', 'v', 's', 'f', 'q']
