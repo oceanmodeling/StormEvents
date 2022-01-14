@@ -20,7 +20,7 @@ Full documentation can be found at https://stormevents.readthedocs.io
 ### storm interface
 
 You can instantiate a new `StormEvent` object from the NHC storm name and year
-(i.e. `FLORENCE 2018`,
+(i.e. `FLORENCE 2018`),
 
 ```python
 from stormevents import StormEvent
@@ -256,8 +256,10 @@ coops_data_within_region(region=polygon, start_date=datetime.now() - timedelta(d
 - `tropycal` - https://tropycal.github.io/tropycal/index.html
 - `pyoos` - https://github.com/ioos/pyoos
 - `adcircpy` - https://github.com/zacharyburnettNOAA/adcircpy
+- `csdllib` - https://github.com/noaa-ocs-modeling/csdllib
 
 ## Acknowledgements
 
 This code was initially written by [@jreniel](https://github.com/jreniel)
-for `adcircpy`. 
+for `adcircpy`. Additionally, methodology for retrieving USGS high water marks data and CO-OPS tidal station data came
+from [@moghimis](https://github.com/moghimis) and @Sergey.Vinogradov
