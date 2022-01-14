@@ -2,9 +2,12 @@
 
 import pandas
 
-from stormevents import usgs_highwatermark_storms
 from stormevents.usgs import usgs_highwatermark_events
-from stormevents.usgs.highwatermarks import EventType, HighWaterMarks
+from stormevents.usgs.highwatermarks import (
+    EventType,
+    HighWaterMarks,
+    usgs_highwatermark_storms,
+)
 from tests import REFERENCE_DIRECTORY
 
 
@@ -17,7 +20,7 @@ def test_usgs_highwatermark_events():
 
     reference_events = pandas.read_csv(reference_directory / 'events.csv', index_col='usgs_id')
 
-    assert events.equals(reference_events)
+    pandas.testing.assert_frame_equal(events, reference_events)
 
 
 def test_usgs_highwatermark_storms():
@@ -27,7 +30,7 @@ def test_usgs_highwatermark_storms():
 
     reference_storms = pandas.read_csv(reference_directory / 'storms.csv', index_col='usgs_id')
 
-    assert storms.equals(reference_storms)
+    pandas.testing.assert_frame_equal(storms, reference_storms)
 
 
 def test_HurricaneHighWaterMarks():
@@ -39,4 +42,4 @@ def test_HurricaneHighWaterMarks():
         reference_directory / 'florence2018.csv', index_col='hwm_id'
     )
 
-    assert hwm_florence2018.data.equals(reference_hwm)
+    pandas.testing.assert_frame_equal(hwm_florence2018.data, reference_hwm)

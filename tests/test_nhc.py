@@ -6,7 +6,7 @@ import pandas
 import pytest
 from pytest_socket import SocketBlockedError
 
-from stormevents import nhc_storms
+from stormevents.nhc import nhc_storms
 from stormevents.nhc.track import VortexTrack
 from tests import (
     check_reference_directory,
@@ -25,7 +25,7 @@ def test_nhc_storms():
         reference_directory / 'storms.csv', index_col='nhc_code'
     )
 
-    assert storms.equals(reference_storms)
+    pandas.testing.assert_frame_equal(storms, reference_storms)
 
 
 def test_vortex():
