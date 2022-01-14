@@ -8,13 +8,18 @@
 [![style](https://sourceforge.net/p/oitnb/code/ci/default/tree/_doc/_static/oitnb.svg?format=raw)](https://sourceforge.net/p/oitnb/code)
 
 `stormevents` provides Python interfaces for observational data surrounding named storm events.
+
+```bash
+pip install stormevents
+```
+
 Full documentation can be found at https://stormevents.readthedocs.io
 
 ## Usage
 
 ### storm interface
 
-you can instantiate a new `StormEvent` object from the NHC storm name and year
+You can instantiate a new `StormEvent` object from the NHC storm name and year
 (i.e. `FLORENCE 2018`,
 
 ```python
