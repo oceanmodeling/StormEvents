@@ -228,6 +228,10 @@ class COOPS_Query:
 
     @property
     def data(self) -> DataFrame:
+        """
+        :return: data frame of data for the current query parameters
+        """
+
         if self.__previous_query is None or self.query != self.__previous_query:
             response = requests.get(self.URL, params=self.query)
             response.raise_for_status()

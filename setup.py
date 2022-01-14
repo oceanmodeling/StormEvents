@@ -61,7 +61,6 @@ setup(
     install_requires=[
         'appdirs',
         'bs4',
-        'matplotlib',
         'numpy',
         'python-dateutil',
         'pandas',

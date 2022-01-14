@@ -4,8 +4,6 @@ from os import PathLike
 import re
 from typing import Any, Dict, Iterable, List
 
-from matplotlib import pyplot
-from matplotlib.axis import Axis
 import pandas
 import requests
 from typepigeon import convert_value
@@ -100,6 +98,56 @@ class HighWaterMarks:
         self.__previous_query = self.query
         self.__data = None
 
+    @classmethod
+    def from_name(
+        cls,
+        name: str,
+        year: int = None,
+        event_type: EventType = None,
+        event_status: EventStatus = None,
+    ) -> 'HighWaterMarks':
+        """
+        retrieve high-water mark info from the USGS flood event name
+
+        :param name: USGS flood event name
+        :param year: year of flood event
+        :param event_type: type of flood event
+        :param event_status: whether event has completed
+        :return: high-water marks object
+        """
+
+        events = usgs_highwatermark_events()
+        events = events[events['usgs_name'] == name]
+        if len(events) > 0:
+            events = events[events['year'] == year]
+        event = events[0]
+        return cls(
+            event_id=event['usgs_id'], event_type=event_type, event_status=event_status,
+        )
+
+    @classmethod
+    def from_csv(
+        cls,
+        filename: PathLike,
+        event_id: int = None,
+        event_type: EventType = None,
+        event_status: EventStatus = None,
+    ) -> 'HighWaterMarks':
+        """
+        read a CSV file with high-water mark data
+
+        :param filename: file path to CSV
+        :param event_id: USGS flood event ID
+        :param event_type: type of flood event
+        :param event_status: whether flood event has completed
+        :return: high-water marks object
+        """
+
+        data = pandas.read_csv(filename, index_col='hwm_id')
+        instance = cls(event_id=event_id, event_type=event_type, event_status=event_status,)
+        instance.__data = data
+        return instance
+
     @property
     def event_type(self) -> EventType:
         return self.__event_type
@@ -165,6 +213,10 @@ class HighWaterMarks:
 
     @property
     def data(self) -> pandas.DataFrame:
+        """
+        :returns: data frame of data for the current parameters
+        """
+
         if self.__data is None or self.__previous_query != self.query:
             response = requests.get(self.URL, params=self.query)
             data = pandas.DataFrame(response.json())
@@ -172,57 +224,6 @@ class HighWaterMarks:
             self.__data = data
             self.__previous_query = self.query
         return self.__data
-
-    @data.setter
-    def data(self, data: pandas.DataFrame):
-        self.__data = data
-
-    def plot(
-        self, axis: Axis = None, show: bool = True, **kwargs,
-    ):
-        if axis is None:
-            fig = pyplot.figure()
-            axis = fig.add_subplot(111)
-
-        for hwm_id, hwm in self.data.iterrows():
-            axis.scatter(
-                hwm['longitude'], hwm['latitude'], c=hwm['elev_ft'], **kwargs,
-            )
-
-        if show:
-            pyplot.show()
-
-        return axis
-
-    @classmethod
-    def from_name(
-        cls,
-        name: str,
-        year: int = None,
-        event_type: EventType = None,
-        event_status: EventStatus = None,
-    ) -> 'HighWaterMarks':
-        events = usgs_highwatermark_events()
-        events = events[events['usgs_name'] == name]
-        if len(events) > 0:
-            events = events[events['year'] == year]
-        event = events[0]
-        return cls(
-            event_id=event['usgs_id'], event_type=event_type, event_status=event_status,
-        )
-
-    @classmethod
-    def from_csv(
-        cls,
-        filename: PathLike,
-        event_id: int = None,
-        event_type: EventType = None,
-        event_status: EventStatus = None,
-    ) -> 'HighWaterMarks':
-        data = pandas.read_csv(filename, index_col='hwm_id')
-        instance = cls(event_id=event_id, event_type=event_type, event_status=event_status,)
-        instance.data = data
-        return instance
 
     def __eq__(self, other: 'HighWaterMarks') -> bool:
         return self.data.equals(other.data)
@@ -286,7 +287,7 @@ def usgs_highwatermark_events(
     event_type: EventType = None, year: int = None, event_status: EventStatus = None,
 ) -> pandas.DataFrame:
     """
-    this function collects all USGS flood events of the given type and status that have high water mark data
+    this function collects all USGS flood events of the given type and status that have high-water mark data
 
     USGS does not standardize event naming, and they should.
     Year, month, and storm type are not always included.
@@ -327,7 +328,7 @@ def usgs_highwatermark_events(
         },
     )
 
-    LOGGER.info('building table of USGS high water mark survey events')
+    LOGGER.info('building table of USGS high-water mark survey events')
 
     data = response.json()
 
@@ -357,7 +358,7 @@ def usgs_highwatermark_events(
                                 event_year = years[0]
                             else:
                                 LOGGER.warning(
-                                    f'could not find year of "{name}" in USGS high water mark database nor in NHC table'
+                                    f'could not find year of "{name}" in USGS high-water mark database nor in NHC table'
                                 )
                                 event_year = None
                             break
@@ -381,7 +382,7 @@ def usgs_highwatermark_events(
 @lru_cache(maxsize=None)
 def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     """
-    this function collects USGS high water mark data for storm events and cross-correlates it with NHC storm data
+    this function collects USGS high-water mark data for storm events and cross-correlates it with NHC storm data
 
     this is useful if you want to retrieve USGS data for a specific NHC storm code
 

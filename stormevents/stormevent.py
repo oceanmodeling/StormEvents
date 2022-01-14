@@ -24,7 +24,31 @@ from stormevents.usgs import StormHighWaterMarks, usgs_highwatermark_storms
 
 class StormEvent:
     """
-    abstraction of a storm event, providing data getters for NHC tracks, USGS high water marks, and CO-OPS tidal station data
+    The ``StormEvent`` class can be used to retrieve data related to any arbitrary named storm event.
+    You can instantiate a new ``StormEvent`` object from the NHC storm name and year
+    (i.e. ``FLORENCE 2018``, the NHC storm code (i.e. ``AL062018``), or the USGS flood event ID (i.e. ``304``).
+
+    .. code-block:: python
+
+        from stormevents import StormEvent
+
+        florence2018 = StormEvent('florence', 2018)
+        paine2016 = StormEvent.from_nhc_code('EP172016')
+        sally2020 = StormEvent.from_usgs_id(304)
+
+    You can then retrieve track data from NHC, high-water mark data from USGS, and water level products from CO-OPS for this storm.
+    By default, these functions operate within the time interval defined by the NHC best track.
+
+    .. code-block:: python
+
+        from stormevents import StormEvent
+
+        florence2018 = StormEvent('florence', 2018)
+
+        track = florence2018.track()
+        high_water_marks = florence2018.high_water_marks()
+        water_levels = florence2018.tidal_data_within_isotach(isotach=34)
+
     """
 
     def __init__(self, name: str, year: int):
@@ -43,11 +67,23 @@ class StormEvent:
 
     @classmethod
     def from_nhc_code(cls, nhc_code: str) -> 'StormEvent':
+        """
+        retrieve storm information from the NHC code
+        :param nhc_code: NHC code
+        :return: storm object
+        """
+
         track = VortexTrack(storm=nhc_code.lower())
         return cls(name=track.name, year=track.year)
 
     @classmethod
     def from_usgs_id(cls, usgs_id: int, year: int = None) -> 'StormEvent':
+        """
+        retrieve storm information from the USGS flood event ID
+        :param usgs_id: USGS flood event ID
+        :return: storm object
+        """
+
         usgs_storm_events = usgs_highwatermark_storms(year=year)
 
         if usgs_id in usgs_storm_events.index:
@@ -60,18 +96,22 @@ class StormEvent:
 
     @property
     def name(self) -> str:
+        """ storm name """
         return self.__name
 
     @property
     def year(self) -> int:
+        """ storm year """
         return self.__year
 
     @property
     def nhc_code(self) -> str:
+        """ NHC code """
         return self.__nhc_code
 
     @property
     def usgs_id(self) -> int:
+        """ USGS flood event ID """
         if self.__usgs_id is None and self.__usgs_flood_event:
             usgs_storm_events = usgs_highwatermark_storms(year=self.year)
 
@@ -86,10 +126,12 @@ class StormEvent:
 
     @property
     def basin(self) -> str:
+        """ basin in which storm occurred """
         return self.nhc_code[:2]
 
     @property
     def number(self) -> int:
+        """ ordinal number of storm in the year """
         return int(self.nhc_code[2:4])
 
     @lru_cache(maxsize=None)
@@ -102,6 +144,18 @@ class StormEvent:
         record_type: str = None,
         filename: PathLike = None,
     ) -> VortexTrack:
+        """
+        retrieve NHC ATCF track data
+
+        :param start_date: start date
+        :param end_date: end date
+        :param file_deck: ATCF file deck
+        :param mode: ATCF mode
+        :param record_type: ATCF record type
+        :param filename: file path to ``fort.22``
+        :return: vortex track
+        """
+
         track = VortexTrack.from_storm_name(
             name=self.name,
             year=self.year,
@@ -118,6 +172,14 @@ class StormEvent:
     def high_water_marks(
         self, start_date: datetime = None, end_date: datetime = None,
     ) -> DataFrame:
+        """
+        retrieve USGS high-water marks (HWMs)
+
+        :param start_date: start date
+        :param end_date: end date
+        :return: data frame of survey data
+        """
+
         high_water_marks = StormHighWaterMarks(name=self.name, year=self.year)
         data = high_water_marks.data
         if start_date is not None:
@@ -140,6 +202,22 @@ class StormEvent:
         interval: COOPS_Interval = None,
         track_filename: PathLike = None,
     ) -> DataFrame:
+        """
+        retrieve CO-OPS tidal station data within the specified isotach of the storm
+
+        :param isotach: the wind swath to extract (34-kt, 50-kt, or 64-kt)
+        :param station_type: either ``current`` or ``historical``
+        :param start_date: start date
+        :param end_date: end date
+        :param product: CO-OPS product
+        :param datum: tidal datum
+        :param units: either ``metric`` or ``english``
+        :param time_zone: time zone
+        :param interval: time interval
+        :param track_filename: file path to ``fort.22``
+        :return: data frame of CO-OPS station data
+        """
+
         track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
 
         if start_date is None:
@@ -179,6 +257,21 @@ class StormEvent:
         interval: COOPS_Interval = None,
         track_filename: PathLike = None,
     ) -> DataFrame:
+        """
+        retrieve CO-OPS tidal station data within the bounding box of the track
+
+        :param station_type: either ``current`` or ``historical``
+        :param start_date: start date
+        :param end_date: end date
+        :param product: CO-OPS product
+        :param datum: tidal datum
+        :param units: either ``metric`` or ``english``
+        :param time_zone: time zone
+        :param interval: time interval
+        :param track_filename: file path to ``fort.22``
+        :return: data frame of CO-OPS station data
+        """
+
         track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
 
         if start_date is None:
