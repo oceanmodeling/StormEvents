@@ -1,9 +1,15 @@
-National Hurricane Center (NHC)
-===============================
+NHC vortex tracks
+=================
 
-https://www.nhc.noaa.gov/
+The [National Hurricane Center (NHC)](https://www.nhc.noaa.gov)
+provides spatial storm tracks for tracked hurricanes, from 1851 to the present.
 
-storm tracks
-------------
+list storm events defined by the NHC since 2008
+-----------------------------------------------
+
+.. autofunction:: stormevents.nhc.storms.nhc_storms
+
+retrieve spatial storm tracks provided by the NHC
+-------------------------------------------------
 
 .. autoclass:: stormevents.nhc.track.VortexTrack

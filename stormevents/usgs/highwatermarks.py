@@ -10,10 +10,8 @@ import pandas
 import requests
 from typepigeon import convert_value
 
-from stormevents.nhc.storms import nhc_storms
+from stormevents.nhc import nhc_storms
 from stormevents.utilities import get_logger
-
-LOGGER = get_logger(__name__)
 
 
 class EventType(Enum):
@@ -209,7 +207,7 @@ class HighWaterMarks:
         return self.data.equals(other.data)
 
 
-class HurricaneHighWaterMarks(HighWaterMarks):
+class StormHighWaterMarks(HighWaterMarks):
     def __init__(
         self,
         name: str,
@@ -245,6 +243,9 @@ class HurricaneHighWaterMarks(HighWaterMarks):
         )
 
 
+LOGGER = get_logger(__name__)
+
+
 @lru_cache(maxsize=None)
 def usgs_highwatermark_events(
     event_type: EventType = None, year: int = None, event_status: EventStatus = None,
@@ -262,23 +263,6 @@ def usgs_highwatermark_events(
     :param year: year of event
     :param event_status: status of USGS flood event
     :return: table of flood events
-
-    >>> usgs_highwatermark_storms()
-             year                         usgs_name  nhc_name  nhc_code
-    usgs_id
-    7        2013                FEMA 2013 exercise      None      None
-    8        2013                             Wilma      None      None
-    18       2012                    Isaac Aug 2012     ISAAC  al092012
-    19       2005                              Rita      None      None
-    23       2011                             Irene     IRENE  al092011
-    ...       ...                               ...       ...       ...
-    303      2020  2020 TS Marco - Hurricane  Laura     MARCO  al142020
-    304      2020              2020 Hurricane Sally     SALLY  al192020
-    305      2020              2020 Hurricane Delta     DELTA  al262020
-    310      2021       2021 Tropical Cyclone Henri     HENRI  al082021
-    312      2021         2021 Tropical Cyclone Ida       IDA  al092021
-
-    [24 rows x 3 columns]
     """
 
     if event_type is None:
@@ -366,6 +350,22 @@ def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     this is useful if you want to retrieve USGS data for a specific NHC storm code
 
     :return: table of USGS flood events with NHC storm names
+
+    >>> usgs_highwatermark_storms()
+             year                         usgs_name  nhc_name  nhc_code
+    usgs_id
+    7        2013                FEMA 2013 exercise      None      None
+    8        2013                             Wilma      None      None
+    18       2012                    Isaac Aug 2012     ISAAC  al092012
+    19       2005                              Rita      None      None
+    23       2011                             Irene     IRENE  al092011
+    ...       ...                               ...       ...       ...
+    303      2020  2020 TS Marco - Hurricane  Laura     MARCO  al142020
+    304      2020              2020 Hurricane Sally     SALLY  al192020
+    305      2020              2020 Hurricane Delta     DELTA  al262020
+    310      2021       2021 Tropical Cyclone Henri     HENRI  al082021
+    312      2021         2021 Tropical Cyclone Ida       IDA  al092021
+    [24 rows x 3 columns]
     """
 
     events = usgs_highwatermark_events(event_type=EventType.HURRICANE, year=year)

@@ -11,33 +11,12 @@
 
 ## Usage
 
-### National Hurricane Center (NHC)
+### vortex tracks from the National Hurricane Center (NHC)
 
-#### storm track
-
-```python
-from stormevents import VortexTrack
-
-# retrieve vortex data from the Internet from its ID
-vortex = VortexTrack('AL112017')
-
-# you can also use the storm name and year in the lookup
-vortex = VortexTrack('irma2017')
-
-# write to a file in the ADCIRC `fort.22` format
-vortex.write('fort.22')
-
-# read vortex data from an existing ATCF track file (`*.trk`)
-vortex = VortexTrack.from_atcf_file('atcf.trk')
-
-# read vortex data from an existing file in the ADCIRC `fort.22` format
-vortex = VortexTrack.from_fort22('fort.22')
-```
-
-#### storm list
+#### list storm events defined by the NHC since 2008
 
 ```python
-from stormevents import nhc_storms
+from stormevents.nhc import nhc_storms
 
 nhc_storms = nhc_storms()
 ```
@@ -61,7 +40,7 @@ ep192021     SANDRA     Tropical Storm SANDRA  2021
 ```
 
 ```python
-from stormevents import nhc_storms
+from stormevents.nhc import nhc_storms
 
 nhc_storms_2018 = nhc_storms(year=2018)
 ```
@@ -84,14 +63,61 @@ ep172018      OLIVIA                Hurricane OLIVIA  2018
 [47 rows x 3 columns]
 ```
 
-### United States Geological Survey (USGS)
-
-#### flood high water marks
+#### retrieve spatial storm tracks provided by the NHC
 
 ```python
-from stormevents import HurricaneHighWaterMarks
+from stormevents.nhc import VortexTrack
 
-hwm_florence2018 = HurricaneHighWaterMarks('florence', 2018)
+# retrieve vortex data from the Internet from its ID
+vortex = VortexTrack('AL112017')
+
+# you can also use the storm name and year in the lookup
+vortex = VortexTrack('irma2017')
+
+# write to a file in the ADCIRC `fort.22` format
+vortex.write('fort.22')
+
+# read vortex data from an existing ATCF track file (`*.trk`)
+vortex = VortexTrack.from_atcf_file('atcf.trk')
+
+# read vortex data from an existing file in the ADCIRC `fort.22` format
+vortex = VortexTrack.from_fort22('fort.22')
+```
+
+### high water mark (HWM) surveys from the United States Geological Survey (USGS)
+
+#### list storm flood events that have HWM surveys
+
+```python
+from stormevents.usgs import usgs_highwatermark_storms
+
+hwm_storms = usgs_highwatermark_storms()
+```
+
+```
+         year                         usgs_name  nhc_name  nhc_code
+usgs_id                                                            
+7        2013                FEMA 2013 exercise      None      None
+8        2013                             Wilma      None      None
+18       2012                    Isaac Aug 2012     ISAAC  al092012
+19       2005                              Rita      None      None
+23       2011                             Irene     IRENE  al092011
+...       ...                               ...       ...       ...
+303      2020  2020 TS Marco - Hurricane  Laura     MARCO  al142020
+304      2020              2020 Hurricane Sally     SALLY  al192020
+305      2020              2020 Hurricane Delta     DELTA  al262020
+310      2021       2021 Tropical Cyclone Henri     HENRI  al082021
+312      2021         2021 Tropical Cyclone Ida       IDA  al092021
+
+[24 rows x 3 columns]
+```
+
+#### retrieve HWM data for a specific storm
+
+```python
+from stormevents.usgs import StormHighWaterMarks
+
+hwm_florence2018 = StormHighWaterMarks('florence', 2018)
 
 hwm_florence2018.data
 hwm_florence2018.data.columns
@@ -132,67 +158,65 @@ Index(['latitude', 'longitude', 'eventName', 'hwmTypeName', 'hwmQualityName',
       dtype='object')
 ```
 
-#### storm flood event list
+### tidal station data from the Center for Operational Oceanographic Products and Services (CO-OPS)
+
+#### list CO-OPS tidal stations
 
 ```python
-from stormevents import usgs_highwatermark_storms
-
-hwm_storms = usgs_highwatermark_storms()
-```
-
-```
-         year                         usgs_name  nhc_name  nhc_code
-usgs_id                                                            
-7        2013                FEMA 2013 exercise      None      None
-8        2013                             Wilma      None      None
-18       2012                    Isaac Aug 2012     ISAAC  al092012
-19       2005                              Rita      None      None
-23       2011                             Irene     IRENE  al092011
-...       ...                               ...       ...       ...
-303      2020  2020 TS Marco - Hurricane  Laura     MARCO  al142020
-304      2020              2020 Hurricane Sally     SALLY  al192020
-305      2020              2020 Hurricane Delta     DELTA  al262020
-310      2021       2021 Tropical Cyclone Henri     HENRI  al082021
-312      2021         2021 Tropical Cyclone Ida       IDA  al092021
-
-[24 rows x 3 columns]
-```
-
-### Center for Operational Oceanographic Products and Services (CO-OPS)
-
-#### list tidal stations
-
-```python
-from stormevents.coops.tidalstations import coops_stations
+from stormevents.coops import coops_stations
 
 stations = coops_stations()
 ```
 
-#### list tidal stations within a region
+```
+        NWS ID  Latitude  ...                   Station Name   Removed Date/Time
+NOS ID                    ...                                                   
+1600012  46125  37.75008  ...                      QREB buoy                 NaT
+1611400  NWWH1  21.95440  ...                     Nawiliwili                 NaT
+1612340  OOUH1  21.30669  ...                       Honolulu                 NaT
+1612480  MOKH1  21.43306  ...                       Mokuoloe                 NaT
+1615680  KLIH1  20.89500  ...        Kahului, Kahului Harbor                 NaT
+    ...    ...       ...  ...                            ...                 ...
+8637689  YKTV2  37.22650  ...  Yorktown USCG Training Center 2010-09-13 13:00:00
+8637689  YKTV2  37.22650  ...  Yorktown USCG Training Center 2015-08-20 00:00:00
+8637689  YKTV2  37.22650  ...  Yorktown USCG Training Center 2014-12-12 15:29:00
+9414458  ZSMC1  37.58000  ...               San Mateo Bridge 2005-04-05 00:00:00
+9414458  ZSMC1  37.58000  ...               San Mateo Bridge 2005-04-05 23:59:00
+
+[7877 rows x 6 columns]
+```
+
+#### list CO-OPS tidal stations within a region
 
 ```python
 from shapely.geometry import Polygon
-from stormevents.coops.tidalstations import coops_stations_within_region
+from stormevents.coops import coops_stations_within_region
 
 polygon = Polygon(...)
 
 stations = coops_stations_within_region(region=polygon)
 ```
 
-#### retrieve tidal data from a region
+#### retrieve CO-OPS tidal data within a region
 
 ```python
 from datetime import datetime, timedelta
 
 from shapely.geometry import MultiPolygon
-from stormevents.coops.tidalstations import coops_data_within_region
+from stormevents.coops import coops_data_within_region
 
 polygon = MultiPolygon(...)
 
 coops_data_within_region(region=polygon, start_date=datetime.now() - timedelta(days=2), end_date=datetime.now())
 ```
 
+## Related Projects
+
+- `tropycal` - https://tropycal.github.io/tropycal/index.html
+- `pyoos` - https://github.com/ioos/pyoos
+- `adcircpy` - https://github.com/zacharyburnettNOAA/adcircpy
+
 ## Acknowledgements
 
 This code was initially written by [@jreniel](https://github.com/jreniel)
-for [`adcircpy`](https://github.com/zacharyburnettNOAA/adcircpy). 
+for `adcircpy`. 

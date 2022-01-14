@@ -3,11 +3,8 @@
 import pandas
 
 from stormevents import usgs_highwatermark_storms
-from stormevents.usgs.highwatermarks import (
-    EventType,
-    HighWaterMarks,
-    usgs_highwatermark_events,
-)
+from stormevents.usgs import usgs_highwatermark_events
+from stormevents.usgs.highwatermarks import EventType, HighWaterMarks
 from tests import REFERENCE_DIRECTORY
 
 

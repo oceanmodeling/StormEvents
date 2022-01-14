@@ -1,484 +1,484 @@
-nhc_code,name,long_name,year
-al012008,ARTHUR,Tropical Storm ARTHUR,2008
-al022008,BERTHA,Hurricane BERTHA,2008
-al032008,CRISTOBAL,Tropical Storm CRISTOBAL,2008
-al042008,DOLLY,Hurricane DOLLY,2008
-al052008,EDOUARD,Tropical Storm EDOUARD,2008
-al062008,FAY,Tropical Storm FAY,2008
-al072008,GUSTAV,Hurricane GUSTAV,2008
-al082008,HANNA,Hurricane HANNA,2008
-al092008,IKE,Hurricane IKE,2008
-al102008,JOSEPHINE,Tropical Storm JOSEPHINE,2008
-al112008,KYLE,Hurricane KYLE,2008
-al122008,LAURA,Tropical Storm LAURA,2008
-al132008,MARCO,Tropical Storm MARCO,2008
-al142008,NANA,Tropical Storm NANA,2008
-al152008,OMAR,Hurricane OMAR,2008
-al162008,SIXTEEN,Tropical Depression SIXTEEN,2008
-al172008,PALOMA,Hurricane PALOMA,2008
-ep012008,ALMA,Tropical Storm ALMA,2008
-ep022008,BORIS,Hurricane BORIS,2008
-ep032008,CRISTINA,Tropical Storm CRISTINA,2008
-ep042008,DOUGLAS,Tropical Storm DOUGLAS,2008
-ep052008,FIVE-E,Tropical Depression FIVE-E,2008
-ep062008,ELIDA,Hurricane ELIDA,2008
-ep072008,FAUSTO,Hurricane FAUSTO,2008
-ep082008,GENEVIEVE,Hurricane GENEVIEVE,2008
-ep092008,HERNAN,Hurricane HERNAN,2008
-ep102008,ISELLE,Tropical Storm ISELLE,2008
-ep112008,JULIO,Tropical Storm JULIO,2008
-ep122008,KARINA,Tropical Storm KARINA,2008
-ep132008,LOWELL,Tropical Storm LOWELL,2008
-ep142008,MARIE,Hurricane MARIE,2008
-ep152008,NORBERT,Hurricane NORBERT,2008
-ep162008,ODILE,Tropical Storm ODILE,2008
-ep172008,SEVENTEEN-E,Tropical Depression SEVENTEEN-E,2008
-ep182008,POLO,Tropical Storm POLO,2008
-al012009,ONE,Tropical Depression ONE,2009
-al022009,ANA,Tropical Storm ANA,2009
-al032009,BILL,Hurricane BILL,2009
-al042009,CLAUDETTE,Tropical Storm CLAUDETTE,2009
-al052009,DANNY,Tropical Storm DANNY,2009
-al062009,ERIKA,Tropical Storm ERIKA,2009
-al072009,FRED,Hurricane FRED,2009
-al082009,EIGHT,Tropical Depression EIGHT,2009
-al092009,GRACE,Tropical Storm GRACE,2009
-al102009,HENRI,Tropical Storm HENRI,2009
-al112009,IDA,Hurricane IDA,2009
-ep012009,ONE-E,Tropical Depression ONE-E,2009
-ep022009,ANDRES,Hurricane ANDRES,2009
-ep032009,BLANCA,Tropical Storm BLANCA,2009
-ep042009,CARLOS,Hurricane CARLOS,2009
-ep052009,DOLORES,Tropical Storm DOLORES,2009
-ep062009,SIX-E,Tropical Depression SIX-E,2009
-ep072009,ENRIQUE,Tropical Storm ENRIQUE,2009
-ep082009,FELICIA,Hurricane FELICIA,2009
-ep092009,NINE-E,Tropical Depression NINE-E,2009
-ep102009,GUILLERMO,Hurricane GUILLERMO,2009
-ep112009,HILDA,Tropical Storm HILDA,2009
-ep122009,IGNACIO,Tropical Storm IGNACIO,2009
-ep132009,JIMENA,Hurricane JIMENA,2009
-ep142009,KEVIN,Tropical Storm KEVIN,2009
-ep152009,LINDA,Hurricane LINDA,2009
-ep162009,MARTY,Tropical Storm MARTY,2009
-ep172009,NORA,Tropical Storm NORA,2009
-ep182009,OLAF,Tropical Storm OLAF,2009
-ep192009,PATRICIA,Tropical Storm PATRICIA,2009
-ep202009,RICK,Hurricane RICK,2009
-al012010,ALEX,Hurricane ALEX,2010
-al022010,TWO,Tropical Depression TWO,2010
-al032010,BONNIE,Tropical Storm BONNIE,2010
-al042010,COLIN,Tropical Storm COLIN,2010
-al052010,FIVE,Tropical Depression FIVE,2010
-al062010,DANIELLE,Hurricane DANIELLE,2010
-al072010,EARL,Hurricane EARL,2010
-al082010,FIONA,Tropical Storm FIONA,2010
-al092010,GASTON,Tropical Storm GASTON,2010
-al102010,HERMINE,Tropical Storm HERMINE,2010
-al112010,IGOR,Hurricane IGOR,2010
-al122010,JULIA,Hurricane JULIA,2010
-al132010,KARL,Hurricane KARL,2010
-al142010,LISA,Hurricane LISA,2010
-al152010,MATTHEW,Tropical Storm MATTHEW,2010
-al162010,NICOLE,Tropical Storm NICOLE,2010
-al172010,OTTO,Hurricane OTTO,2010
-al182010,PAULA,Hurricane PAULA,2010
-al192010,RICHARD,Hurricane RICHARD,2010
-al202010,SHARY,Hurricane SHARY,2010
-al212010,TOMAS,Hurricane TOMAS,2010
-ep012010,AGATHA,Tropical Storm AGATHA,2010
-ep022010,TWO-E,Tropical Depression TWO-E,2010
-ep032010,BLAS,Tropical Storm BLAS,2010
-ep042010,CELIA,Hurricane CELIA,2010
-ep052010,DARBY,Hurricane DARBY,2010
-ep062010,SIX-E,Tropical Depression SIX-E,2010
-ep072010,ESTELLE,Tropical Storm ESTELLE,2010
-ep082010,EIGHT-E,Tropical Depression EIGHT-E,2010
-ep092010,FRANK,Hurricane FRANK,2010
-ep102010,TEN-E,Tropical Depression TEN-E,2010
-ep112010,ELEVEN-E,Tropical Depression ELEVEN-E,2010
-ep122010,GEORGETTE,Tropical Storm GEORGETTE,2010
-al012011,ARLENE,Tropical Storm ARLENE,2011
-al022011,BRET,Tropical Storm BRET,2011
-al032011,CINDY,Tropical Storm CINDY,2011
-al042011,DON,Tropical Storm DON,2011
-al052011,EMILY,Tropical Storm EMILY,2011
-al062011,FRANKLIN,Tropical Storm FRANKLIN,2011
-al072011,GERT,Tropical Storm GERT,2011
-al082011,HARVEY,Tropical Storm HARVEY,2011
-al092011,IRENE,Hurricane IRENE,2011
-al102011,TEN,Tropical Depression TEN,2011
-al112011,JOSE,Tropical Storm JOSE,2011
-al122011,KATIA,Hurricane KATIA,2011
-al132011,LEE,Tropical Storm LEE,2011
-al142011,MARIA,Hurricane MARIA,2011
-al152011,NATE,Tropical Storm NATE,2011
-al162011,OPHELIA,Hurricane OPHELIA,2011
-al172011,PHILIPPE,Hurricane PHILIPPE,2011
-al182011,RINA,Hurricane RINA,2011
-al192011,SEAN,Tropical Storm SEAN,2011
-ep012011,ADRIAN,Hurricane ADRIAN,2011
-ep022011,BEATRIZ,Hurricane BEATRIZ,2011
-ep032011,CALVIN,Hurricane CALVIN,2011
-ep042011,DORA,Hurricane DORA,2011
-ep052011,EUGENE,Hurricane EUGENE,2011
-ep062011,FERNANDA,Tropical Storm FERNANDA,2011
-ep072011,GREG,Hurricane GREG,2011
-ep082011,EIGHT-E,Tropical Depression EIGHT-E,2011
-ep092011,HILARY,Hurricane HILARY,2011
-ep102011,JOVA,Hurricane JOVA,2011
-ep112011,IRWIN,Hurricane IRWIN,2011
-ep122011,TWELVE-E,Tropical Depression TWELVE-E,2011
-ep132011,KENNETH,Hurricane KENNETH,2011
-al012012,ALBERTO,Tropical Storm ALBERTO,2012
-al022012,BERYL,Tropical Storm BERYL,2012
-al032012,CHRIS,Hurricane CHRIS,2012
-al042012,DEBBY,Tropical Storm DEBBY,2012
-al052012,ERNESTO,Hurricane ERNESTO,2012
-al062012,FLORENCE,Tropical Storm FLORENCE,2012
-al072012,HELENE,Tropical Storm HELENE,2012
-al082012,GORDON,Hurricane GORDON,2012
-al092012,ISAAC,Hurricane ISAAC,2012
-al102012,JOYCE,Tropical Storm JOYCE,2012
-al112012,KIRK,Hurricane KIRK,2012
-al122012,LESLIE,Hurricane LESLIE,2012
-al132012,MICHAEL,Hurricane MICHAEL,2012
-al142012,NADINE,Hurricane NADINE,2012
-al152012,OSCAR,Tropical Storm OSCAR,2012
-al162012,PATTY,Tropical Storm PATTY,2012
-al172012,RAFAEL,Hurricane RAFAEL,2012
-al182012,SANDY,Hurricane SANDY,2012
-al192012,TONY,Tropical Storm TONY,2012
-ep012012,ALETTA,Tropical Storm ALETTA,2012
-ep022012,BUD,Hurricane BUD,2012
-ep032012,CARLOTTA,Hurricane CARLOTTA,2012
-ep042012,DANIEL,Hurricane DANIEL,2012
-ep052012,EMILIA,Hurricane EMILIA,2012
-ep062012,FABIO,Hurricane FABIO,2012
-ep072012,GILMA,Hurricane GILMA,2012
-ep082012,HECTOR,Tropical Storm HECTOR,2012
-ep092012,ILEANA,Hurricane ILEANA,2012
-ep102012,JOHN,Tropical Storm JOHN,2012
-ep112012,KRISTY,Tropical Storm KRISTY,2012
-ep122012,LANE,Hurricane LANE,2012
-ep132012,MIRIAM,Hurricane MIRIAM,2012
-ep142012,NORMAN,Tropical Storm NORMAN,2012
-ep152012,OLIVIA,Tropical Storm OLIVIA,2012
-ep162012,PAUL,Hurricane PAUL,2012
-ep172012,ROSA,Tropical Storm ROSA,2012
-al012013,ANDREA,Tropical Storm ANDREA,2013
-al022013,BARRY,Tropical Storm BARRY,2013
-al032013,CHANTAL,Tropical Storm CHANTAL,2013
-al042013,DORIAN,Tropical Storm DORIAN,2013
-al052013,ERIN,Tropical Storm ERIN,2013
-al062013,FERNAND,Tropical Storm FERNAND,2013
-al072013,GABRIELLE,Tropical Storm GABRIELLE,2013
-al082013,EIGHT,Tropical Depression EIGHT,2013
-al092013,HUMBERTO,Hurricane HUMBERTO,2013
-al102013,INGRID,Hurricane INGRID,2013
-al112013,JERRY,Tropical Storm JERRY,2013
-al122013,KAREN,Tropical Storm KAREN,2013
-al132013,LORENZO,Tropical Storm LORENZO,2013
-al142013,MELISSA,Tropical Storm MELISSA,2013
-ep012013,ALVIN,Tropical Storm ALVIN,2013
-ep022013,BARBARA,Hurricane BARBARA,2013
-ep032013,COSME,Hurricane COSME,2013
-ep042013,DALILA,Hurricane DALILA,2013
-ep052013,ERICK,Hurricane ERICK,2013
-ep062013,FLOSSIE,Tropical Storm FLOSSIE,2013
-ep072013,GIL,Hurricane GIL,2013
-ep082013,HENRIETTE,Hurricane HENRIETTE,2013
-ep092013,IVO,Tropical Storm IVO,2013
-ep102013,JULIETTE,Tropical Storm JULIETTE,2013
-ep112013,KIKO,Tropical Storm KIKO,2013
-ep122013,LORENA,Tropical Storm LORENA,2013
-ep132013,MANUEL,Hurricane MANUEL,2013
-ep142013,NARDA,Tropical Storm NARDA,2013
-ep152013,OCTAVE,Tropical Storm OCTAVE,2013
-ep162013,PRISCILLA,Tropical Storm PRISCILLA,2013
-ep172013,RAYMOND,Hurricane RAYMOND,2013
-ep182013,SONIA,Tropical Storm SONIA,2013
-al012014,ARTHUR,Hurricane ARTHUR,2014
-al022014,TWO,Tropical Depression TWO,2014
-al032014,BERTHA,Hurricane BERTHA,2014
-al042014,CRISTOBAL,Hurricane CRISTOBAL,2014
-al052014,DOLLY,Tropical Storm DOLLY,2014
-al062014,EDOUARD,Hurricane EDOUARD,2014
-al072014,FAY,Hurricane FAY,2014
-al082014,GONZALO,Hurricane GONZALO,2014
-al092014,HANNA,Tropical Storm HANNA,2014
-ep012014,AMANDA,Hurricane AMANDA,2014
-ep022014,BORIS,Tropical Storm BORIS,2014
-ep032014,CRISTINA,Hurricane CRISTINA,2014
-ep042014,DOUGLAS,Tropical Storm DOUGLAS,2014
-ep052014,ELIDA,Tropical Storm ELIDA,2014
-ep062014,FAUSTO,Tropical Storm FAUSTO,2014
-ep072014,GENEVIEVE,Tropical Storm GENEVIEVE,2014
-ep082014,HERNAN,Hurricane HERNAN,2014
-ep092014,ISELLE,Hurricane ISELLE,2014
-ep102014,JULIO,Hurricane JULIO,2014
-ep112014,KARINA,Hurricane KARINA,2014
-ep122014,LOWELL,Hurricane LOWELL,2014
-ep132014,MARIE,Hurricane MARIE,2014
-ep142014,NORBERT,Hurricane NORBERT,2014
-ep152014,ODILE,Hurricane ODILE,2014
-ep162014,SIXTEEN-E,Tropical Depression SIXTEEN-E,2014
-ep172014,POLO,Hurricane POLO,2014
-ep182014,RACHEL,Hurricane RACHEL,2014
-ep192014,SIMON,Hurricane SIMON,2014
-ep202014,TRUDY,Tropical Storm TRUDY,2014
-ep212014,VANCE,Hurricane VANCE,2014
-al012015,ANA,Tropical Storm ANA,2015
-al022015,BILL,Tropical Storm BILL,2015
-al032015,CLAUDETTE,Tropical Storm CLAUDETTE,2015
-al042015,DANNY,Hurricane DANNY,2015
-al052015,ERIKA,Tropical Storm ERIKA,2015
-al062015,FRED,Hurricane FRED,2015
-al072015,GRACE,Tropical Storm GRACE,2015
-al082015,HENRI,Tropical Storm HENRI,2015
-al092015,NINE,Tropical Depression NINE,2015
-al102015,IDA,Tropical Storm IDA,2015
-al112015,JOAQUIN,Hurricane JOAQUIN,2015
-al122015,KATE,Hurricane KATE,2015
-ep012015,ANDRES,Hurricane ANDRES,2015
-ep022015,BLANCA,Hurricane BLANCA,2015
-ep032015,CARLOS,Hurricane CARLOS,2015
-ep042015,FOUR-E,Tropical Depression FOUR-E,2015
-ep052015,DOLORES,Hurricane DOLORES,2015
-ep062015,ENRIQUE,Tropical Storm ENRIQUE,2015
-ep072015,FELICIA,Tropical Storm FELICIA,2015
-ep082015,EIGHT-E,Tropical Depression EIGHT-E,2015
-ep092015,GUILLERMO,Hurricane GUILLERMO,2015
-ep102015,HILDA,Hurricane HILDA,2015
-ep112015,ELEVEN-E,Tropical Depression ELEVEN-E,2015
-ep122015,IGNACIO,Hurricane IGNACIO,2015
-ep132015,JIMENA,Hurricane JIMENA,2015
-ep142015,KEVIN,Tropical Storm KEVIN,2015
-ep152015,LINDA,Hurricane LINDA,2015
-ep162015,SIXTEEN-E,Tropical Depression SIXTEEN-E,2015
-ep172015,MARTY,Hurricane MARTY,2015
-ep182015,NORA,Tropical Storm NORA,2015
-ep192015,OLAF,Hurricane OLAF,2015
-ep202015,PATRICIA,Hurricane PATRICIA,2015
-ep212015,RICK,Tropical Storm RICK,2015
-ep222015,SANDRA,Hurricane SANDRA,2015
-al012016,ALEX,Hurricane ALEX,2016
-al022016,BONNIE,Tropical Storm BONNIE,2016
-al032016,COLIN,Tropical Storm COLIN,2016
-al042016,DANIELLE,Tropical Storm DANIELLE,2016
-al052016,EARL,Hurricane EARL,2016
-al062016,FIONA,Tropical Storm FIONA,2016
-al072016,GASTON,Hurricane GASTON,2016
-al082016,EIGHT,Tropical Depression EIGHT,2016
-al092016,HERMINE,Hurricane HERMINE,2016
-al102016,IAN,Tropical Storm IAN,2016
-al112016,JULIA,Tropical Storm JULIA,2016
-al122016,KARL,Tropical Storm KARL,2016
-al132016,LISA,Tropical Storm LISA,2016
-al142016,MATTHEW,Hurricane MATTHEW,2016
-al152016,NICOLE,Hurricane NICOLE,2016
-al162016,OTTO,Hurricane OTTO,2016
-ep012016,ONE-E,Tropical Depression ONE-E,2016
-ep022016,AGATHA,Tropical Storm AGATHA,2016
-ep032016,BLAS,Hurricane BLAS,2016
-ep042016,CELIA,Hurricane CELIA,2016
-ep052016,DARBY,Hurricane DARBY,2016
-ep062016,ESTELLE,Tropical Storm ESTELLE,2016
-ep072016,FRANK,Hurricane FRANK,2016
-ep082016,GEORGETTE,Hurricane GEORGETTE,2016
-ep092016,HOWARD,Tropical Storm HOWARD,2016
-ep102016,IVETTE,Tropical Storm IVETTE,2016
-ep112016,JAVIER,Tropical Storm JAVIER,2016
-ep122016,KAY,Tropical Storm KAY,2016
-ep132016,LESTER,Hurricane LESTER,2016
-ep142016,MADELINE,Tropical Storm MADELINE,2016
-ep152016,NEWTON,Hurricane NEWTON,2016
-ep162016,ORLENE,Hurricane ORLENE,2016
-ep172016,PAINE,Hurricane PAINE,2016
-ep182016,ROSLYN,Tropical Storm ROSLYN,2016
-ep192016,ULIKA,Hurricane ULIKA,2016
-ep202016,SEYMOUR,Hurricane SEYMOUR,2016
-ep212016,TINA,Tropical Storm TINA,2016
-ep222016,OTTO,Tropical Storm OTTO,2016
-al012017,ARLENE,Tropical Storm ARLENE,2017
-al022017,BRET,Tropical Storm BRET,2017
-al032017,CINDY,Tropical Storm CINDY,2017
-al042017,FOUR,Tropical Depression FOUR,2017
-al052017,DON,Tropical Storm DON,2017
-al062017,EMILY,Tropical Storm EMILY,2017
-al072017,FRANKLIN,Hurricane FRANKLIN,2017
-al082017,GERT,Hurricane GERT,2017
-al092017,HARVEY,Hurricane HARVEY,2017
-al102017,TEN,Potential Tropical Cyclone TEN,2017
-al112017,IRMA,Hurricane IRMA,2017
-al122017,JOSE,Hurricane JOSE,2017
-al132017,KATIA,Hurricane KATIA,2017
-al142017,LEE,Hurricane LEE,2017
-al152017,MARIA,Hurricane MARIA,2017
-al162017,NATE,Hurricane NATE,2017
-al172017,OPHELIA,Hurricane OPHELIA,2017
-al182017,PHILIPPE,Tropical Storm PHILIPPE,2017
-al192017,RINA,Tropical Storm RINA,2017
-ep012017,ADRIAN,Tropical Storm ADRIAN,2017
-ep022017,BEATRIZ,Tropical Storm BEATRIZ,2017
-ep032017,CALVIN,Tropical Storm CALVIN,2017
-ep042017,DORA,Hurricane DORA,2017
-ep052017,EUGENE,Hurricane EUGENE,2017
-ep062017,FERNANDA,Hurricane FERNANDA,2017
-ep072017,GREG,Tropical Storm GREG,2017
-ep082017,EIGHT-E,Tropical Depression EIGHT-E,2017
-ep092017,HILARY,Hurricane HILARY,2017
-ep102017,IRWIN,Hurricane IRWIN,2017
-ep112017,ELEVEN-E,Tropical Depression ELEVEN-E,2017
-ep122017,JOVA,Tropical Storm JOVA,2017
-ep132017,KENNETH,Hurricane KENNETH,2017
-ep142017,LIDIA,Tropical Storm LIDIA,2017
-ep152017,OTIS,Hurricane OTIS,2017
-ep162017,MAX,Hurricane MAX,2017
-ep172017,NORMA,Hurricane NORMA,2017
-ep182017,PILAR,Tropical Storm PILAR,2017
-ep192017,RAMON,Tropical Storm RAMON,2017
-ep202017,SELMA,Tropical Storm SELMA,2017
-ep062017,FERNANDA,Hurricane FERNANDA,2017
-ep072017,GREG,Tropical Storm GREG,2017
-al012018,ALBERTO,Subtropical Storm ALBERTO,2018
-al022018,BERYL,Hurricane BERYL,2018
-al032018,CHRIS,Hurricane CHRIS,2018
-al042018,DEBBY,Tropical Storm DEBBY,2018
-al052018,ERNESTO,Tropical Storm ERNESTO,2018
-al062018,FLORENCE,Hurricane FLORENCE,2018
-al072018,GORDON,Tropical Storm GORDON,2018
-al082018,HELENE,Hurricane HELENE,2018
-al092018,ISAAC,Hurricane ISAAC,2018
-al102018,JOYCE,Tropical Storm JOYCE,2018
-al112018,ELEVEN,Tropical Depression ELEVEN,2018
-al122018,KIRK,Tropical Storm KIRK,2018
-al132018,LESLIE,Hurricane LESLIE,2018
-al142018,MICHAEL,Hurricane MICHAEL,2018
-al152018,NADINE,Tropical Storm NADINE,2018
-al162018,OSCAR,Hurricane OSCAR,2018
-ep012018,ONE-E,Tropical Depression ONE-E,2018
-ep022018,ALETTA,Hurricane ALETTA,2018
-ep032018,BUD,Hurricane BUD,2018
-ep042018,CARLOTTA,Tropical Storm CARLOTTA,2018
-ep052018,DANIEL,Tropical Storm DANIEL,2018
-ep062018,EMILIA,Tropical Storm EMILIA,2018
-ep072018,FABIO,Hurricane FABIO,2018
-ep082018,GILMA,Tropical Storm GILMA,2018
-ep092018,NINE-E,Tropical Depression NINE-E,2018
-ep102018,HECTOR,Hurricane HECTOR,2018
-ep112018,ILEANA,Tropical Storm ILEANA,2018
-ep122018,JOHN,Hurricane JOHN,2018
-ep132018,KRISTY,Tropical Storm KRISTY,2018
-ep142018,LANE,Hurricane LANE,2018
-ep152018,MIRIAM,Hurricane MIRIAM,2018
-ep162018,NORMAN,Hurricane NORMAN,2018
-ep172018,OLIVIA,Hurricane OLIVIA,2018
-ep182018,PAUL,Tropical Storm PAUL,2018
-ep192018,NINETEEN-E,Tropical Depression NINETEEN-E,2018
-ep202018,ROSA,Hurricane ROSA,2018
-ep212018,SERGIO,Hurricane SERGIO,2018
-ep222018,TARA,Tropical Storm TARA,2018
-ep232018,VICENTE,Tropical Storm VICENTE,2018
-ep242018,WILLA,Hurricane WILLA,2018
-ep252018,XAVIER,Tropical Storm XAVIER,2018
-cp012018,WALAKA,Hurricane WALAKA,2018
-ep102018,HECTOR,Hurricane HECTOR,2018
-ep142018,LANE,Hurricane LANE,2018
-ep152018,MIRIAM,Hurricane MIRIAM,2018
-ep162018,NORMAN,Hurricane NORMAN,2018
-ep172018,OLIVIA,Hurricane OLIVIA,2018
-al012019,ANDREA,Subtropical Storm ANDREA,2019
-al022019,BARRY,Hurricane BARRY,2019
-al032019,THREE,Tropical Depression THREE,2019
-al042019,CHANTAL,Tropical Storm CHANTAL,2019
-al052019,DORIAN,Hurricane DORIAN,2019
-al062019,ERIN,Tropical Storm ERIN,2019
-al072019,FERNAND,Tropical Storm FERNAND,2019
-al082019,GABRIELLE,Tropical Storm GABRIELLE,2019
-al092019,HUMBERTO,Hurricane HUMBERTO,2019
-al102019,JERRY,Hurricane JERRY,2019
-al112019,IMELDA,Tropical Storm IMELDA,2019
-al122019,KAREN,Tropical Storm KAREN,2019
-al132019,LORENZO,Hurricane LORENZO,2019
-al142019,MELISSA,Tropical Storm MELISSA,2019
-al152019,FIFTEEN,Tropical Depression FIFTEEN,2019
-al162019,NESTOR,Tropical Storm NESTOR,2019
-al172019,OLGA,Tropical Storm OLGA,2019
-al182019,PABLO,Hurricane PABLO,2019
-al192019,REBEKAH,Subtropical Storm REBEKAH,2019
-al202019,SEBASTIEN,Tropical Storm SEBASTIEN,2019
-ep012019,ALVIN,Hurricane ALVIN,2019
-ep022019,BARBARA,Hurricane BARBARA,2019
-ep032019,COSME,Tropical Storm COSME,2019
-ep042019,FOUR-E,Tropical Depression FOUR-E,2019
-ep052019,DALILA,Tropical Storm DALILA,2019
-ep062019,ERICK,Hurricane ERICK,2019
-ep072019,FLOSSIE,Hurricane FLOSSIE,2019
-ep082019,GIL,Tropical Storm GIL,2019
-ep092019,HENRIETTE,Tropical Storm HENRIETTE,2019
-ep102019,IVO,Tropical Storm IVO,2019
-ep112019,JULIETTE,Hurricane JULIETTE,2019
-ep122019,AKONI,Tropical Storm AKONI,2019
-ep132019,KIKO,Hurricane KIKO,2019
-ep142019,MARIO,Tropical Storm MARIO,2019
-ep152019,LORENA,Hurricane LORENA,2019
-ep162019,NARDA,Tropical Storm NARDA,2019
-ep172019,SEVENTEEN-E,Potential Tropical Cyclone SEVENTEEN-E,2019
-ep182019,OCTAVE,Tropical Storm OCTAVE,2019
-ep192019,PRISCILLA,Tropical Storm PRISCILLA,2019
-ep202019,RAYMOND,Tropical Storm RAYMOND,2019
-ep212019,TWENTY-ONE-E,Tropical Depression TWENTY-ONE-E,2019
-cp012019,EMA,Tropical Storm EMA,2019
-al012020,ARTHUR,Tropical Storm ARTHUR,2020
-al022020,BERTHA,Tropical Storm BERTHA,2020
-al032020,CRISTOBAL,Tropical Storm CRISTOBAL,2020
-al042020,DOLLY,Tropical Storm DOLLY,2020
-al052020,EDOUARD,Tropical Storm EDOUARD,2020
-al062020,FAY,Tropical Storm FAY,2020
-al072020,GONZALO,Tropical Storm GONZALO,2020
-al082020,HANNA,Hurricane HANNA,2020
-al092020,ISAIAS,Hurricane ISAIAS,2020
-al102020,TEN,Tropical Depression TEN,2020
-al112020,JOSEPHINE,Tropical Storm JOSEPHINE,2020
-al122020,KYLE,Tropical Storm KYLE,2020
-al132020,LAURA,Hurricane LAURA,2020
-al142020,MARCO,Hurricane MARCO,2020
-al152020,OMAR,Tropical Storm OMAR,2020
-al162020,NANA,Hurricane NANA,2020
-al172020,PAULETTE,Hurricane PAULETTE,2020
-al182020,RENE,Tropical Storm RENE,2020
-al192020,SALLY,Hurricane SALLY,2020
-al202020,TEDDY,Hurricane TEDDY,2020
-al212020,VICKY,Tropical Storm VICKY,2020
-al222020,BETA,Tropical Storm BETA,2020
-al232020,WILFRED,Tropical Storm WILFRED,2020
-al242020,ALPHA,Subtropical Storm ALPHA,2020
-al252020,GAMMA,Hurricane GAMMA,2020
-al262020,DELTA,Hurricane DELTA,2020
-al272020,EPSILON,Hurricane EPSILON,2020
-al282020,ZETA,Hurricane ZETA,2020
-al292020,ETA,Hurricane ETA,2020
-al302020,THETA,Tropical Storm THETA,2020
-al312020,IOTA,Hurricane IOTA,2020
-ep012020,ONE-E,Tropical Depression ONE-E,2020
-ep022020,AMANDA,Tropical Storm AMANDA,2020
-ep032020,BORIS,Tropical Storm BORIS,2020
-ep042020,FOUR-E,Tropical Depression FOUR-E,2020
-ep052020,CRISTINA,Tropical Storm CRISTINA,2020
-ep062020,SIX-E,Tropical Depression SIX-E,2020
-ep072020,SEVEN-E,Tropical Depression SEVEN-E,2020
-ep082020,DOUGLAS,Hurricane DOUGLAS,2020
-ep092020,ELIDA,Hurricane ELIDA,2020
-ep102020,TEN-E,Tropical Depression TEN-E,2020
-ep112020,FAUSTO,Tropical Storm FAUSTO,2020
-ep122020,GENEVIEVE,Hurricane GENEVIEVE,2020
-ep132020,HERNAN,Tropical Storm HERNAN,2020
-ep142020,ISELLE,Tropical Storm ISELLE,2020
-ep152020,JULIO,Tropical Storm JULIO,2020
-ep162020,KARINA,Tropical Storm KARINA,2020
-ep172020,LOWELL,Tropical Storm LOWELL,2020
-ep182020,MARIE,Hurricane MARIE,2020
-ep192020,NORBERT,Tropical Storm NORBERT,2020
-ep202020,ODALYS,Tropical Storm ODALYS,2020
-ep212020,POLO,Tropical Storm POLO,2020
+nhc_code,name        ,long_name                             ,year
+al012008,ARTHUR      ,Tropical Storm ARTHUR                 ,2008
+al022008,BERTHA      ,Hurricane BERTHA                      ,2008
+al032008,CRISTOBAL   ,Tropical Storm CRISTOBAL              ,2008
+al042008,DOLLY       ,Hurricane DOLLY                       ,2008
+al052008,EDOUARD     ,Tropical Storm EDOUARD                ,2008
+al062008,FAY         ,Tropical Storm FAY                    ,2008
+al072008,GUSTAV      ,Hurricane GUSTAV                      ,2008
+al082008,HANNA       ,Hurricane HANNA                       ,2008
+al092008,IKE         ,Hurricane IKE                         ,2008
+al102008,JOSEPHINE   ,Tropical Storm JOSEPHINE              ,2008
+al112008,KYLE        ,Hurricane KYLE                        ,2008
+al122008,LAURA       ,Tropical Storm LAURA                  ,2008
+al132008,MARCO       ,Tropical Storm MARCO                  ,2008
+al142008,NANA        ,Tropical Storm NANA                   ,2008
+al152008,OMAR        ,Hurricane OMAR                        ,2008
+al162008,SIXTEEN     ,Tropical Depression SIXTEEN           ,2008
+al172008,PALOMA      ,Hurricane PALOMA                      ,2008
+ep012008,ALMA        ,Tropical Storm ALMA                   ,2008
+ep022008,BORIS       ,Hurricane BORIS                       ,2008
+ep032008,CRISTINA    ,Tropical Storm CRISTINA               ,2008
+ep042008,DOUGLAS     ,Tropical Storm DOUGLAS                ,2008
+ep052008,FIVE-E      ,Tropical Depression FIVE-E            ,2008
+ep062008,ELIDA       ,Hurricane ELIDA                       ,2008
+ep072008,FAUSTO      ,Hurricane FAUSTO                      ,2008
+ep082008,GENEVIEVE   ,Hurricane GENEVIEVE                   ,2008
+ep092008,HERNAN      ,Hurricane HERNAN                      ,2008
+ep102008,ISELLE      ,Tropical Storm ISELLE                 ,2008
+ep112008,JULIO       ,Tropical Storm JULIO                  ,2008
+ep122008,KARINA      ,Tropical Storm KARINA                 ,2008
+ep132008,LOWELL      ,Tropical Storm LOWELL                 ,2008
+ep142008,MARIE       ,Hurricane MARIE                       ,2008
+ep152008,NORBERT     ,Hurricane NORBERT                     ,2008
+ep162008,ODILE       ,Tropical Storm ODILE                  ,2008
+ep172008,SEVENTEEN-E ,Tropical Depression SEVENTEEN-E       ,2008
+ep182008,POLO        ,Tropical Storm POLO                   ,2008
+al012009,ONE         ,Tropical Depression ONE               ,2009
+al022009,ANA         ,Tropical Storm ANA                    ,2009
+al032009,BILL        ,Hurricane BILL                        ,2009
+al042009,CLAUDETTE   ,Tropical Storm CLAUDETTE              ,2009
+al052009,DANNY       ,Tropical Storm DANNY                  ,2009
+al062009,ERIKA       ,Tropical Storm ERIKA                  ,2009
+al072009,FRED        ,Hurricane FRED                        ,2009
+al082009,EIGHT       ,Tropical Depression EIGHT             ,2009
+al092009,GRACE       ,Tropical Storm GRACE                  ,2009
+al102009,HENRI       ,Tropical Storm HENRI                  ,2009
+al112009,IDA         ,Hurricane IDA                         ,2009
+ep012009,ONE-E       ,Tropical Depression ONE-E             ,2009
+ep022009,ANDRES      ,Hurricane ANDRES                      ,2009
+ep032009,BLANCA      ,Tropical Storm BLANCA                 ,2009
+ep042009,CARLOS      ,Hurricane CARLOS                      ,2009
+ep052009,DOLORES     ,Tropical Storm DOLORES                ,2009
+ep062009,SIX-E       ,Tropical Depression SIX-E             ,2009
+ep072009,ENRIQUE     ,Tropical Storm ENRIQUE                ,2009
+ep082009,FELICIA     ,Hurricane FELICIA                     ,2009
+ep092009,NINE-E      ,Tropical Depression NINE-E            ,2009
+ep102009,GUILLERMO   ,Hurricane GUILLERMO                   ,2009
+ep112009,HILDA       ,Tropical Storm HILDA                  ,2009
+ep122009,IGNACIO     ,Tropical Storm IGNACIO                ,2009
+ep132009,JIMENA      ,Hurricane JIMENA                      ,2009
+ep142009,KEVIN       ,Tropical Storm KEVIN                  ,2009
+ep152009,LINDA       ,Hurricane LINDA                       ,2009
+ep162009,MARTY       ,Tropical Storm MARTY                  ,2009
+ep172009,NORA        ,Tropical Storm NORA                   ,2009
+ep182009,OLAF        ,Tropical Storm OLAF                   ,2009
+ep192009,PATRICIA    ,Tropical Storm PATRICIA               ,2009
+ep202009,RICK        ,Hurricane RICK                        ,2009
+al012010,ALEX        ,Hurricane ALEX                        ,2010
+al022010,TWO         ,Tropical Depression TWO               ,2010
+al032010,BONNIE      ,Tropical Storm BONNIE                 ,2010
+al042010,COLIN       ,Tropical Storm COLIN                  ,2010
+al052010,FIVE        ,Tropical Depression FIVE              ,2010
+al062010,DANIELLE    ,Hurricane DANIELLE                    ,2010
+al072010,EARL        ,Hurricane EARL                        ,2010
+al082010,FIONA       ,Tropical Storm FIONA                  ,2010
+al092010,GASTON      ,Tropical Storm GASTON                 ,2010
+al102010,HERMINE     ,Tropical Storm HERMINE                ,2010
+al112010,IGOR        ,Hurricane IGOR                        ,2010
+al122010,JULIA       ,Hurricane JULIA                       ,2010
+al132010,KARL        ,Hurricane KARL                        ,2010
+al142010,LISA        ,Hurricane LISA                        ,2010
+al152010,MATTHEW     ,Tropical Storm MATTHEW                ,2010
+al162010,NICOLE      ,Tropical Storm NICOLE                 ,2010
+al172010,OTTO        ,Hurricane OTTO                        ,2010
+al182010,PAULA       ,Hurricane PAULA                       ,2010
+al192010,RICHARD     ,Hurricane RICHARD                     ,2010
+al202010,SHARY       ,Hurricane SHARY                       ,2010
+al212010,TOMAS       ,Hurricane TOMAS                       ,2010
+ep012010,AGATHA      ,Tropical Storm AGATHA                 ,2010
+ep022010,TWO-E       ,Tropical Depression TWO-E             ,2010
+ep032010,BLAS        ,Tropical Storm BLAS                   ,2010
+ep042010,CELIA       ,Hurricane CELIA                       ,2010
+ep052010,DARBY       ,Hurricane DARBY                       ,2010
+ep062010,SIX-E       ,Tropical Depression SIX-E             ,2010
+ep072010,ESTELLE     ,Tropical Storm ESTELLE                ,2010
+ep082010,EIGHT-E     ,Tropical Depression EIGHT-E           ,2010
+ep092010,FRANK       ,Hurricane FRANK                       ,2010
+ep102010,TEN-E       ,Tropical Depression TEN-E             ,2010
+ep112010,ELEVEN-E    ,Tropical Depression ELEVEN-E          ,2010
+ep122010,GEORGETTE   ,Tropical Storm GEORGETTE              ,2010
+al012011,ARLENE      ,Tropical Storm ARLENE                 ,2011
+al022011,BRET        ,Tropical Storm BRET                   ,2011
+al032011,CINDY       ,Tropical Storm CINDY                  ,2011
+al042011,DON         ,Tropical Storm DON                    ,2011
+al052011,EMILY       ,Tropical Storm EMILY                  ,2011
+al062011,FRANKLIN    ,Tropical Storm FRANKLIN               ,2011
+al072011,GERT        ,Tropical Storm GERT                   ,2011
+al082011,HARVEY      ,Tropical Storm HARVEY                 ,2011
+al092011,IRENE       ,Hurricane IRENE                       ,2011
+al102011,TEN         ,Tropical Depression TEN               ,2011
+al112011,JOSE        ,Tropical Storm JOSE                   ,2011
+al122011,KATIA       ,Hurricane KATIA                       ,2011
+al132011,LEE         ,Tropical Storm LEE                    ,2011
+al142011,MARIA       ,Hurricane MARIA                       ,2011
+al152011,NATE        ,Tropical Storm NATE                   ,2011
+al162011,OPHELIA     ,Hurricane OPHELIA                     ,2011
+al172011,PHILIPPE    ,Hurricane PHILIPPE                    ,2011
+al182011,RINA        ,Hurricane RINA                        ,2011
+al192011,SEAN        ,Tropical Storm SEAN                   ,2011
+ep012011,ADRIAN      ,Hurricane ADRIAN                      ,2011
+ep022011,BEATRIZ     ,Hurricane BEATRIZ                     ,2011
+ep032011,CALVIN      ,Hurricane CALVIN                      ,2011
+ep042011,DORA        ,Hurricane DORA                        ,2011
+ep052011,EUGENE      ,Hurricane EUGENE                      ,2011
+ep062011,FERNANDA    ,Tropical Storm FERNANDA               ,2011
+ep072011,GREG        ,Hurricane GREG                        ,2011
+ep082011,EIGHT-E     ,Tropical Depression EIGHT-E           ,2011
+ep092011,HILARY      ,Hurricane HILARY                      ,2011
+ep102011,JOVA        ,Hurricane JOVA                        ,2011
+ep112011,IRWIN       ,Hurricane IRWIN                       ,2011
+ep122011,TWELVE-E    ,Tropical Depression TWELVE-E          ,2011
+ep132011,KENNETH     ,Hurricane KENNETH                     ,2011
+al012012,ALBERTO     ,Tropical Storm ALBERTO                ,2012
+al022012,BERYL       ,Tropical Storm BERYL                  ,2012
+al032012,CHRIS       ,Hurricane CHRIS                       ,2012
+al042012,DEBBY       ,Tropical Storm DEBBY                  ,2012
+al052012,ERNESTO     ,Hurricane ERNESTO                     ,2012
+al062012,FLORENCE    ,Tropical Storm FLORENCE               ,2012
+al072012,HELENE      ,Tropical Storm HELENE                 ,2012
+al082012,GORDON      ,Hurricane GORDON                      ,2012
+al092012,ISAAC       ,Hurricane ISAAC                       ,2012
+al102012,JOYCE       ,Tropical Storm JOYCE                  ,2012
+al112012,KIRK        ,Hurricane KIRK                        ,2012
+al122012,LESLIE      ,Hurricane LESLIE                      ,2012
+al132012,MICHAEL     ,Hurricane MICHAEL                     ,2012
+al142012,NADINE      ,Hurricane NADINE                      ,2012
+al152012,OSCAR       ,Tropical Storm OSCAR                  ,2012
+al162012,PATTY       ,Tropical Storm PATTY                  ,2012
+al172012,RAFAEL      ,Hurricane RAFAEL                      ,2012
+al182012,SANDY       ,Hurricane SANDY                       ,2012
+al192012,TONY        ,Tropical Storm TONY                   ,2012
+ep012012,ALETTA      ,Tropical Storm ALETTA                 ,2012
+ep022012,BUD         ,Hurricane BUD                         ,2012
+ep032012,CARLOTTA    ,Hurricane CARLOTTA                    ,2012
+ep042012,DANIEL      ,Hurricane DANIEL                      ,2012
+ep052012,EMILIA      ,Hurricane EMILIA                      ,2012
+ep062012,FABIO       ,Hurricane FABIO                       ,2012
+ep072012,GILMA       ,Hurricane GILMA                       ,2012
+ep082012,HECTOR      ,Tropical Storm HECTOR                 ,2012
+ep092012,ILEANA      ,Hurricane ILEANA                      ,2012
+ep102012,JOHN        ,Tropical Storm JOHN                   ,2012
+ep112012,KRISTY      ,Tropical Storm KRISTY                 ,2012
+ep122012,LANE        ,Hurricane LANE                        ,2012
+ep132012,MIRIAM      ,Hurricane MIRIAM                      ,2012
+ep142012,NORMAN      ,Tropical Storm NORMAN                 ,2012
+ep152012,OLIVIA      ,Tropical Storm OLIVIA                 ,2012
+ep162012,PAUL        ,Hurricane PAUL                        ,2012
+ep172012,ROSA        ,Tropical Storm ROSA                   ,2012
+al012013,ANDREA      ,Tropical Storm ANDREA                 ,2013
+al022013,BARRY       ,Tropical Storm BARRY                  ,2013
+al032013,CHANTAL     ,Tropical Storm CHANTAL                ,2013
+al042013,DORIAN      ,Tropical Storm DORIAN                 ,2013
+al052013,ERIN        ,Tropical Storm ERIN                   ,2013
+al062013,FERNAND     ,Tropical Storm FERNAND                ,2013
+al072013,GABRIELLE   ,Tropical Storm GABRIELLE              ,2013
+al082013,EIGHT       ,Tropical Depression EIGHT             ,2013
+al092013,HUMBERTO    ,Hurricane HUMBERTO                    ,2013
+al102013,INGRID      ,Hurricane INGRID                      ,2013
+al112013,JERRY       ,Tropical Storm JERRY                  ,2013
+al122013,KAREN       ,Tropical Storm KAREN                  ,2013
+al132013,LORENZO     ,Tropical Storm LORENZO                ,2013
+al142013,MELISSA     ,Tropical Storm MELISSA                ,2013
+ep012013,ALVIN       ,Tropical Storm ALVIN                  ,2013
+ep022013,BARBARA     ,Hurricane BARBARA                     ,2013
+ep032013,COSME       ,Hurricane COSME                       ,2013
+ep042013,DALILA      ,Hurricane DALILA                      ,2013
+ep052013,ERICK       ,Hurricane ERICK                       ,2013
+ep062013,FLOSSIE     ,Tropical Storm FLOSSIE                ,2013
+ep072013,GIL         ,Hurricane GIL                         ,2013
+ep082013,HENRIETTE   ,Hurricane HENRIETTE                   ,2013
+ep092013,IVO         ,Tropical Storm IVO                    ,2013
+ep102013,JULIETTE    ,Tropical Storm JULIETTE               ,2013
+ep112013,KIKO        ,Tropical Storm KIKO                   ,2013
+ep122013,LORENA      ,Tropical Storm LORENA                 ,2013
+ep132013,MANUEL      ,Hurricane MANUEL                      ,2013
+ep142013,NARDA       ,Tropical Storm NARDA                  ,2013
+ep152013,OCTAVE      ,Tropical Storm OCTAVE                 ,2013
+ep162013,PRISCILLA   ,Tropical Storm PRISCILLA              ,2013
+ep172013,RAYMOND     ,Hurricane RAYMOND                     ,2013
+ep182013,SONIA       ,Tropical Storm SONIA                  ,2013
+al012014,ARTHUR      ,Hurricane ARTHUR                      ,2014
+al022014,TWO         ,Tropical Depression TWO               ,2014
+al032014,BERTHA      ,Hurricane BERTHA                      ,2014
+al042014,CRISTOBAL   ,Hurricane CRISTOBAL                   ,2014
+al052014,DOLLY       ,Tropical Storm DOLLY                  ,2014
+al062014,EDOUARD     ,Hurricane EDOUARD                     ,2014
+al072014,FAY         ,Hurricane FAY                         ,2014
+al082014,GONZALO     ,Hurricane GONZALO                     ,2014
+al092014,HANNA       ,Tropical Storm HANNA                  ,2014
+ep012014,AMANDA      ,Hurricane AMANDA                      ,2014
+ep022014,BORIS       ,Tropical Storm BORIS                  ,2014
+ep032014,CRISTINA    ,Hurricane CRISTINA                    ,2014
+ep042014,DOUGLAS     ,Tropical Storm DOUGLAS                ,2014
+ep052014,ELIDA       ,Tropical Storm ELIDA                  ,2014
+ep062014,FAUSTO      ,Tropical Storm FAUSTO                 ,2014
+ep072014,GENEVIEVE   ,Tropical Storm GENEVIEVE              ,2014
+ep082014,HERNAN      ,Hurricane HERNAN                      ,2014
+ep092014,ISELLE      ,Hurricane ISELLE                      ,2014
+ep102014,JULIO       ,Hurricane JULIO                       ,2014
+ep112014,KARINA      ,Hurricane KARINA                      ,2014
+ep122014,LOWELL      ,Hurricane LOWELL                      ,2014
+ep132014,MARIE       ,Hurricane MARIE                       ,2014
+ep142014,NORBERT     ,Hurricane NORBERT                     ,2014
+ep152014,ODILE       ,Hurricane ODILE                       ,2014
+ep162014,SIXTEEN-E   ,Tropical Depression SIXTEEN-E         ,2014
+ep172014,POLO        ,Hurricane POLO                        ,2014
+ep182014,RACHEL      ,Hurricane RACHEL                      ,2014
+ep192014,SIMON       ,Hurricane SIMON                       ,2014
+ep202014,TRUDY       ,Tropical Storm TRUDY                  ,2014
+ep212014,VANCE       ,Hurricane VANCE                       ,2014
+al012015,ANA         ,Tropical Storm ANA                    ,2015
+al022015,BILL        ,Tropical Storm BILL                   ,2015
+al032015,CLAUDETTE   ,Tropical Storm CLAUDETTE              ,2015
+al042015,DANNY       ,Hurricane DANNY                       ,2015
+al052015,ERIKA       ,Tropical Storm ERIKA                  ,2015
+al062015,FRED        ,Hurricane FRED                        ,2015
+al072015,GRACE       ,Tropical Storm GRACE                  ,2015
+al082015,HENRI       ,Tropical Storm HENRI                  ,2015
+al092015,NINE        ,Tropical Depression NINE              ,2015
+al102015,IDA         ,Tropical Storm IDA                    ,2015
+al112015,JOAQUIN     ,Hurricane JOAQUIN                     ,2015
+al122015,KATE        ,Hurricane KATE                        ,2015
+ep012015,ANDRES      ,Hurricane ANDRES                      ,2015
+ep022015,BLANCA      ,Hurricane BLANCA                      ,2015
+ep032015,CARLOS      ,Hurricane CARLOS                      ,2015
+ep042015,FOUR-E      ,Tropical Depression FOUR-E            ,2015
+ep052015,DOLORES     ,Hurricane DOLORES                     ,2015
+ep062015,ENRIQUE     ,Tropical Storm ENRIQUE                ,2015
+ep072015,FELICIA     ,Tropical Storm FELICIA                ,2015
+ep082015,EIGHT-E     ,Tropical Depression EIGHT-E           ,2015
+ep092015,GUILLERMO   ,Hurricane GUILLERMO                   ,2015
+ep102015,HILDA       ,Hurricane HILDA                       ,2015
+ep112015,ELEVEN-E    ,Tropical Depression ELEVEN-E          ,2015
+ep122015,IGNACIO     ,Hurricane IGNACIO                     ,2015
+ep132015,JIMENA      ,Hurricane JIMENA                      ,2015
+ep142015,KEVIN       ,Tropical Storm KEVIN                  ,2015
+ep152015,LINDA       ,Hurricane LINDA                       ,2015
+ep162015,SIXTEEN-E   ,Tropical Depression SIXTEEN-E         ,2015
+ep172015,MARTY       ,Hurricane MARTY                       ,2015
+ep182015,NORA        ,Tropical Storm NORA                   ,2015
+ep192015,OLAF        ,Hurricane OLAF                        ,2015
+ep202015,PATRICIA    ,Hurricane PATRICIA                    ,2015
+ep212015,RICK        ,Tropical Storm RICK                   ,2015
+ep222015,SANDRA      ,Hurricane SANDRA                      ,2015
+al012016,ALEX        ,Hurricane ALEX                        ,2016
+al022016,BONNIE      ,Tropical Storm BONNIE                 ,2016
+al032016,COLIN       ,Tropical Storm COLIN                  ,2016
+al042016,DANIELLE    ,Tropical Storm DANIELLE               ,2016
+al052016,EARL        ,Hurricane EARL                        ,2016
+al062016,FIONA       ,Tropical Storm FIONA                  ,2016
+al072016,GASTON      ,Hurricane GASTON                      ,2016
+al082016,EIGHT       ,Tropical Depression EIGHT             ,2016
+al092016,HERMINE     ,Hurricane HERMINE                     ,2016
+al102016,IAN         ,Tropical Storm IAN                    ,2016
+al112016,JULIA       ,Tropical Storm JULIA                  ,2016
+al122016,KARL        ,Tropical Storm KARL                   ,2016
+al132016,LISA        ,Tropical Storm LISA                   ,2016
+al142016,MATTHEW     ,Hurricane MATTHEW                     ,2016
+al152016,NICOLE      ,Hurricane NICOLE                      ,2016
+al162016,OTTO        ,Hurricane OTTO                        ,2016
+ep012016,ONE-E       ,Tropical Depression ONE-E             ,2016
+ep022016,AGATHA      ,Tropical Storm AGATHA                 ,2016
+ep032016,BLAS        ,Hurricane BLAS                        ,2016
+ep042016,CELIA       ,Hurricane CELIA                       ,2016
+ep052016,DARBY       ,Hurricane DARBY                       ,2016
+ep062016,ESTELLE     ,Tropical Storm ESTELLE                ,2016
+ep072016,FRANK       ,Hurricane FRANK                       ,2016
+ep082016,GEORGETTE   ,Hurricane GEORGETTE                   ,2016
+ep092016,HOWARD      ,Tropical Storm HOWARD                 ,2016
+ep102016,IVETTE      ,Tropical Storm IVETTE                 ,2016
+ep112016,JAVIER      ,Tropical Storm JAVIER                 ,2016
+ep122016,KAY         ,Tropical Storm KAY                    ,2016
+ep132016,LESTER      ,Hurricane LESTER                      ,2016
+ep142016,MADELINE    ,Tropical Storm MADELINE               ,2016
+ep152016,NEWTON      ,Hurricane NEWTON                      ,2016
+ep162016,ORLENE      ,Hurricane ORLENE                      ,2016
+ep172016,PAINE       ,Hurricane PAINE                       ,2016
+ep182016,ROSLYN      ,Tropical Storm ROSLYN                 ,2016
+ep192016,ULIKA       ,Hurricane ULIKA                       ,2016
+ep202016,SEYMOUR     ,Hurricane SEYMOUR                     ,2016
+ep212016,TINA        ,Tropical Storm TINA                   ,2016
+ep222016,OTTO        ,Tropical Storm OTTO                   ,2016
+al012017,ARLENE      ,Tropical Storm ARLENE                 ,2017
+al022017,BRET        ,Tropical Storm BRET                   ,2017
+al032017,CINDY       ,Tropical Storm CINDY                  ,2017
+al042017,FOUR        ,Tropical Depression FOUR              ,2017
+al052017,DON         ,Tropical Storm DON                    ,2017
+al062017,EMILY       ,Tropical Storm EMILY                  ,2017
+al072017,FRANKLIN    ,Hurricane FRANKLIN                    ,2017
+al082017,GERT        ,Hurricane GERT                        ,2017
+al092017,HARVEY      ,Hurricane HARVEY                      ,2017
+al102017,TEN         ,Potential Tropical Cyclone TEN        ,2017
+al112017,IRMA        ,Hurricane IRMA                        ,2017
+al122017,JOSE        ,Hurricane JOSE                        ,2017
+al132017,KATIA       ,Hurricane KATIA                       ,2017
+al142017,LEE         ,Hurricane LEE                         ,2017
+al152017,MARIA       ,Hurricane MARIA                       ,2017
+al162017,NATE        ,Hurricane NATE                        ,2017
+al172017,OPHELIA     ,Hurricane OPHELIA                     ,2017
+al182017,PHILIPPE    ,Tropical Storm PHILIPPE               ,2017
+al192017,RINA        ,Tropical Storm RINA                   ,2017
+ep012017,ADRIAN      ,Tropical Storm ADRIAN                 ,2017
+ep022017,BEATRIZ     ,Tropical Storm BEATRIZ                ,2017
+ep032017,CALVIN      ,Tropical Storm CALVIN                 ,2017
+ep042017,DORA        ,Hurricane DORA                        ,2017
+ep052017,EUGENE      ,Hurricane EUGENE                      ,2017
+ep062017,FERNANDA    ,Hurricane FERNANDA                    ,2017
+ep072017,GREG        ,Tropical Storm GREG                   ,2017
+ep082017,EIGHT-E     ,Tropical Depression EIGHT-E           ,2017
+ep092017,HILARY      ,Hurricane HILARY                      ,2017
+ep102017,IRWIN       ,Hurricane IRWIN                       ,2017
+ep112017,ELEVEN-E    ,Tropical Depression ELEVEN-E          ,2017
+ep122017,JOVA        ,Tropical Storm JOVA                   ,2017
+ep132017,KENNETH     ,Hurricane KENNETH                     ,2017
+ep142017,LIDIA       ,Tropical Storm LIDIA                  ,2017
+ep152017,OTIS        ,Hurricane OTIS                        ,2017
+ep162017,MAX         ,Hurricane MAX                         ,2017
+ep172017,NORMA       ,Hurricane NORMA                       ,2017
+ep182017,PILAR       ,Tropical Storm PILAR                  ,2017
+ep192017,RAMON       ,Tropical Storm RAMON                  ,2017
+ep202017,SELMA       ,Tropical Storm SELMA                  ,2017
+ep062017,FERNANDA    ,Hurricane FERNANDA                    ,2017
+ep072017,GREG        ,Tropical Storm GREG                   ,2017
+al012018,ALBERTO     ,Subtropical Storm ALBERTO             ,2018
+al022018,BERYL       ,Hurricane BERYL                       ,2018
+al032018,CHRIS       ,Hurricane CHRIS                       ,2018
+al042018,DEBBY       ,Tropical Storm DEBBY                  ,2018
+al052018,ERNESTO     ,Tropical Storm ERNESTO                ,2018
+al062018,FLORENCE    ,Hurricane FLORENCE                    ,2018
+al072018,GORDON      ,Tropical Storm GORDON                 ,2018
+al082018,HELENE      ,Hurricane HELENE                      ,2018
+al092018,ISAAC       ,Hurricane ISAAC                       ,2018
+al102018,JOYCE       ,Tropical Storm JOYCE                  ,2018
+al112018,ELEVEN      ,Tropical Depression ELEVEN            ,2018
+al122018,KIRK        ,Tropical Storm KIRK                   ,2018
+al132018,LESLIE      ,Hurricane LESLIE                      ,2018
+al142018,MICHAEL     ,Hurricane MICHAEL                     ,2018
+al152018,NADINE      ,Tropical Storm NADINE                 ,2018
+al162018,OSCAR       ,Hurricane OSCAR                       ,2018
+ep012018,ONE-E       ,Tropical Depression ONE-E             ,2018
+ep022018,ALETTA      ,Hurricane ALETTA                      ,2018
+ep032018,BUD         ,Hurricane BUD                         ,2018
+ep042018,CARLOTTA    ,Tropical Storm CARLOTTA               ,2018
+ep052018,DANIEL      ,Tropical Storm DANIEL                 ,2018
+ep062018,EMILIA      ,Tropical Storm EMILIA                 ,2018
+ep072018,FABIO       ,Hurricane FABIO                       ,2018
+ep082018,GILMA       ,Tropical Storm GILMA                  ,2018
+ep092018,NINE-E      ,Tropical Depression NINE-E            ,2018
+ep102018,HECTOR      ,Hurricane HECTOR                      ,2018
+ep112018,ILEANA      ,Tropical Storm ILEANA                 ,2018
+ep122018,JOHN        ,Hurricane JOHN                        ,2018
+ep132018,KRISTY      ,Tropical Storm KRISTY                 ,2018
+ep142018,LANE        ,Hurricane LANE                        ,2018
+ep152018,MIRIAM      ,Hurricane MIRIAM                      ,2018
+ep162018,NORMAN      ,Hurricane NORMAN                      ,2018
+ep172018,OLIVIA      ,Hurricane OLIVIA                      ,2018
+ep182018,PAUL        ,Tropical Storm PAUL                   ,2018
+ep192018,NINETEEN-E  ,Tropical Depression NINETEEN-E        ,2018
+ep202018,ROSA        ,Hurricane ROSA                        ,2018
+ep212018,SERGIO      ,Hurricane SERGIO                      ,2018
+ep222018,TARA        ,Tropical Storm TARA                   ,2018
+ep232018,VICENTE     ,Tropical Storm VICENTE                ,2018
+ep242018,WILLA       ,Hurricane WILLA                       ,2018
+ep252018,XAVIER      ,Tropical Storm XAVIER                 ,2018
+cp012018,WALAKA      ,Hurricane WALAKA                      ,2018
+ep102018,HECTOR      ,Hurricane HECTOR                      ,2018
+ep142018,LANE        ,Hurricane LANE                        ,2018
+ep152018,MIRIAM      ,Hurricane MIRIAM                      ,2018
+ep162018,NORMAN      ,Hurricane NORMAN                      ,2018
+ep172018,OLIVIA      ,Hurricane OLIVIA                      ,2018
+al012019,ANDREA      ,Subtropical Storm ANDREA              ,2019
+al022019,BARRY       ,Hurricane BARRY                       ,2019
+al032019,THREE       ,Tropical Depression THREE             ,2019
+al042019,CHANTAL     ,Tropical Storm CHANTAL                ,2019
+al052019,DORIAN      ,Hurricane DORIAN                      ,2019
+al062019,ERIN        ,Tropical Storm ERIN                   ,2019
+al072019,FERNAND     ,Tropical Storm FERNAND                ,2019
+al082019,GABRIELLE   ,Tropical Storm GABRIELLE              ,2019
+al092019,HUMBERTO    ,Hurricane HUMBERTO                    ,2019
+al102019,JERRY       ,Hurricane JERRY                       ,2019
+al112019,IMELDA      ,Tropical Storm IMELDA                 ,2019
+al122019,KAREN       ,Tropical Storm KAREN                  ,2019
+al132019,LORENZO     ,Hurricane LORENZO                     ,2019
+al142019,MELISSA     ,Tropical Storm MELISSA                ,2019
+al152019,FIFTEEN     ,Tropical Depression FIFTEEN           ,2019
+al162019,NESTOR      ,Tropical Storm NESTOR                 ,2019
+al172019,OLGA        ,Tropical Storm OLGA                   ,2019
+al182019,PABLO       ,Hurricane PABLO                       ,2019
+al192019,REBEKAH     ,Subtropical Storm REBEKAH             ,2019
+al202019,SEBASTIEN   ,Tropical Storm SEBASTIEN              ,2019
+ep012019,ALVIN       ,Hurricane ALVIN                       ,2019
+ep022019,BARBARA     ,Hurricane BARBARA                     ,2019
+ep032019,COSME       ,Tropical Storm COSME                  ,2019
+ep042019,FOUR-E      ,Tropical Depression FOUR-E            ,2019
+ep052019,DALILA      ,Tropical Storm DALILA                 ,2019
+ep062019,ERICK       ,Hurricane ERICK                       ,2019
+ep072019,FLOSSIE     ,Hurricane FLOSSIE                     ,2019
+ep082019,GIL         ,Tropical Storm GIL                    ,2019
+ep092019,HENRIETTE   ,Tropical Storm HENRIETTE              ,2019
+ep102019,IVO         ,Tropical Storm IVO                    ,2019
+ep112019,JULIETTE    ,Hurricane JULIETTE                    ,2019
+ep122019,AKONI       ,Tropical Storm AKONI                  ,2019
+ep132019,KIKO        ,Hurricane KIKO                        ,2019
+ep142019,MARIO       ,Tropical Storm MARIO                  ,2019
+ep152019,LORENA      ,Hurricane LORENA                      ,2019
+ep162019,NARDA       ,Tropical Storm NARDA                  ,2019
+ep172019,SEVENTEEN-E ,Potential Tropical Cyclone SEVENTEEN-E,2019
+ep182019,OCTAVE      ,Tropical Storm OCTAVE                 ,2019
+ep192019,PRISCILLA   ,Tropical Storm PRISCILLA              ,2019
+ep202019,RAYMOND     ,Tropical Storm RAYMOND                ,2019
+ep212019,TWENTY-ONE-E,Tropical Depression TWENTY-ONE-E      ,2019
+cp012019,EMA         ,Tropical Storm EMA                    ,2019
+al012020,ARTHUR      ,Tropical Storm ARTHUR                 ,2020
+al022020,BERTHA      ,Tropical Storm BERTHA                 ,2020
+al032020,CRISTOBAL   ,Tropical Storm CRISTOBAL              ,2020
+al042020,DOLLY       ,Tropical Storm DOLLY                  ,2020
+al052020,EDOUARD     ,Tropical Storm EDOUARD                ,2020
+al062020,FAY         ,Tropical Storm FAY                    ,2020
+al072020,GONZALO     ,Tropical Storm GONZALO                ,2020
+al082020,HANNA       ,Hurricane HANNA                       ,2020
+al092020,ISAIAS      ,Hurricane ISAIAS                      ,2020
+al102020,TEN         ,Tropical Depression TEN               ,2020
+al112020,JOSEPHINE   ,Tropical Storm JOSEPHINE              ,2020
+al122020,KYLE        ,Tropical Storm KYLE                   ,2020
+al132020,LAURA       ,Hurricane LAURA                       ,2020
+al142020,MARCO       ,Hurricane MARCO                       ,2020
+al152020,OMAR        ,Tropical Storm OMAR                   ,2020
+al162020,NANA        ,Hurricane NANA                        ,2020
+al172020,PAULETTE    ,Hurricane PAULETTE                    ,2020
+al182020,RENE        ,Tropical Storm RENE                   ,2020
+al192020,SALLY       ,Hurricane SALLY                       ,2020
+al202020,TEDDY       ,Hurricane TEDDY                       ,2020
+al212020,VICKY       ,Tropical Storm VICKY                  ,2020
+al222020,BETA        ,Tropical Storm BETA                   ,2020
+al232020,WILFRED     ,Tropical Storm WILFRED                ,2020
+al242020,ALPHA       ,Subtropical Storm ALPHA               ,2020
+al252020,GAMMA       ,Hurricane GAMMA                       ,2020
+al262020,DELTA       ,Hurricane DELTA                       ,2020
+al272020,EPSILON     ,Hurricane EPSILON                     ,2020
+al282020,ZETA        ,Hurricane ZETA                        ,2020
+al292020,ETA         ,Hurricane ETA                         ,2020
+al302020,THETA       ,Tropical Storm THETA                  ,2020
+al312020,IOTA        ,Hurricane IOTA                        ,2020
+ep012020,ONE-E       ,Tropical Depression ONE-E             ,2020
+ep022020,AMANDA      ,Tropical Storm AMANDA                 ,2020
+ep032020,BORIS       ,Tropical Storm BORIS                  ,2020
+ep042020,FOUR-E      ,Tropical Depression FOUR-E            ,2020
+ep052020,CRISTINA    ,Tropical Storm CRISTINA               ,2020
+ep062020,SIX-E       ,Tropical Depression SIX-E             ,2020
+ep072020,SEVEN-E     ,Tropical Depression SEVEN-E           ,2020
+ep082020,DOUGLAS     ,Hurricane DOUGLAS                     ,2020
+ep092020,ELIDA       ,Hurricane ELIDA                       ,2020
+ep102020,TEN-E       ,Tropical Depression TEN-E             ,2020
+ep112020,FAUSTO      ,Tropical Storm FAUSTO                 ,2020
+ep122020,GENEVIEVE   ,Hurricane GENEVIEVE                   ,2020
+ep132020,HERNAN      ,Tropical Storm HERNAN                 ,2020
+ep142020,ISELLE      ,Tropical Storm ISELLE                 ,2020
+ep152020,JULIO       ,Tropical Storm JULIO                  ,2020
+ep162020,KARINA      ,Tropical Storm KARINA                 ,2020
+ep172020,LOWELL      ,Tropical Storm LOWELL                 ,2020
+ep182020,MARIE       ,Hurricane MARIE                       ,2020
+ep192020,NORBERT     ,Tropical Storm NORBERT                ,2020
+ep202020,ODALYS      ,Tropical Storm ODALYS                 ,2020
+ep212020,POLO        ,Tropical Storm POLO                   ,2020
