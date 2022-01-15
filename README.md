@@ -87,21 +87,19 @@ nhc_storms = nhc_storms()
 ```
 
 ```
-               name                 long_name  year
-nhc_code                                                 
-al012008     ARTHUR     Tropical Storm ARTHUR  2008
-al022008     BERTHA          Hurricane BERTHA  2008
-al032008  CRISTOBAL  Tropical Storm CRISTOBAL  2008
-al042008      DOLLY           Hurricane DOLLY  2008
-al052008    EDOUARD    Tropical Storm EDOUARD  2008
-...             ...                       ...   ...
-ep152021       OLAF            Hurricane OLAF  2021
-ep162021     PAMELA          Hurricane PAMELA  2021
-ep172021       RICK            Hurricane RICK  2021
-ep182021      TERRY      Tropical Storm TERRY  2021
-ep192021     SANDRA     Tropical Storm SANDRA  2021
-
-[523 rows x 3 columns]
+                name type  year  start_date    end_date     source
+nhc_code
+AL021851     UNNAMED   HU  1851  1851070512  1851070512    ARCHIVE
+AL031851     UNNAMED   TS  1851  1851071012  1851071012    ARCHIVE
+AL041851     UNNAMED   HU  1851  1851081600  1851082718    ARCHIVE
+AL051851     UNNAMED   TS  1851  1851091300  1851091618    ARCHIVE
+AL061851     UNNAMED   TS  1851  1851101600  1851101918    ARCHIVE
+           ...  ...   ...         ...         ...        ...
+EP192021      SANDRA   TD  2021  2021110106  9999999999    WARNING
+EP732021  GENESIS030   DB  2021  2021102712  2021103012    GENESIS
+EP742021  GENESIS031   DB  2021  2021102918  2021110500    GENESIS
+EP752021  GENESIS032   DB  2021  2021110106  2021110712    GENESIS
+EP922021      INVEST   DB  2021  2021060506  9999999999   METWATCH
 ```
 
 #### retrieve spatial storm tracks provided by the NHC
@@ -140,15 +138,15 @@ hwm_storms = usgs_highwatermark_storms()
 usgs_id                                                            
 7        2013                FEMA 2013 exercise      None      None
 8        2013                             Wilma      None      None
-18       2012                    Isaac Aug 2012     ISAAC  al092012
+18       2012                    Isaac Aug 2012     ISAAC  AL092012
 19       2005                              Rita      None      None
-23       2011                             Irene     IRENE  al092011
+23       2011                             Irene     IRENE  AL092011
 ...       ...                               ...       ...       ...
-303      2020  2020 TS Marco - Hurricane  Laura     MARCO  al142020
-304      2020              2020 Hurricane Sally     SALLY  al192020
-305      2020              2020 Hurricane Delta     DELTA  al262020
-310      2021       2021 Tropical Cyclone Henri     HENRI  al082021
-312      2021         2021 Tropical Cyclone Ida       IDA  al092021
+303      2020  2020 TS Marco - Hurricane  Laura     MARCO  AL142020
+304      2020              2020 Hurricane Sally     SALLY  AL192020
+305      2020              2020 Hurricane Delta     DELTA  AL262020
+310      2021       2021 Tropical Cyclone Henri     HENRI  AL082021
+312      2021         2021 Tropical Cyclone Ida       IDA  AL092021
 
 [24 rows x 3 columns]
 ```

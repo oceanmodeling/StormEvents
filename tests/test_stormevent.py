@@ -4,7 +4,6 @@ import pytest
 from stormevents.nhc import VortexTrack
 from stormevents.stormevent import StormEvent
 from stormevents.usgs import StormHighWaterMarks
-from tests import REFERENCE_DIRECTORY
 
 
 @pytest.fixture
@@ -30,6 +29,17 @@ def test_stormevent(florence2018):
     assert sally2020.year == 2020
     assert sally2020.nhc_code == 'al192020'
     assert sally2020.usgs_id == 304
+
+
+def test_nonexistent_storm():
+    with pytest.raises(ValueError):
+        StormEvent('nonexistent', 2021)
+
+    with pytest.raises(ValueError):
+        StormEvent.from_nhc_code('AL992021')
+
+    with pytest.raises(ValueError):
+        StormEvent.from_nhc_code(-1)
 
 
 def test_track(florence2018):
