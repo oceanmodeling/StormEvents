@@ -260,13 +260,13 @@ class StormHighWaterMarks(HighWaterMarks):
             hwm_environment = HWMEnvironment.RIVERINE
 
         storms = usgs_highwatermark_storms(year=year)
+        storm = storms[(storms['nhc_name'] == name.upper().strip()) & (storms['year'] == year)]
 
-        event_id = storms[
-            (storms['nhc_name'] == name.upper()) & (storms['year'] == year)
-        ].index[0]
+        if len(storm) == 0:
+            raise ValueError(f'storm "{name} {year}" not found in USGS HWM database')
 
         super().__init__(
-            event_id=event_id,
+            event_id=storm.index[0],
             event_status=EventStatus.COMPLETED,
             event_type=EventType.HURRICANE,
             us_states=us_states,
@@ -393,15 +393,28 @@ def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     usgs_id
     7        2013                FEMA 2013 exercise      None      None
     8        2013                             Wilma      None      None
-    18       2012                    Isaac Aug 2012     ISAAC  al092012
-    19       2005                              Rita      None      None
-    23       2011                             Irene     IRENE  al092011
-    ...       ...                               ...       ...       ...
-    303      2020  2020 TS Marco - Hurricane  Laura     MARCO  al142020
-    304      2020              2020 Hurricane Sally     SALLY  al192020
-    305      2020              2020 Hurricane Delta     DELTA  al262020
-    310      2021       2021 Tropical Cyclone Henri     HENRI  al082021
-    312      2021         2021 Tropical Cyclone Ida       IDA  al092021
+    18       2012                    Isaac Aug 2012     ISAAC  AL092012
+    19       2005                              Rita      RITA  AL182005
+    23       2011                             Irene     IRENE  AL092011
+    24       2017                             Sandy      None      None
+    119      2015                           Joaquin   JOAQUIN  AL112015
+    131      2016                           Hermine   HERMINE  AL092016
+    133      2003             Isabel September 2003    ISABEL  AL132003
+    135      2016              Matthew October 2016   MATTHEW  AL142016
+    180      2017                   Harvey Aug 2017    HARVEY  AL092017
+    182      2017               Irma September 2017      IRMA  AL112017
+    189      2017              Maria September 2017     MARIA  AL152017
+    196      2017                 Nate October 2017      NATE  AL162017
+    281      2019                  Lane August 2018      None      None
+    283      2018                 Florence Sep 2018  FLORENCE  AL062018
+    287      2018                  Michael Oct 2018   MICHAEL  AL142018
+    291      2019             2019 Hurricane Dorian    DORIAN  AL052019
+    301      2020             2020 Hurricane Isaias      None      None
+    303      2020  2020 TS Marco - Hurricane  Laura      None      None
+    304      2020              2020 Hurricane Sally      None      None
+    305      2020              2020 Hurricane Delta      None      None
+    310      2021       2021 Tropical Cyclone Henri     HENRI  AL082021
+    312      2021         2021 Tropical Cyclone Ida       IDA  AL092021
     """
 
     events = usgs_highwatermark_events(event_type=EventType.HURRICANE, year=year)
@@ -412,15 +425,16 @@ def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
 
     storms = nhc_storms(tuple(pandas.unique(events['year'])))
 
-    storm_names = pandas.unique(storms['name'])
+    storm_names = pandas.unique(storms['name'].str.strip())
     storm_names.sort()
     for storm_name in storm_names:
         event_storms = events[
-            events['usgs_name'].str.contains(storm_name, flags=re.IGNORECASE,)
+            events['usgs_name'].str.contains(storm_name, flags=re.IGNORECASE)
         ]
         for event_id, event in event_storms.iterrows():
             storms_matching = storms[
-                (storms['name'] == storm_name) & (storms['year'] == event['year'])
+                storms['name'].str.contains(storm_name, flags=re.IGNORECASE)
+                & (storms['year'] == event['year'])
             ]
 
             for nhc_code, storm in storms_matching.iterrows():

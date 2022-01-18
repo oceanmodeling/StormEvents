@@ -17,12 +17,14 @@ from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
 from shapely.geometry import Polygon
+import typepigeon
 
 from stormevents.nhc import nhc_storms
 from stormevents.nhc.atcf import (
     ATCF_FileDeck,
     atcf_id_from_storm_name,
     ATCF_Mode,
+    ATCF_RecordType,
     atcf_url,
     normalize_atcf_value,
 )
@@ -69,7 +71,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
-        record_type: str = None,
+        record_type: ATCF_RecordType = None,
         filename: PathLike = None,
     ):
         self.__dataframe = None
@@ -439,20 +441,23 @@ class VortexTrack:
         return self.__record_type
 
     @record_type.setter
-    def record_type(self, record_type: str):
+    def record_type(self, record_type: ATCF_RecordType):
         # e.g. BEST, OFCL, HWRF, etc.
         if record_type is not None:
+            if not isinstance(record_type, str):
+                record_type = typepigeon.convert_value(record_type, str)
+            record_type = record_type.upper()
             if self.file_deck == ATCF_FileDeck.a:
                 # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
                 # there are more but they may not have enough columns
-                record_types_list = ['OFCL', 'OFCP', 'HWRF', 'HMON', 'CARQ']
+                allowed_record_types = ['OFCL', 'OFCP', 'HWRF', 'HMON', 'CARQ']
             elif self.file_deck == ATCF_FileDeck.b:
-                record_types_list = ['BEST']
+                allowed_record_types = ['BEST']
             else:
                 raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
-            if record_type not in record_types_list:
+            if record_type not in allowed_record_types:
                 raise ValueError(
-                    f'request_record_type = {record_type} not allowed, select from {record_types_list}'
+                    f'request_record_type = {record_type} not allowed, select from {allowed_record_types}'
                 )
         self.__record_type = record_type
 

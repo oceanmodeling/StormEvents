@@ -28,7 +28,9 @@ def test_usgs_highwatermark_storms():
 
     storms = usgs_highwatermark_storms(year=tuple(range(2003, 2020 + 1)))
 
-    reference_storms = pandas.read_csv(reference_directory / 'storms.csv', index_col='usgs_id')
+    reference_storms = pandas.read_csv(
+        reference_directory / 'storms.csv', index_col='usgs_id', na_values=''
+    )
 
     pandas.testing.assert_frame_equal(storms, reference_storms)
 

@@ -78,37 +78,43 @@ By default, these functions operate within the time interval defined by the NHC 
 
 ### vortex tracks from the National Hurricane Center (NHC)
 
-#### list storm events defined by the NHC since 2008
+#### list storm events defined by the NHC
 
 ```python
 from stormevents.nhc import nhc_storms
 
-nhc_storms = nhc_storms()
+nhc_storms = nhc_storms(year=None)
 ```
 
 ```
-                name type  year  start_date    end_date     source
+                name class  year  start_date    end_date     source
 nhc_code
-AL021851     UNNAMED   HU  1851  1851070512  1851070512    ARCHIVE
-AL031851     UNNAMED   TS  1851  1851071012  1851071012    ARCHIVE
-AL041851     UNNAMED   HU  1851  1851081600  1851082718    ARCHIVE
-AL051851     UNNAMED   TS  1851  1851091300  1851091618    ARCHIVE
-AL061851     UNNAMED   TS  1851  1851101600  1851101918    ARCHIVE
-           ...  ...   ...         ...         ...        ...
-EP192021      SANDRA   TD  2021  2021110106  9999999999    WARNING
-EP732021  GENESIS030   DB  2021  2021102712  2021103012    GENESIS
-EP742021  GENESIS031   DB  2021  2021102918  2021110500    GENESIS
-EP752021  GENESIS032   DB  2021  2021110106  2021110712    GENESIS
-EP922021      INVEST   DB  2021  2021060506  9999999999   METWATCH
+AL021851     UNNAMED    HU  1851  1851070512  1851070512    ARCHIVE
+AL031851     UNNAMED    TS  1851  1851071012  1851071012    ARCHIVE
+AL041851     UNNAMED    HU  1851  1851081600  1851082718    ARCHIVE
+AL051851     UNNAMED    TS  1851  1851091300  1851091618    ARCHIVE
+AL061851     UNNAMED    TS  1851  1851101600  1851101918    ARCHIVE
+       ...   ...   ...         ...         ...        ...
+EP192021      SANDRA    TD  2021  2021110106  9999999999    WARNING
+EP732021  GENESIS030    DB  2021  2021102712  2021103012    GENESIS
+EP742021  GENESIS031    DB  2021  2021102918  2021110500    GENESIS
+EP752021  GENESIS032    DB  2021  2021110106  2021110712    GENESIS
+EP922021      INVEST    DB  2021  2021060506  9999999999   METWATCH
+
+[2693 rows x 6 columns]
 ```
 
-#### retrieve spatial storm tracks provided by the NHC
+#### retrieve a storm track provided by the NHC
 
 ```python
 from stormevents.nhc import VortexTrack
+from stormevents.nhc.atcf import ATCF_FileDeck
 
 # retrieve vortex data from the Internet from its ID
 vortex = VortexTrack('AL112017')
+
+# you can specify the file deck with `file_deck`
+vortex = VortexTrack('AL112017', file_deck=ATCF_FileDeck.f)
 
 # you can also use the storm name and year in the lookup
 vortex = VortexTrack('irma2017')

@@ -46,6 +46,15 @@ class ATCF_Mode(Enum):
     realtime = 'aid_public'
 
 
+class ATCF_RecordType(Enum):
+    best = 'BEST'
+    ofcl = 'OFCL'
+    ofcp = 'OFCP'
+    hmon = 'HMON'
+    carq = 'CARQ'
+    hwrf = 'HWRF'
+
+
 def get_atcf_entry(
     year: int, basin: str = None, storm_number: int = None, storm_name: str = None,
 ) -> Series:
