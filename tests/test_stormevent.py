@@ -12,8 +12,8 @@ def florence2018() -> StormEvent:
 
 
 def test_storm_lookup():
-    paine2016 = StormEvent.from_nhc_code('EP172016')
     florence2018 = StormEvent('florence', 2018)
+    paine2016 = StormEvent.from_nhc_code('EP172016')
     henri2021 = StormEvent.from_usgs_id(310)
 
     with pytest.raises(ValueError):

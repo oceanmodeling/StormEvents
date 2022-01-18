@@ -41,7 +41,7 @@ or from the USGS flood event ID (i.e. `283`).
 ```python
 from stormevents import StormEvent
 
-sally2020 = StormEvent.from_usgs_id(304)
+henri2021 = StormEvent.from_usgs_id(310)
 ```
 
 For this storm, you can then retrieve track data from NHC,
