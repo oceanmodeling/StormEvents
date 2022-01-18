@@ -1,5 +1,6 @@
 from datetime import datetime
 from functools import lru_cache
+import re
 from typing import Iterable
 
 from bs4 import BeautifulSoup
@@ -70,29 +71,30 @@ def wsurge_storms(year: int = None):
 
 
 @lru_cache(maxsize=None)
-def nhc_storms(year: int = None) -> pandas.DataFrame:
+def nhc_storms(year: int = None, add_wsurge: bool = True) -> pandas.DataFrame:
     """
     retrieve a list of hurricanes from NHC since 1851
 
     :param year: storm year
+    :param add_wsurge: also attempt to read in WSURGE table
     :return: table of storms
 
     >>> nhc_storms()
-                    name class  ...             end_date    source
-    nhc_code                    ...
-    AL021851     UNNAMED    HU  ...  1851-07-05 12:00:00   ARCHIVE
-    AL031851     UNNAMED    TS  ...  1851-07-10 12:00:00   ARCHIVE
-    AL041851     UNNAMED    HU  ...  1851-08-27 18:00:00   ARCHIVE
-    AL051851     UNNAMED    TS  ...  1851-09-16 18:00:00   ARCHIVE
-    AL061851     UNNAMED    TS  ...  1851-10-19 18:00:00   ARCHIVE
-                  ...   ...  ...                  ...       ...
-    EP192021      SANDRA    TD  ...                  NaN   WARNING
-    EP732021  GENESIS030    DB  ...  2021-10-30 12:00:00   GENESIS
-    EP742021  GENESIS031    DB  ...  2021-11-05 00:00:00   GENESIS
-    EP752021  GENESIS032    DB  ...  2021-11-07 12:00:00   GENESIS
-    EP922021      INVEST    DB  ...                  NaN  METWATCH
+                 name class  year          start_date            end_date   source
+    nhc_code
+    AL021851  UNNAMED    HU  1851 1851-07-05 12:00:00 1851-07-05 12:00:00  ARCHIVE
+    AL031851  UNNAMED    TS  1851 1851-07-10 12:00:00 1851-07-10 12:00:00  ARCHIVE
+    AL041851  UNNAMED    HU  1851 1851-08-16 00:00:00 1851-08-27 18:00:00  ARCHIVE
+    AL051851  UNNAMED    TS  1851 1851-09-13 00:00:00 1851-09-16 18:00:00  ARCHIVE
+    AL061851  UNNAMED    TS  1851 1851-10-16 00:00:00 1851-10-19 18:00:00  ARCHIVE
+    ...           ...   ...   ...                 ...                 ...      ...
+    EP132020   HERNAN    TS  2020                 NaT                 NaT     None
+    EP142020   ISELLE    TS  2020                 NaT                 NaT     None
+    EP152020    JULIO    TS  2020                 NaT                 NaT     None
+    EP182020    MARIE    HU  2020                 NaT                 NaT     None
+    EP212020     POLO    TS  2020                 NaT                 NaT     None
 
-    [2693 rows x 6 columns]
+    [2730 rows x 6 columns]
     """
 
     url = 'https://ftp.nhc.noaa.gov/atcf/index/storm_list.txt'
@@ -135,16 +137,55 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
 
     storms = storms[['nhc_code', 'name', 'class', 'year', 'start_date', 'end_date', 'source']]
 
-    for string_column in ['nhc_code', 'name', 'class', 'source']:
-        storms[string_column] = storms[string_column].str.strip()
-        storms[string_column][storms[string_column].str.len() == 0] = None
-
     if year is not None:
         if isinstance(year, Iterable) and not isinstance(year, str):
             storms = storms[storms['year'].isin(year)]
         else:
             storms = storms[storms['year'] == int(year)]
 
+    for string_column in ['nhc_code', 'name', 'class', 'source']:
+        storms[string_column] = storms[string_column].str.strip()
+
     storms.set_index('nhc_code', inplace=True)
+
+    if add_wsurge:
+        extra_wsurge_storms = wsurge_storms(year=year)
+        extra_wsurge_storms = extra_wsurge_storms[
+            ~extra_wsurge_storms.index.isin(storms.index)
+        ]
+        if len(extra_wsurge_storms) > 0:
+            extra_wsurge_storms[['class', 'source']] = ''
+            extra_wsurge_storms[['start_date', 'end_date']] = pandas.to_datetime(numpy.nan)
+            extra_wsurge_storms.at[
+                extra_wsurge_storms['long_name'].str.contains(
+                    'Tropical Cyclone', flags=re.IGNORECASE
+                )
+                | extra_wsurge_storms['long_name'].str.contains(
+                    'Hurricane', flags=re.IGNORECASE
+                ),
+                'class',
+            ] = 'HU'
+            extra_wsurge_storms.at[
+                extra_wsurge_storms['long_name'].str.contains(
+                    'Tropical Storm', flags=re.IGNORECASE
+                ),
+                'class',
+            ] = 'TS'
+            extra_wsurge_storms.at[
+                extra_wsurge_storms['long_name'].str.contains(
+                    'Tropical Depression', flags=re.IGNORECASE
+                ),
+                'class',
+            ] = 'TD'
+            extra_wsurge_storms.at[
+                extra_wsurge_storms['long_name'].str.contains(
+                    'Subtropical', flags=re.IGNORECASE
+                ),
+                'class',
+            ] = 'ST'
+            storms = pandas.concat([storms, extra_wsurge_storms[storms.columns]])
+
+    for string_column in ['name', 'class', 'source']:
+        storms.at[storms[string_column].str.len() == 0, string_column] = None
 
     return storms

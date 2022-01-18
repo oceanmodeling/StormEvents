@@ -299,6 +299,35 @@ def usgs_highwatermark_events(
     :param year: year of event
     :param event_status: status of USGS flood event
     :return: table of flood events
+
+
+    >>> usgs_highwatermark_events()
+                                         name  year
+    usgs_id
+    7                      FEMA 2013 exercise  2013
+    8                                   Wilma  2013
+    18                         Isaac Aug 2012  2012
+    19                                   Rita  2005
+    23                                  Irene  2011
+    24                                  Sandy  2017
+    119                               Joaquin  2015
+    131                               Hermine  2016
+    133                 Isabel September 2003  2003
+    135                  Matthew October 2016  2016
+    180                       Harvey Aug 2017  2017
+    182                   Irma September 2017  2017
+    189                  Maria September 2017  2017
+    196                     Nate October 2017  2017
+    281                      Lane August 2018  2019
+    283                     Florence Sep 2018  2018
+    287                      Michael Oct 2018  2018
+    291                 2019 Hurricane Dorian  2019
+    301                 2020 Hurricane Isaias  2020
+    303      2020 TS Marco - Hurricane  Laura  2020
+    304                  2020 Hurricane Sally  2020
+    305                  2020 Hurricane Delta  2020
+    310           2021 Tropical Cyclone Henri  2021
+    312             2021 Tropical Cyclone Ida  2021
     """
 
     if event_type is None:
@@ -380,12 +409,14 @@ def usgs_highwatermark_events(
 
 
 @lru_cache(maxsize=None)
-def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
+def usgs_highwatermark_storms(year: int = None, add_wsurge: bool = True) -> pandas.DataFrame:
     """
     this function collects USGS high-water mark data for storm events and cross-correlates it with NHC storm data
 
     this is useful if you want to retrieve USGS data for a specific NHC storm code
 
+    :param year: storm year
+    :param add_wsurge: also attempt to read in WSURGE table
     :return: table of USGS flood events with NHC storm names
 
     >>> usgs_highwatermark_storms()
@@ -409,10 +440,10 @@ def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     283      2018                 Florence Sep 2018  FLORENCE  AL062018
     287      2018                  Michael Oct 2018   MICHAEL  AL142018
     291      2019             2019 Hurricane Dorian    DORIAN  AL052019
-    301      2020             2020 Hurricane Isaias      None      None
-    303      2020  2020 TS Marco - Hurricane  Laura      None      None
-    304      2020              2020 Hurricane Sally      None      None
-    305      2020              2020 Hurricane Delta      None      None
+    301      2020             2020 Hurricane Isaias    ISAIAS  AL092020
+    303      2020  2020 TS Marco - Hurricane  Laura     MARCO  AL142020
+    304      2020              2020 Hurricane Sally     SALLY  AL192020
+    305      2020              2020 Hurricane Delta     DELTA  AL262020
     310      2021       2021 Tropical Cyclone Henri     HENRI  AL082021
     312      2021         2021 Tropical Cyclone Ida       IDA  AL092021
     """
@@ -423,7 +454,7 @@ def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     events['nhc_name'] = None
     events['nhc_code'] = None
 
-    storms = nhc_storms(tuple(pandas.unique(events['year'])))
+    storms = nhc_storms(tuple(pandas.unique(events['year'])), add_wsurge=add_wsurge)
 
     storm_names = pandas.unique(storms['name'].str.strip())
     storm_names.sort()

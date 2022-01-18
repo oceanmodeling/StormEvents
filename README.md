@@ -83,25 +83,25 @@ By default, these functions operate within the time interval defined by the NHC 
 ```python
 from stormevents.nhc import nhc_storms
 
-nhc_storms = nhc_storms(year=None)
+nhc_storms = nhc_storms()
 ```
 
 ```
-                name class  year  start_date    end_date     source
-nhc_code
-AL021851     UNNAMED    HU  1851  1851070512  1851070512    ARCHIVE
-AL031851     UNNAMED    TS  1851  1851071012  1851071012    ARCHIVE
-AL041851     UNNAMED    HU  1851  1851081600  1851082718    ARCHIVE
-AL051851     UNNAMED    TS  1851  1851091300  1851091618    ARCHIVE
-AL061851     UNNAMED    TS  1851  1851101600  1851101918    ARCHIVE
-       ...   ...   ...         ...         ...        ...
-EP192021      SANDRA    TD  2021  2021110106  9999999999    WARNING
-EP732021  GENESIS030    DB  2021  2021102712  2021103012    GENESIS
-EP742021  GENESIS031    DB  2021  2021102918  2021110500    GENESIS
-EP752021  GENESIS032    DB  2021  2021110106  2021110712    GENESIS
-EP922021      INVEST    DB  2021  2021060506  9999999999   METWATCH
+             name class  year          start_date            end_date   source
+nhc_code                                                                      
+AL021851  UNNAMED    HU  1851 1851-07-05 12:00:00 1851-07-05 12:00:00  ARCHIVE
+AL031851  UNNAMED    TS  1851 1851-07-10 12:00:00 1851-07-10 12:00:00  ARCHIVE
+AL041851  UNNAMED    HU  1851 1851-08-16 00:00:00 1851-08-27 18:00:00  ARCHIVE
+AL051851  UNNAMED    TS  1851 1851-09-13 00:00:00 1851-09-16 18:00:00  ARCHIVE
+AL061851  UNNAMED    TS  1851 1851-10-16 00:00:00 1851-10-19 18:00:00  ARCHIVE
+...           ...   ...   ...                 ...                 ...      ...
+EP132020   HERNAN    TS  2020                 NaT                 NaT     None
+EP142020   ISELLE    TS  2020                 NaT                 NaT     None
+EP152020    JULIO    TS  2020                 NaT                 NaT     None
+EP182020    MARIE    HU  2020                 NaT                 NaT     None
+EP212020     POLO    TS  2020                 NaT                 NaT     None
 
-[2693 rows x 6 columns]
+[2730 rows x 6 columns]
 ```
 
 #### retrieve a storm track provided by the NHC
@@ -145,12 +145,12 @@ usgs_id
 7        2013                FEMA 2013 exercise      None      None
 8        2013                             Wilma      None      None
 18       2012                    Isaac Aug 2012     ISAAC  AL092012
-19       2005                              Rita      None      None
+19       2005                              Rita      RITA  AL182005
 23       2011                             Irene     IRENE  AL092011
 ...       ...                               ...       ...       ...
-303      2020  2020 TS Marco - Hurricane  Laura     MARCO  AL142020
-304      2020              2020 Hurricane Sally     SALLY  AL192020
-305      2020              2020 Hurricane Delta     DELTA  AL262020
+303      2020  2020 TS Marco - Hurricane  Laura      None      None
+304      2020              2020 Hurricane Sally      None      None
+305      2020              2020 Hurricane Delta      None      None
 310      2021       2021 Tropical Cyclone Henri     HENRI  AL082021
 312      2021         2021 Tropical Cyclone Ida       IDA  AL092021
 

@@ -17,7 +17,7 @@ usgs_id,year,usgs_name,nhc_name,nhc_code
 283,2018,Florence Sep 2018,FLORENCE,AL062018
 287,2018,Michael Oct 2018,MICHAEL,AL142018
 291,2019,2019 Hurricane Dorian,DORIAN,AL052019
-301,2020,2020 Hurricane Isaias,,
-303,2020,2020 TS Marco - Hurricane  Laura,,
-304,2020,2020 Hurricane Sally,,
-305,2020,2020 Hurricane Delta,,
+301,2020,2020 Hurricane Isaias,ISAIAS,AL092020
+303,2020,2020 TS Marco - Hurricane  Laura,MARCO,AL142020
+304,2020,2020 Hurricane Sally,SALLY,AL192020
+305,2020,2020 Hurricane Delta,DELTA,AL262020

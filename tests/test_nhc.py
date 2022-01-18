@@ -20,7 +20,6 @@ def test_nhc_storms():
     reference_directory = REFERENCE_DIRECTORY / 'test_nhc_storms'
 
     storms = nhc_storms(year=tuple(range(1851, 2020 + 1)))
-    storms.to_csv(reference_directory / 'storms.csv')
 
     reference_storms = pandas.read_csv(
         reference_directory / 'storms.csv',
