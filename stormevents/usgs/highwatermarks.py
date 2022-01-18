@@ -409,14 +409,13 @@ def usgs_highwatermark_events(
 
 
 @lru_cache(maxsize=None)
-def usgs_highwatermark_storms(year: int = None, add_wsurge: bool = True) -> pandas.DataFrame:
+def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
     """
     this function collects USGS high-water mark data for storm events and cross-correlates it with NHC storm data
 
     this is useful if you want to retrieve USGS data for a specific NHC storm code
 
     :param year: storm year
-    :param add_wsurge: also attempt to read in WSURGE table
     :return: table of USGS flood events with NHC storm names
 
     >>> usgs_highwatermark_storms()
@@ -454,7 +453,7 @@ def usgs_highwatermark_storms(year: int = None, add_wsurge: bool = True) -> pand
     events['nhc_name'] = None
     events['nhc_code'] = None
 
-    storms = nhc_storms(tuple(pandas.unique(events['year'])), add_wsurge=add_wsurge)
+    storms = nhc_storms(tuple(pandas.unique(events['year'])))
 
     storm_names = pandas.unique(storms['name'].str.strip())
     storm_names.sort()

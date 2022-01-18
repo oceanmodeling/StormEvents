@@ -87,19 +87,19 @@ nhc_storms = nhc_storms()
 ```
 
 ```
-             name class  year          start_date            end_date   source
-nhc_code                                                                      
-AL021851  UNNAMED    HU  1851 1851-07-05 12:00:00 1851-07-05 12:00:00  ARCHIVE
-AL031851  UNNAMED    TS  1851 1851-07-10 12:00:00 1851-07-10 12:00:00  ARCHIVE
-AL041851  UNNAMED    HU  1851 1851-08-16 00:00:00 1851-08-27 18:00:00  ARCHIVE
-AL051851  UNNAMED    TS  1851 1851-09-13 00:00:00 1851-09-16 18:00:00  ARCHIVE
-AL061851  UNNAMED    TS  1851 1851-10-16 00:00:00 1851-10-19 18:00:00  ARCHIVE
-...           ...   ...   ...                 ...                 ...      ...
-EP132020   HERNAN    TS  2020                 NaT                 NaT     None
-EP142020   ISELLE    TS  2020                 NaT                 NaT     None
-EP152020    JULIO    TS  2020                 NaT                 NaT     None
-EP182020    MARIE    HU  2020                 NaT                 NaT     None
-EP212020     POLO    TS  2020                 NaT                 NaT     None
+             name class  year  ...    source          start_date            end_date
+nhc_code                       ...
+AL021851  UNNAMED    HU  1851  ...   ARCHIVE 1851-07-05 12:00:00 1851-07-05 12:00:00
+AL031851  UNNAMED    TS  1851  ...   ARCHIVE 1851-07-10 12:00:00 1851-07-10 12:00:00
+AL041851  UNNAMED    HU  1851  ...   ARCHIVE 1851-08-16 00:00:00 1851-08-27 18:00:00
+AL051851  UNNAMED    TS  1851  ...   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
+AL061851  UNNAMED    TS  1851  ...   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
+           ...   ...   ...  ...       ...                 ...                 ...
+CP902021   INVEST    LO  2021  ...  METWATCH 2021-07-24 12:00:00                 NaT
+CP912021   INVEST    DB  2021  ...  METWATCH 2021-08-07 18:00:00                 NaT
+EP922021   INVEST    DB  2021  ...  METWATCH 2021-06-05 06:00:00                 NaT
+AL952021   INVEST    DB  2021  ...  METWATCH 2021-10-28 12:00:00                 NaT
+AL962021   INVEST    EX  2021  ...  METWATCH 2021-11-07 12:00:00                 NaT
 
 [2730 rows x 6 columns]
 ```
@@ -148,13 +148,13 @@ usgs_id
 19       2005                              Rita      RITA  AL182005
 23       2011                             Irene     IRENE  AL092011
 ...       ...                               ...       ...       ...
-303      2020  2020 TS Marco - Hurricane  Laura      None      None
-304      2020              2020 Hurricane Sally      None      None
-305      2020              2020 Hurricane Delta      None      None
+303      2020  2020 TS Marco - Hurricane  Laura     MARCO  AL142020
+304      2020              2020 Hurricane Sally     SALLY  AL192020
+305      2020              2020 Hurricane Delta     DELTA  AL262020
 310      2021       2021 Tropical Cyclone Henri     HENRI  AL082021
 312      2021         2021 Tropical Cyclone Ida       IDA  AL092021
 
-[24 rows x 3 columns]
+[24 rows x 4 columns]
 ```
 
 #### retrieve HWM data for a specific storm

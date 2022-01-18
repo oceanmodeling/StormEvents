@@ -8,45 +8,45 @@ import numpy
 import pandas
 import requests
 
-WSURGE_RECORDS_START_YEAR = 2008
+NHC_GIS_ARCHIVE_START_YEAR = 2008
 
 
 @lru_cache(maxsize=None)
-def wsurge_storms(year: int = None):
+def nhc_gis_storms(year: int = None):
     """
-    retrieve list of hurricanes from WSURGE that have GIS files available since 2008
+    retrieve list of hurricanes from GIS archive since 2008
 
     :param year: storm year
     :return: table of storms
 
-    >>> wsurge_storms()
-                   name                 long_name  year
+    >>> nhc_gis_storms()
+                   name class  year basin  number       source
     nhc_code
-    AL012008     ARTHUR     Tropical Storm ARTHUR  2008
-    AL022008     BERTHA          Hurricane BERTHA  2008
-    AL032008  CRISTOBAL  Tropical Storm CRISTOBAL  2008
-    AL042008      DOLLY           Hurricane DOLLY  2008
-    AL052008    EDOUARD    Tropical Storm EDOUARD  2008
-                 ...                       ...   ...
-    EP152021       OLAF            Hurricane OLAF  2021
-    EP162021     PAMELA          Hurricane PAMELA  2021
-    EP172021       RICK            Hurricane RICK  2021
-    EP182021      TERRY      Tropical Storm TERRY  2021
-    EP192021     SANDRA     Tropical Storm SANDRA  2021
+    AL012008     ARTHUR    TS  2008    AL       1  GIS_ARCHIVE
+    AL022008     BERTHA    HU  2008    AL       2  GIS_ARCHIVE
+    AL032008  CRISTOBAL    TS  2008    AL       3  GIS_ARCHIVE
+    AL042008      DOLLY    HU  2008    AL       4  GIS_ARCHIVE
+    AL052008    EDOUARD    TS  2008    AL       5  GIS_ARCHIVE
+                 ...   ...   ...   ...     ...          ...
+    EP152021       OLAF    HU  2021    EP      15  GIS_ARCHIVE
+    EP162021     PAMELA    HU  2021    EP      16  GIS_ARCHIVE
+    EP172021       RICK    HU  2021    EP      17  GIS_ARCHIVE
+    EP182021      TERRY    TS  2021    EP      18  GIS_ARCHIVE
+    EP192021     SANDRA    TS  2021    EP      19  GIS_ARCHIVE
 
-    [523 rows x 3 columns]
+    [523 rows x 6 columns]
     """
 
     if year is None:
-        year = list(range(WSURGE_RECORDS_START_YEAR, datetime.today().year + 1))
+        year = list(range(NHC_GIS_ARCHIVE_START_YEAR, datetime.today().year + 1))
 
     if isinstance(year, Iterable) and not isinstance(year, str):
         years = sorted(pandas.unique(year))
         return pandas.concat(
             [
-                wsurge_storms(year)
+                nhc_gis_storms(year)
                 for year in years
-                if year is not None and year >= WSURGE_RECORDS_START_YEAR
+                if year is not None and year >= NHC_GIS_ARCHIVE_START_YEAR
             ]
         )
     elif not isinstance(year, int):
@@ -67,34 +67,56 @@ def wsurge_storms(year: int = None):
     storms['nhc_code'] = storms['nhc_code'].str.upper()
     storms.set_index('nhc_code', inplace=True)
 
-    return storms
+    storms['number'] = storms.index.str.slice(2, 4).astype(int)
+    storms['basin'] = storms.index.str.slice(0, 2)
+
+    storms['class'] = None
+    storms.loc[
+        storms['long_name'].str.contains('Tropical Cyclone', flags=re.IGNORECASE)
+        | storms['long_name'].str.contains('Hurricane', flags=re.IGNORECASE),
+        'class',
+    ] = 'HU'
+    storms.loc[
+        storms['long_name'].str.contains('Tropical Storm', flags=re.IGNORECASE), 'class',
+    ] = 'TS'
+    storms.loc[
+        storms['long_name'].str.contains('Tropical Depression', flags=re.IGNORECASE), 'class',
+    ] = 'TD'
+    storms.loc[
+        storms['long_name'].str.contains('Subtropical', flags=re.IGNORECASE), 'class',
+    ] = 'ST'
+
+    storms['source'] = 'GIS_ARCHIVE'
+
+    storms.sort_values(['year', 'basin', 'number'], inplace=True)
+
+    return storms[['name', 'class', 'year', 'basin', 'number', 'source']]
 
 
 @lru_cache(maxsize=None)
-def nhc_storms(year: int = None, add_wsurge: bool = True) -> pandas.DataFrame:
+def nhc_storms(year: int = None) -> pandas.DataFrame:
     """
     retrieve a list of hurricanes from NHC since 1851
 
     :param year: storm year
-    :param add_wsurge: also attempt to read in WSURGE table
     :return: table of storms
 
     >>> nhc_storms()
-                 name class  year          start_date            end_date   source
-    nhc_code
-    AL021851  UNNAMED    HU  1851 1851-07-05 12:00:00 1851-07-05 12:00:00  ARCHIVE
-    AL031851  UNNAMED    TS  1851 1851-07-10 12:00:00 1851-07-10 12:00:00  ARCHIVE
-    AL041851  UNNAMED    HU  1851 1851-08-16 00:00:00 1851-08-27 18:00:00  ARCHIVE
-    AL051851  UNNAMED    TS  1851 1851-09-13 00:00:00 1851-09-16 18:00:00  ARCHIVE
-    AL061851  UNNAMED    TS  1851 1851-10-16 00:00:00 1851-10-19 18:00:00  ARCHIVE
-    ...           ...   ...   ...                 ...                 ...      ...
-    EP132020   HERNAN    TS  2020                 NaT                 NaT     None
-    EP142020   ISELLE    TS  2020                 NaT                 NaT     None
-    EP152020    JULIO    TS  2020                 NaT                 NaT     None
-    EP182020    MARIE    HU  2020                 NaT                 NaT     None
-    EP212020     POLO    TS  2020                 NaT                 NaT     None
+                 name class  year  ...    source          start_date            end_date
+    nhc_code                       ...
+    AL021851  UNNAMED    HU  1851  ...   ARCHIVE 1851-07-05 12:00:00 1851-07-05 12:00:00
+    AL031851  UNNAMED    TS  1851  ...   ARCHIVE 1851-07-10 12:00:00 1851-07-10 12:00:00
+    AL041851  UNNAMED    HU  1851  ...   ARCHIVE 1851-08-16 00:00:00 1851-08-27 18:00:00
+    AL051851  UNNAMED    TS  1851  ...   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
+    AL061851  UNNAMED    TS  1851  ...   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
+               ...   ...   ...  ...       ...                 ...                 ...
+    CP902021   INVEST    LO  2021  ...  METWATCH 2021-07-24 12:00:00                 NaT
+    CP912021   INVEST    DB  2021  ...  METWATCH 2021-08-07 18:00:00                 NaT
+    EP922021   INVEST    DB  2021  ...  METWATCH 2021-06-05 06:00:00                 NaT
+    AL952021   INVEST    DB  2021  ...  METWATCH 2021-10-28 12:00:00                 NaT
+    AL962021   INVEST    EX  2021  ...  METWATCH 2021-11-07 12:00:00                 NaT
 
-    [2730 rows x 6 columns]
+    [2730 rows x 8 columns]
     """
 
     url = 'https://ftp.nhc.noaa.gov/atcf/index/storm_list.txt'
@@ -135,7 +157,19 @@ def nhc_storms(year: int = None, add_wsurge: bool = True) -> pandas.DataFrame:
         {'start_date': 'datetime64[s]', 'end_date': 'datetime64[s]'}, copy=False,
     )
 
-    storms = storms[['nhc_code', 'name', 'class', 'year', 'start_date', 'end_date', 'source']]
+    storms = storms[
+        [
+            'nhc_code',
+            'name',
+            'class',
+            'year',
+            'basin',
+            'number',
+            'source',
+            'start_date',
+            'end_date',
+        ]
+    ]
 
     if year is not None:
         if isinstance(year, Iterable) and not isinstance(year, str):
@@ -148,44 +182,15 @@ def nhc_storms(year: int = None, add_wsurge: bool = True) -> pandas.DataFrame:
 
     storms.set_index('nhc_code', inplace=True)
 
-    if add_wsurge:
-        extra_wsurge_storms = wsurge_storms(year=year)
-        extra_wsurge_storms = extra_wsurge_storms[
-            ~extra_wsurge_storms.index.isin(storms.index)
-        ]
-        if len(extra_wsurge_storms) > 0:
-            extra_wsurge_storms[['class', 'source']] = ''
-            extra_wsurge_storms[['start_date', 'end_date']] = pandas.to_datetime(numpy.nan)
-            extra_wsurge_storms.at[
-                extra_wsurge_storms['long_name'].str.contains(
-                    'Tropical Cyclone', flags=re.IGNORECASE
-                )
-                | extra_wsurge_storms['long_name'].str.contains(
-                    'Hurricane', flags=re.IGNORECASE
-                ),
-                'class',
-            ] = 'HU'
-            extra_wsurge_storms.at[
-                extra_wsurge_storms['long_name'].str.contains(
-                    'Tropical Storm', flags=re.IGNORECASE
-                ),
-                'class',
-            ] = 'TS'
-            extra_wsurge_storms.at[
-                extra_wsurge_storms['long_name'].str.contains(
-                    'Tropical Depression', flags=re.IGNORECASE
-                ),
-                'class',
-            ] = 'TD'
-            extra_wsurge_storms.at[
-                extra_wsurge_storms['long_name'].str.contains(
-                    'Subtropical', flags=re.IGNORECASE
-                ),
-                'class',
-            ] = 'ST'
-            storms = pandas.concat([storms, extra_wsurge_storms[storms.columns]])
+    gis_storms = nhc_gis_storms(year=year)
+    gis_storms = gis_storms.drop(gis_storms[gis_storms.index.isin(storms.index)].index)
+    if len(gis_storms) > 0:
+        gis_storms[['start_date', 'end_date']] = pandas.to_datetime(numpy.nan)
+        storms = pandas.concat([storms, gis_storms[storms.columns]])
 
     for string_column in ['name', 'class', 'source']:
-        storms.at[storms[string_column].str.len() == 0, string_column] = None
+        storms.loc[storms[string_column].str.len() == 0, string_column] = None
+
+    storms.sort_values(['year', 'number', 'basin'], inplace=True)
 
     return storms

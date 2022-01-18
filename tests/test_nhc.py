@@ -7,6 +7,7 @@ import pytest
 from pytest_socket import SocketBlockedError
 
 from stormevents.nhc import nhc_storms
+from stormevents.nhc.storms import nhc_gis_storms
 from stormevents.nhc.track import VortexTrack
 from tests import (
     check_reference_directory,
@@ -16,10 +17,24 @@ from tests import (
 )
 
 
+def test_nhc_gis_storms():
+    reference_directory = REFERENCE_DIRECTORY / 'test_nhc_gis_storms'
+
+    storms = nhc_gis_storms(year=tuple(range(2008, 2021 + 1)))
+    storms.to_csv(reference_directory / 'storms.csv')
+
+    reference_storms = pandas.read_csv(
+        reference_directory / 'storms.csv', index_col='nhc_code', na_values='',
+    )
+
+    pandas.testing.assert_frame_equal(storms, reference_storms)
+
+
 def test_nhc_storms():
     reference_directory = REFERENCE_DIRECTORY / 'test_nhc_storms'
 
-    storms = nhc_storms(year=tuple(range(1851, 2020 + 1)))
+    storms = nhc_storms(year=tuple(range(1851, 2021 + 1)))
+    storms.to_csv(reference_directory / 'storms.csv')
 
     reference_storms = pandas.read_csv(
         reference_directory / 'storms.csv',
