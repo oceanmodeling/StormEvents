@@ -102,7 +102,7 @@ class COOPS_Station:
         self.id = id
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=None)
     def constituents(self) -> DataFrame:
         url = f'https://tidesandcurrents.noaa.gov/harcon.html?id={self.id}'
         response = requests.get(url)
@@ -250,7 +250,7 @@ class COOPS_Query:
         return self.__data
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=None)
 def __coops_stations_html_tables() -> bs4.element.ResultSet:
     response = requests.get(
         'https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current',
@@ -259,7 +259,7 @@ def __coops_stations_html_tables() -> bs4.element.ResultSet:
     return soup.find_all('div', {'class': 'table-responsive'})
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=None)
 def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
     """
     retrieve a list of CO-OPS stations with associated metadata

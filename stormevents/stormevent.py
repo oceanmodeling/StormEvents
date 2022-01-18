@@ -86,14 +86,15 @@ class StormEvent:
 
     def __init__(self, name: str, year: int):
         storms = nhc_storms(year=year)
-        if name.upper() in storms['name'].values:
-            storm = storms.loc[storms['name'] == name.upper()]
-            nhc_code = storm.index[0]
-            self.__nhc_code = nhc_code
-            self.__name = storm['name'][0]
-            self.__year = storm['year'][0]
+        storms = storms[storms['name'].str.contains(name.upper())]
+        if len(storms) > 0:
+            storm = storms.iloc[0]
+            nhc_code = storm.name
+            self.__nhc_code = nhc_code.upper()
+            self.__name = storm['name']
+            self.__year = storm['year']
         else:
-            raise ValueError('no storm with specified name found in NHC database')
+            raise ValueError(f'storm "{name} {year}" not found in NHC database')
 
         self.__usgs_id = None
         self.__usgs_flood_event = True
@@ -106,8 +107,18 @@ class StormEvent:
         :return: storm object
         """
 
-        track = VortexTrack(storm=nhc_code.lower())
-        return cls(name=track.name, year=track.year)
+        try:
+            year = int(nhc_code[-4:])
+        except:
+            raise ValueError(f'unable to parse NHC code "{nhc_code}"')
+
+        storms = nhc_storms(year=year)
+
+        if nhc_code.upper() not in storms.index.values:
+            raise ValueError(f'NHC code "{nhc_code}" does not exist in table')
+
+        storm = storms.loc[nhc_code]
+        return cls(name=storm['name'], year=storm['year'])
 
     @classmethod
     def from_usgs_id(cls, usgs_id: int, year: int = None) -> 'StormEvent':
