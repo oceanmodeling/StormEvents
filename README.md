@@ -76,7 +76,7 @@ water_levels = florence2018.tidal_data_within_isotach(isotach=34)
 
 By default, these functions operate within the time interval defined by the NHC best track.
 
-### vortex tracks from the National Hurricane Center (NHC)
+### storm data from the National Hurricane Center (NHC)
 
 #### list storm events defined by the NHC
 
@@ -104,7 +104,7 @@ AL962021   INVEST    EX  2021  ...  METWATCH 2021-11-07 12:00:00                
 [2730 rows x 6 columns]
 ```
 
-#### retrieve a storm track provided by the NHC
+#### retrieve storm tracks provided by the NHC
 
 ```python
 from stormevents.nhc import VortexTrack
