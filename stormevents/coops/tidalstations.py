@@ -92,19 +92,34 @@ class COOPS_Station:
     abstraction of a CO-OPS station, providing data getter for a specific station
     """
 
-    def __init__(self, id: int):
+    def __init__(self, id: Union[int, str]):
         stations = coops_stations()
-        if id not in stations.index:
-            if id in stations['NWS ID'].values:
-                id = stations.index[stations['NWS ID'] == id][0]
-            else:
-                raise ValueError(f'NWS id "{id}" not found')
-        self.id = id
+        if id in stations.index:
+            station = stations.loc[id]
+        elif id in stations['NWS ID'].values:
+            station = stations[stations['NWS ID'] == id]
+        elif id in stations['Station Name'].values:
+            station = stations[stations['Station Name'] == id]
+        else:
+            station = None
+
+        if stations is not None and len(station) > 0:
+            self.removed_date = station['Removed Date/Time'].values
+
+            station = station.iloc[0]
+
+            self.nos_id = station.name
+            self.nws_id = station['NWS ID']
+            self.location = Point(station['Longitude'], station['Latitude'])
+            self.state = station['State']
+            self.name = station['Station Name']
+        else:
+            raise ValueError(f'station with "{id}" not found')
 
     @property
     @lru_cache(maxsize=None)
     def constituents(self) -> DataFrame:
-        url = f'https://tidesandcurrents.noaa.gov/harcon.html?id={self.id}'
+        url = f'https://tidesandcurrents.noaa.gov/harcon.html?id={self.nos_id}'
         response = requests.get(url)
         soup = BeautifulSoup(response.content, features='html.parser')
         table = soup.find_all('table', {'class': 'table table-striped'})[0]
@@ -164,7 +179,7 @@ class COOPS_Query:
         interval: COOPS_Interval = None,
     ):
         if isinstance(station, COOPS_Station):
-            station = station.id
+            station = station.nos_id
         if end_date is None:
             end_date = datetime.today()
         if product is None:
