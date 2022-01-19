@@ -10,6 +10,7 @@ from typing import List, Union
 
 import bs4
 from bs4 import BeautifulSoup
+import numpy
 import pandas
 from pandas import DataFrame
 import requests
@@ -391,6 +392,8 @@ def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
         return pandas.concat(
             [coops_stations(station_type) for station_type in COOPS_StationType]
         )
+    elif not isinstance(station_type, COOPS_StationType):
+        station_type = typepigeon.convert_value(station_type, COOPS_StationType)
 
     column_types = {'NOS ID': int, 'Latitude': float, 'Longitude': float}
 
@@ -416,6 +419,8 @@ def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
 
     if station_type == COOPS_StationType.HISTORICAL:
         stations['Removed Date/Time'] = pandas.to_datetime(stations['Removed Date/Time'])
+    else:
+        stations['Removed Date/Time'] = pandas.to_datetime(numpy.nan)
 
     return stations
 
