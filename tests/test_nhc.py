@@ -21,7 +21,6 @@ def test_nhc_gis_storms():
     reference_directory = REFERENCE_DIRECTORY / 'test_nhc_gis_storms'
 
     storms = nhc_gis_storms(year=tuple(range(2008, 2021 + 1)))
-    storms.to_csv(reference_directory / 'storms.csv')
 
     reference_storms = pandas.read_csv(
         reference_directory / 'storms.csv', index_col='nhc_code', na_values='',
@@ -34,7 +33,6 @@ def test_nhc_storms():
     reference_directory = REFERENCE_DIRECTORY / 'test_nhc_storms'
 
     storms = nhc_storms(year=tuple(range(1851, 2021 + 1)))
-    storms.to_csv(reference_directory / 'storms.csv')
 
     reference_storms = pandas.read_csv(
         reference_directory / 'storms.csv',
