@@ -14,6 +14,7 @@ import pandas
 from pandas import DataFrame
 import requests
 from shapely.geometry import box, MultiPolygon, Point, Polygon
+import typepigeon
 
 
 class COOPS_Product(Enum):
@@ -89,10 +90,29 @@ class COOPS_StationType(Enum):
 
 class COOPS_Station:
     """
-    abstraction of a CO-OPS station, providing data getter for a specific station
+    a specific CO-OPS station
+
+    from NOS ID:
+
+    >>> COOPS_Station(1612480)
+    COOPS_Station(1612480)
+
+    from NWS ID:
+
+    >>> COOPS_Station('OOUH1')
+    COOPS_Station(1612340)
+
+    from station name:
+
+    >>> COOPS_Station('San Mateo Bridge')
+    COOPS_Station(9414458)
     """
 
     def __init__(self, id: Union[int, str]):
+        """
+        :param id: NOS ID, NWS ID, or station name
+        """
+
         stations = coops_stations()
         if id in stations.index:
             station = stations.loc[id]
@@ -158,18 +178,27 @@ class COOPS_Station:
 
         return query.data
 
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} - {self.nos_id} ({self.name}) - {self.location}'
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.nos_id})'
+
 
 class COOPS_Query:
     """
     abstraction of an individual query to the CO-OPS API
     https://api.tidesandcurrents.noaa.gov/api/prod/
+
+    >>> COOPS_Query(1612480, start_date='2022-01-01', end_date='2022-01-03')
+    COOPS_Query(1612480, datetime.datetime(2022, 1, 1, 0, 0), datetime.datetime(2022, 1, 3, 0, 0), 'water_level', 'MLLW', 'metric', 'gmt', 'h')
     """
 
     URL = 'https://tidesandcurrents.noaa.gov/api/datagetter?'
 
     def __init__(
         self,
-        station: COOPS_Station,
+        station: int,
         start_date: datetime,
         end_date: datetime = None,
         product: COOPS_Product = None,
@@ -178,8 +207,9 @@ class COOPS_Query:
         time_zone: COOPS_TimeZone = None,
         interval: COOPS_Interval = None,
     ):
-        if isinstance(station, COOPS_Station):
-            station = station.nos_id
+        if not isinstance(station, COOPS_Station):
+            station = COOPS_Station(station)
+        station = station.nos_id
         if end_date is None:
             end_date = datetime.today()
         if product is None:
@@ -204,6 +234,62 @@ class COOPS_Query:
 
         self.__previous_query = None
         self.__error = None
+
+    @property
+    def start_date(self) -> datetime:
+        return self.__start_date
+
+    @start_date.setter
+    def start_date(self, start_date: datetime):
+        self.__start_date = typepigeon.convert_value(start_date, datetime)
+
+    @property
+    def end_date(self) -> datetime:
+        return self.__end_date
+
+    @end_date.setter
+    def end_date(self, end_date: datetime):
+        self.__end_date = typepigeon.convert_value(end_date, datetime)
+
+    @property
+    def product(self) -> COOPS_Product:
+        return self.__product
+
+    @product.setter
+    def product(self, product: COOPS_Product):
+        self.__product = typepigeon.convert_value(product, COOPS_Product)
+
+    @property
+    def datum(self) -> COOPS_TidalDatum:
+        return self.__datum
+
+    @datum.setter
+    def datum(self, datum: COOPS_TidalDatum):
+        self.__datum = typepigeon.convert_value(datum, COOPS_TidalDatum)
+
+    @property
+    def units(self) -> COOPS_Units:
+        return self.__units
+
+    @units.setter
+    def units(self, units: COOPS_Units):
+        self.__units = typepigeon.convert_value(units, COOPS_Units)
+
+    @property
+    def time_zone(self) -> COOPS_TimeZone:
+        return self.__time_zone
+
+    @time_zone.setter
+    def time_zone(self, time_zone: COOPS_TimeZone):
+        self.__time_zone = typepigeon.convert_value(time_zone, COOPS_TimeZone)
+
+    @property
+    def interval(self) -> COOPS_Interval:
+        return self.__interval
+
+    @interval.setter
+    def interval(self, interval: COOPS_Interval):
+        self.__interval = typepigeon.convert_value(interval, COOPS_Interval)
 
     @property
     def query(self):
@@ -263,6 +349,9 @@ class COOPS_Query:
                 data = DataFrame(columns=['station'] + fields)
             self.__data = data
         return self.__data
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({", ".join(repr(value) for value in (self.station, self.start_date, self.end_date, self.product.value, self.datum.value, self.units.value, self.time_zone.value, self.interval.value))})'
 
 
 @lru_cache(maxsize=None)
