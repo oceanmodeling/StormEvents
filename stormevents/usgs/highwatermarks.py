@@ -1,5 +1,6 @@
 from enum import Enum
 from functools import lru_cache
+import logging
 from os import PathLike
 import re
 from typing import Any, Dict, Iterable, List
@@ -9,7 +10,6 @@ import requests
 from typepigeon import convert_value
 
 from stormevents.nhc import nhc_storms
-from stormevents.utilities import get_logger
 
 
 class EventType(Enum):
@@ -279,9 +279,6 @@ class StormHighWaterMarks(HighWaterMarks):
         )
 
 
-LOGGER = get_logger(__name__)
-
-
 @lru_cache(maxsize=None)
 def usgs_highwatermark_events(
     event_type: EventType = None, year: int = None, event_status: EventStatus = None,
@@ -357,7 +354,7 @@ def usgs_highwatermark_events(
         },
     )
 
-    LOGGER.info('building table of USGS high-water mark survey events')
+    logging.info('building table of USGS high-water mark survey events')
 
     data = response.json()
 
@@ -386,7 +383,7 @@ def usgs_highwatermark_events(
                             if len(years) == 1:
                                 event_year = years[0]
                             else:
-                                LOGGER.warning(
+                                logging.warning(
                                     f'could not find year of "{name}" in USGS high-water mark database nor in NHC table'
                                 )
                                 event_year = None

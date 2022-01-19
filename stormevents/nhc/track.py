@@ -3,6 +3,7 @@ import ftplib
 from functools import wraps
 import gzip
 import io
+import logging
 import os
 from os import PathLike
 import pathlib
@@ -28,9 +29,6 @@ from stormevents.nhc.atcf import (
     atcf_url,
     normalize_atcf_value,
 )
-from stormevents.utilities import get_logger
-
-LOGGER = get_logger(__name__)
 
 
 class VortexTrack:
@@ -262,7 +260,7 @@ class VortexTrack:
             with open(path, 'w') as f:
                 f.write(str(self))
         else:
-            LOGGER.warning(f'skipping existing file "{path}"')
+            logging.warning(f'skipping existing file "{path}"')
 
     @property
     def storm_id(self) -> str:
@@ -935,7 +933,7 @@ def get_atcf_file(
     storm_id: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
 ) -> io.BytesIO:
     url = atcf_url(file_deck=file_deck, storm_id=storm_id, mode=mode).replace('ftp://', "")
-    LOGGER.info(f'Downloading storm data from {url}')
+    logging.info(f'Downloading storm data from {url}')
 
     hostname, filename = url.split('/', 1)
 
