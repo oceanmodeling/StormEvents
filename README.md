@@ -257,12 +257,14 @@ coops_data_within_region(region=polygon, start_date=datetime.now() - timedelta(d
 
 ## Related Projects
 
+- `searvey` - https://github.com/pmav99/searvey
+- `pyStorms` - https://github.com/brey/pyStorms
 - `tropycal` - https://tropycal.github.io/tropycal/index.html
 - `pyoos` - https://github.com/ioos/pyoos
-- `adcircpy` - https://github.com/zacharyburnettNOAA/adcircpy
 - `csdllib` - https://github.com/noaa-ocs-modeling/csdllib
 - `pyPoseidon` - https://github.com/ec-jrc/pyPoseidon
-- `searvey` - https://github.com/pmav99/searvey
+- `Thalassa` - https://github.com/ec-jrc/Thalassa
+- `adcircpy` - https://github.com/zacharyburnettNOAA/adcircpy
 
 ## Acknowledgements
 
