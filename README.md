@@ -261,6 +261,8 @@ coops_data_within_region(region=polygon, start_date=datetime.now() - timedelta(d
 - `pyoos` - https://github.com/ioos/pyoos
 - `adcircpy` - https://github.com/zacharyburnettNOAA/adcircpy
 - `csdllib` - https://github.com/noaa-ocs-modeling/csdllib
+- `pyPoseidon` - https://github.com/ec-jrc/pyPoseidon
+- `searvey` - https://github.com/pmav99/searvey
 
 ## Acknowledgements
 
