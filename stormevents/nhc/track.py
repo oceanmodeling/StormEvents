@@ -71,7 +71,7 @@ class VortexTrack:
         self.__dataframe = None
         self.__filename = None
 
-        self.__atcf = None
+        self.__remote_atcf = None
         self.__storm_id = None
         self.__name = None
         self.__start_date = start_date  # initially used to filter A-deck here
@@ -91,10 +91,10 @@ class VortexTrack:
         if isinstance(storm, DataFrame):
             self.dataframe = storm
         elif isinstance(storm, io.BytesIO):
-            self.__atcf = storm
+            self.__remote_atcf = storm
         elif isinstance(storm, (str, PathLike, pathlib.Path)):
             if os.path.exists(storm):
-                self.__atcf = io.open(storm, 'rb')
+                self.__remote_atcf = io.open(storm, 'rb')
             else:
                 try:
                     self.storm_id = storm
@@ -163,28 +163,30 @@ class VortexTrack:
                     dataframe[column].round(0).astype('Int64', copy=False)
                 )
 
-        for i, (_, row) in enumerate(dataframe.iterrows()):
+        for index, (_, record) in enumerate(dataframe.iterrows()):
             line = []
 
             line.extend(
                 [
-                    f'{row["basin"]:<2}',
-                    f'{row["storm_number"]:>3}',
-                    f'{row["datetime"]:%Y%m%d%H}'.rjust(11),
+                    f'{record["basin"]:<2}',
+                    f'{record["storm_number"]:>3}',
+                    f'{record["datetime"]:%Y%m%d%H}'.rjust(11),
                     f'{"":3}',
-                    f'{row["record_type"]:>5}',
-                    f'{normalize_atcf_value((row["datetime"] - self.start_date) / timedelta(hours=1), to_type=int):>4}',
+                    f'{record["record_type"]:>5}',
+                    f'{normalize_atcf_value((record["datetime"] - self.start_date) / timedelta(hours=1), to_type=int):>4}',
                 ]
             )
 
-            latitude = normalize_atcf_value(row['latitude'] / 0.1, to_type=int, round_digits=1)
+            latitude = normalize_atcf_value(
+                record['latitude'] / 0.1, to_type=int, round_digits=1
+            )
             if latitude >= 0:
                 line.append(f'{latitude:>4}N')
             else:
                 line.append(f'{latitude * -.1:>4}S')
 
             longitude = normalize_atcf_value(
-                row['longitude'] / 0.1, to_type=int, round_digits=1
+                record['longitude'] / 0.1, to_type=int, round_digits=1
             )
             if longitude >= 0:
                 line.append(f'{longitude:>5}E')
@@ -193,33 +195,35 @@ class VortexTrack:
 
             line.extend(
                 [
-                    f'{normalize_atcf_value(row["max_sustained_wind_speed"], to_type=int, round_digits=0):>4}',
-                    f'{normalize_atcf_value(row["central_pressure"], to_type=int, round_digits=0):>5}',
-                    f'{row["development_level"]:>3}',
-                    f'{normalize_atcf_value(row["isotach"], to_type=int, round_digits=0):>4}',
-                    f'{row["quadrant"]:>4}',
-                    f'{normalize_atcf_value(row["radius_for_NEQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(row["radius_for_SEQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(row["radius_for_SWQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(row["radius_for_NWQ"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(record["max_sustained_wind_speed"], to_type=int, round_digits=0):>4}',
+                    f'{normalize_atcf_value(record["central_pressure"], to_type=int, round_digits=0):>5}',
+                    f'{record["development_level"]:>3}',
+                    f'{normalize_atcf_value(record["isotach"], to_type=int, round_digits=0):>4}',
+                    f'{record["quadrant"]:>4}',
+                    f'{normalize_atcf_value(record["radius_for_NEQ"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(record["radius_for_SEQ"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(record["radius_for_SWQ"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(record["radius_for_NWQ"], to_type=int, round_digits=0):>5}',
                 ]
             )
 
-            if row['background_pressure'] is None:
-                row['background_pressure'] = self.data['background_pressure'].iloc[i - 1]
+            if record['background_pressure'] is None:
+                record['background_pressure'] = self.data['background_pressure'].iloc[
+                    index - 1
+                ]
             if (
-                not pandas.isna(row['central_pressure'])
-                and row['background_pressure'] <= row['central_pressure']
-                and 1013 > row['central_pressure']
+                not pandas.isna(record['central_pressure'])
+                and record['background_pressure'] <= record['central_pressure']
+                and 1013 > record['central_pressure']
             ):
                 background_pressure = 1013
             elif (
-                not pandas.isna(row['central_pressure'])
-                and row['background_pressure'] <= row['central_pressure']
-                and 1013 <= row['central_pressure']
+                not pandas.isna(record['central_pressure'])
+                and record['background_pressure'] <= record['central_pressure']
+                and 1013 <= record['central_pressure']
             ):
                 background_pressure = normalize_atcf_value(
-                    row['central_pressure'] + 1, to_type=int, round_digits=0,
+                    record['central_pressure'] + 1, to_type=int, round_digits=0,
                 )
             else:
                 background_pressure = normalize_atcf_value(
@@ -229,21 +233,21 @@ class VortexTrack:
 
             line.extend(
                 [
-                    f'{normalize_atcf_value(row["radius_of_last_closed_isobar"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(row["radius_of_maximum_winds"], to_type=int, round_digits=0):>4}',
+                    f'{normalize_atcf_value(record["radius_of_last_closed_isobar"], to_type=int, round_digits=0):>5}',
+                    f'{normalize_atcf_value(record["radius_of_maximum_winds"], to_type=int, round_digits=0):>4}',
                     f'{"":>5}',  # gust
                     f'{"":>4}',  # eye
                     f'{"":>4}',  # subregion
                     f'{"":>4}',  # maxseas
                     f'{"":>4}',  # initials
-                    f'{row["direction"]:>3}',
-                    f'{row["speed"]:>4}',
-                    f'{row["name"]:^12}',
+                    f'{record["direction"]:>3}',
+                    f'{record["speed"]:>4}',
+                    f'{record["name"]:^12}',
                 ]
             )
 
             # from this point forwards it's all aswip
-            line.append(f'{record_numbers[i]:>4}')
+            line.append(f'{record_numbers[index]:>4}')
 
             lines.append(','.join(line))
 
@@ -299,7 +303,7 @@ class VortexTrack:
     def track_length(self) -> float:
         geodetic = Geod(ellps='WGS84')
 
-        forward_azimuths, inverse_azimuths, distances = geodetic.inv(
+        _, _, distances = geodetic.inv(
             self.data['longitude'].iloc[:-1],
             self.data['latitude'].iloc[:-1],
             self.data['longitude'].iloc[1:],
@@ -458,19 +462,23 @@ class VortexTrack:
     @property
     def data(self) -> DataFrame:
         """
-        retrieve track data for the given parameters as a data frame
+        :return: track data for the given parameters as a data frame
         """
 
         start_date_mask = self.dataframe['datetime'] >= self.start_date
         if self.end_date is None:
-            return self.dataframe[start_date_mask]
+            return self.dataframe.loc[start_date_mask]
         else:
-            return self.dataframe[
+            return self.dataframe.loc[
                 start_date_mask & (self.dataframe['datetime'] <= self.__file_end_date)
             ]
 
     @property
-    def atcf(self) -> open:
+    def remote_atcf(self) -> io.BytesIO:
+        """
+        :return: ATCF file from server
+        """
+
         configuration = {
             'storm_id': self.storm_id,
             'file_deck': self.file_deck,
@@ -480,15 +488,15 @@ class VortexTrack:
 
         if (
             self.storm_id is not None
-            and self.__atcf is None
+            and self.__remote_atcf is None
             or configuration != self.__previous_configuration
         ):
-            self.__atcf = get_atcf_file(self.storm_id, self.file_deck, self.mode)
+            self.__remote_atcf = get_atcf_file(self.storm_id, self.file_deck, self.mode)
 
-        return self.__atcf
+        return self.__remote_atcf
 
     @property
-    def dataframe(self):
+    def dataframe(self) -> DataFrame:
         configuration = {
             'storm_id': self.storm_id,
             'file_deck': self.file_deck,
