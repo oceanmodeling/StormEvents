@@ -12,7 +12,7 @@ import pandas
 from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Polygon
 import typepigeon
 
 from stormevents.nhc import nhc_storms
@@ -141,6 +141,203 @@ class VortexTrack:
             filename=filename,
         )
 
+    @classmethod
+    def from_fort22(
+        cls, fort22: PathLike, start_date: datetime = None, end_date: datetime = None,
+    ) -> 'VortexTrack':
+        """
+        read a ``fort.22`` file
+        """
+
+        filename = None
+        if pathlib.Path(fort22).exists():
+            filename = fort22
+        return cls(
+            storm=read_atcf(fort22),
+            start_date=start_date,
+            end_date=end_date,
+            file_deck=None,
+            mode=None,
+            record_type=None,
+            filename=filename,
+        )
+
+    @classmethod
+    def from_atcf_file(
+        cls, atcf: PathLike, start_date: datetime = None, end_date: datetime = None,
+    ) -> 'VortexTrack':
+        """
+        read an ATCF file
+        """
+
+        filename = None
+        if pathlib.Path(atcf).exists():
+            filename = atcf
+        return cls(
+            storm=atcf,
+            start_date=start_date,
+            end_date=end_date,
+            file_deck=None,
+            mode=None,
+            record_type=None,
+            filename=filename,
+        )
+
+    @property
+    def name(self) -> str:
+        if self.__name is None:
+            name = self.data['name'].value_counts()[:].index.tolist()[0]
+
+            if name.strip() == '':
+                storms = nhc_storms(year=self.year)
+                if self.storm_id.lower() in storms.index:
+                    storm = storms.loc[self.storm_id.lower()]
+                    name = storm['name'].lower()
+
+            self.__name = name
+
+        return self.__name
+
+    @property
+    def basin(self) -> str:
+        return self.data['basin'].iloc[0]
+
+    @property
+    def storm_number(self) -> str:
+        return self.data['storm_number'].iloc[0]
+
+    @property
+    def year(self) -> int:
+        return self.data['datetime'].iloc[0].year
+
+    @property
+    def storm_id(self) -> str:
+        if self.__storm_id is None and not self.__invalid_storm_name:
+            if self.__dataframe is not None:
+                storm_id = (
+                    f'{self.__dataframe["basin"].iloc[-1]}'
+                    f'{self.__dataframe["storm_number"].iloc[-1]}'
+                    f'{self.__dataframe["datetime"].iloc[-1].year}'
+                )
+                try:
+                    self.storm_id = storm_id
+                except ValueError:
+                    try:
+                        storm_id = atcf_id_from_storm_name(
+                            storm_name=self.__dataframe['name'].tolist()[-1],
+                            year=self.__dataframe['datetime'].tolist()[-1].year,
+                        )
+                        self.storm_id = storm_id
+                    except ValueError:
+                        self.__invalid_storm_name = True
+        return self.__storm_id
+
+    @storm_id.setter
+    def storm_id(self, storm_id: str):
+        if storm_id is not None:
+            # check if name+year was given instead of basin+number+year
+            digits = sum([1 for character in storm_id if character.isdigit()])
+
+            if digits == 4:
+                atcf_id = atcf_id_from_storm_name(
+                    storm_name=storm_id[:-4], year=int(storm_id[-4:])
+                )
+                if atcf_id is None:
+                    raise ValueError(f'No storm with id: {storm_id}')
+                storm_id = atcf_id
+        self.__storm_id = storm_id
+
+    @property
+    def start_date(self) -> datetime:
+        return self.__start_date
+
+    @start_date.setter
+    def start_date(self, start_date: datetime):
+        if start_date is None:
+            start_date = self.dataframe['datetime'].iloc[0]
+        else:
+            if not isinstance(start_date, datetime):
+                start_date = parse_date(start_date)
+            if (
+                start_date < self.dataframe['datetime'].iloc[0]
+                or start_date > self.dataframe['datetime'].iloc[-1]
+            ):
+                raise ValueError(
+                    f'given start date is outside of data bounds ({self.dataframe["datetime"].iloc[0]} - {self.dataframe["datetime"].iloc[-1]})'
+                )
+        self.__start_date = start_date
+
+    @property
+    def end_date(self) -> datetime:
+        return self.__end_date
+
+    @end_date.setter
+    def end_date(self, end_date: datetime):
+        if end_date is None:
+            end_date = self.dataframe['datetime'].iloc[-1]
+        else:
+            if not isinstance(end_date, datetime):
+                end_date = parse_date(end_date)
+            if (
+                end_date < self.dataframe['datetime'].iloc[0]
+                or end_date > self.dataframe['datetime'].iloc[-1]
+            ):
+                raise ValueError(
+                    f'given end date is outside of data bounds ({self.dataframe["datetime"].iloc[0]} - {self.dataframe["datetime"].iloc[-1]})'
+                )
+            if end_date <= self.start_date:
+                raise ValueError(f'end date must be after start date ({self.start_date})')
+        self.__end_date = end_date
+
+    @property
+    def file_deck(self) -> ATCF_FileDeck:
+        return self.__file_deck
+
+    @file_deck.setter
+    def file_deck(self, file_deck: ATCF_FileDeck):
+        if file_deck is None:
+            file_deck = ATCF_FileDeck.a
+        elif not isinstance(file_deck, ATCF_FileDeck):
+            file_deck = normalize_atcf_value(file_deck, ATCF_FileDeck)
+        self.__file_deck = file_deck
+
+    @property
+    def mode(self) -> ATCF_Mode:
+        return self.__mode
+
+    @mode.setter
+    def mode(self, mode: ATCF_Mode):
+        if mode is None:
+            mode = ATCF_Mode.historical
+        elif not isinstance(mode, ATCF_Mode):
+            mode = normalize_atcf_value(mode, ATCF_Mode)
+        self.__mode = mode
+
+    @property
+    def record_type(self) -> str:
+        return self.__record_type
+
+    @record_type.setter
+    def record_type(self, record_type: ATCF_RecordType):
+        # e.g. BEST, OFCL, HWRF, etc.
+        if record_type is not None:
+            if not isinstance(record_type, str):
+                record_type = typepigeon.convert_value(record_type, str)
+            record_type = record_type.upper()
+            if self.file_deck == ATCF_FileDeck.a:
+                # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
+                # there are more but they may not have enough columns
+                allowed_record_types = ['OFCL', 'OFCP', 'HWRF', 'HMON', 'CARQ']
+            elif self.file_deck == ATCF_FileDeck.b:
+                allowed_record_types = ['BEST']
+            else:
+                raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
+            if record_type not in allowed_record_types:
+                raise ValueError(
+                    f'request_record_type = {record_type} not allowed, select from {allowed_record_types}'
+                )
+        self.__record_type = record_type
+
     @property
     def filename(self) -> pathlib.Path:
         return self.__filename
@@ -150,6 +347,29 @@ class VortexTrack:
         if filename is not None and not isinstance(filename, pathlib.Path):
             filename = pathlib.Path(filename)
         self.__filename = filename
+
+    @property
+    def data(self) -> DataFrame:
+        """
+        :return: track data for the given parameters as a data frame
+        """
+
+        start_date_mask = self.dataframe['datetime'] >= self.start_date
+        if self.end_date is None:
+            return self.dataframe.loc[start_date_mask]
+        else:
+            return self.dataframe.loc[
+                start_date_mask & (self.dataframe['datetime'] <= self.__file_end_date)
+            ]
+
+    def write(self, path: PathLike, overwrite: bool = False):
+        if not isinstance(path, pathlib.Path):
+            path = pathlib.Path(path)
+        if overwrite or not path.exists():
+            with open(path, 'w') as f:
+                f.write(str(self))
+        else:
+            logging.warning(f'skipping existing file "{path}"')
 
     def __str__(self):
         record_numbers = self.record_numbers
@@ -253,293 +473,23 @@ class VortexTrack:
 
         return '\n'.join(lines)
 
-    def write(self, path: PathLike, overwrite: bool = False):
-        if not isinstance(path, pathlib.Path):
-            path = pathlib.Path(path)
-        if overwrite or not path.exists():
-            with open(path, 'w') as f:
-                f.write(str(self))
-        else:
-            logging.warning(f'skipping existing file "{path}"')
+    @property
+    def linestring(self) -> LineString:
+        """ spatial linestring of current track """
+        return LineString(self.data[['longitude', 'latitude']])
 
     @property
-    def storm_id(self) -> str:
-        if self.__storm_id is None and not self.__invalid_storm_name:
-            if self.__dataframe is not None:
-                storm_id = (
-                    f'{self.__dataframe["basin"].iloc[-1]}'
-                    f'{self.__dataframe["storm_number"].iloc[-1]}'
-                    f'{self.__dataframe["datetime"].iloc[-1].year}'
-                )
-                try:
-                    self.storm_id = storm_id
-                except ValueError:
-                    try:
-                        storm_id = atcf_id_from_storm_name(
-                            storm_name=self.__dataframe['name'].tolist()[-1],
-                            year=self.__dataframe['datetime'].tolist()[-1].year,
-                        )
-                        self.storm_id = storm_id
-                    except ValueError:
-                        self.__invalid_storm_name = True
-        return self.__storm_id
+    def distance(self) -> float:
+        """ length, in meters, of the track over the default WGS84 that comes with pyPROJ """
 
-    @storm_id.setter
-    def storm_id(self, storm_id: str):
-        if storm_id is not None:
-            # check if name+year was given instead of basin+number+year
-            digits = sum([1 for character in storm_id if character.isdigit()])
-
-            if digits == 4:
-                atcf_id = atcf_id_from_storm_name(
-                    storm_name=storm_id[:-4], year=int(storm_id[-4:])
-                )
-                if atcf_id is None:
-                    raise ValueError(f'No storm with id: {storm_id}')
-                storm_id = atcf_id
-        self.__storm_id = storm_id
-
-    @property
-    def track_length(self) -> float:
         geodetic = Geod(ellps='WGS84')
-
         _, _, distances = geodetic.inv(
             self.data['longitude'].iloc[:-1],
             self.data['latitude'].iloc[:-1],
             self.data['longitude'].iloc[1:],
             self.data['latitude'].iloc[1:],
         )
-
         return numpy.sum(distances)
-
-    @property
-    def start_date(self) -> datetime:
-        return self.__start_date
-
-    @start_date.setter
-    def start_date(self, start_date: datetime):
-        if start_date is None:
-            start_date = self.dataframe['datetime'].iloc[0]
-        else:
-            if not isinstance(start_date, datetime):
-                start_date = parse_date(start_date)
-            if (
-                start_date < self.dataframe['datetime'].iloc[0]
-                or start_date > self.dataframe['datetime'].iloc[-1]
-            ):
-                raise ValueError(
-                    f'given start date is outside of data bounds ({self.dataframe["datetime"].iloc[0]} - {self.dataframe["datetime"].iloc[-1]})'
-                )
-        self.__start_date = start_date
-
-    @property
-    def end_date(self) -> datetime:
-        return self.__end_date
-
-    @end_date.setter
-    def end_date(self, end_date: datetime):
-        if end_date is None:
-            end_date = self.dataframe['datetime'].iloc[-1]
-        else:
-            if not isinstance(end_date, datetime):
-                end_date = parse_date(end_date)
-            if (
-                end_date < self.dataframe['datetime'].iloc[0]
-                or end_date > self.dataframe['datetime'].iloc[-1]
-            ):
-                raise ValueError(
-                    f'given end date is outside of data bounds ({self.dataframe["datetime"].iloc[0]} - {self.dataframe["datetime"].iloc[-1]})'
-                )
-            if end_date <= self.start_date:
-                raise ValueError(f'end date must be after start date ({self.start_date})')
-        self.__end_date = end_date
-
-    @property
-    def duration(self) -> float:
-        d = (self.end_date - self.start_date) / timedelta(days=1)
-        return d
-
-    @property
-    def file_deck(self) -> ATCF_FileDeck:
-        return self.__file_deck
-
-    @property
-    def name(self) -> str:
-        if self.__name is None:
-            name = self.data['name'].value_counts()[:].index.tolist()[0]
-
-            if name.strip() == '':
-                storms = nhc_storms(year=self.year)
-                if self.storm_id.lower() in storms.index:
-                    storm = storms.loc[self.storm_id.lower()]
-                    name = storm['name'].lower()
-
-            self.__name = name
-
-        return self.__name
-
-    @property
-    def basin(self) -> str:
-        return self.data['basin'].iloc[0]
-
-    @property
-    def storm_number(self) -> str:
-        return self.data['storm_number'].iloc[0]
-
-    @property
-    def year(self) -> int:
-        return self.data['datetime'].iloc[0].year
-
-    @property
-    def datetime(self):
-        return self.data['datetime']
-
-    @property
-    def central_pressure(self):
-        return self.data['central_pressure']
-
-    @property
-    def speed(self):
-        return self.data['speed']
-
-    @property
-    def direction(self):
-        return self.data['direction']
-
-    @property
-    def longitude(self):
-        return self.data['longitude']
-
-    @property
-    def latitude(self):
-        return self.data['latitude']
-
-    @file_deck.setter
-    def file_deck(self, file_deck: ATCF_FileDeck):
-        if file_deck is None:
-            file_deck = ATCF_FileDeck.a
-        elif not isinstance(file_deck, ATCF_FileDeck):
-            file_deck = normalize_atcf_value(file_deck, ATCF_FileDeck)
-        self.__file_deck = file_deck
-
-    @property
-    def mode(self) -> ATCF_Mode:
-        return self.__mode
-
-    @mode.setter
-    def mode(self, mode: ATCF_Mode):
-        if mode is None:
-            mode = ATCF_Mode.historical
-        elif not isinstance(mode, ATCF_Mode):
-            mode = normalize_atcf_value(mode, ATCF_Mode)
-        self.__mode = mode
-
-    @property
-    def record_type(self) -> str:
-        return self.__record_type
-
-    @record_type.setter
-    def record_type(self, record_type: ATCF_RecordType):
-        # e.g. BEST, OFCL, HWRF, etc.
-        if record_type is not None:
-            if not isinstance(record_type, str):
-                record_type = typepigeon.convert_value(record_type, str)
-            record_type = record_type.upper()
-            if self.file_deck == ATCF_FileDeck.a:
-                # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
-                # there are more but they may not have enough columns
-                allowed_record_types = ['OFCL', 'OFCP', 'HWRF', 'HMON', 'CARQ']
-            elif self.file_deck == ATCF_FileDeck.b:
-                allowed_record_types = ['BEST']
-            else:
-                raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
-            if record_type not in allowed_record_types:
-                raise ValueError(
-                    f'request_record_type = {record_type} not allowed, select from {allowed_record_types}'
-                )
-        self.__record_type = record_type
-
-    @property
-    def data(self) -> DataFrame:
-        """
-        :return: track data for the given parameters as a data frame
-        """
-
-        start_date_mask = self.dataframe['datetime'] >= self.start_date
-        if self.end_date is None:
-            return self.dataframe.loc[start_date_mask]
-        else:
-            return self.dataframe.loc[
-                start_date_mask & (self.dataframe['datetime'] <= self.__file_end_date)
-            ]
-
-    @property
-    def remote_atcf(self) -> io.BytesIO:
-        """
-        :return: ATCF file from server
-        """
-
-        configuration = {
-            'storm_id': self.storm_id,
-            'file_deck': self.file_deck,
-            'mode': self.mode,
-            'filename': self.filename,
-        }
-
-        if (
-            self.storm_id is not None
-            and self.__remote_atcf is None
-            or configuration != self.__previous_configuration
-        ):
-            self.__remote_atcf = get_atcf_file(self.storm_id, self.file_deck, self.mode)
-
-        return self.__remote_atcf
-
-    @property
-    def dataframe(self) -> DataFrame:
-        configuration = {
-            'storm_id': self.storm_id,
-            'file_deck': self.file_deck,
-            'mode': self.mode,
-            'filename': self.filename,
-        }
-
-        # only download new file if the configuration has changed since the last download
-        if (
-            self.__dataframe is None
-            or len(self.__dataframe) == 0
-            or configuration != self.__previous_configuration
-        ):
-            if configuration['filename'] is not None:
-                allowed_record_types = None if self.record_type is None else [self.record_type]
-                atcf_file = configuration['filename']
-            else:
-                # Only accept request `BEST` or `OFCL` (official) records by default
-                allowed_record_types = (
-                    ['BEST', 'OFCL'] if self.record_type is None else [self.record_type]
-                )
-                atcf_file = self.remote_atcf
-
-            dataframe = read_atcf(atcf_file, allowed_record_types=allowed_record_types)
-            dataframe.sort_values(['datetime', 'record_type'], inplace=True)
-            dataframe.reset_index(inplace=True)
-
-            self.__dataframe = dataframe
-            self.__previous_configuration = configuration
-
-        # if location values have changed, recompute velocity
-        location_hash = pandas.util.hash_pandas_object(
-            self.__dataframe[['longitude', 'latitude']]
-        ).sum()
-        if self.__location_hash is None or location_hash != self.__location_hash:
-            self.__compute_velocity()
-            self.__location_hash = location_hash
-
-        return self.__dataframe
-
-    @dataframe.setter
-    def dataframe(self, dataframe: DataFrame):
-        self.__dataframe = dataframe
 
     def isotachs(self, wind_speed: float, segments: int = 91) -> List[Polygon]:
         """
@@ -624,30 +574,83 @@ class VortexTrack:
         return ops.unary_union(convex_hulls)
 
     @property
+    def duration(self) -> float:
+        return self.data['datetime'].diff().sum()
+
+    @property
+    def remote_atcf(self) -> io.BytesIO:
+        """
+        :return: ATCF file from server
+        """
+
+        configuration = {
+            'storm_id': self.storm_id,
+            'file_deck': self.file_deck,
+            'mode': self.mode,
+            'filename': self.filename,
+        }
+
+        if (
+            self.storm_id is not None
+            and self.__remote_atcf is None
+            or configuration != self.__previous_configuration
+        ):
+            self.__remote_atcf = get_atcf_file(self.storm_id, self.file_deck, self.mode)
+
+        return self.__remote_atcf
+
+    @property
+    def dataframe(self) -> DataFrame:
+        configuration = {
+            'storm_id': self.storm_id,
+            'file_deck': self.file_deck,
+            'mode': self.mode,
+            'filename': self.filename,
+        }
+
+        # only download new file if the configuration has changed since the last download
+        if (
+            self.__dataframe is None
+            or len(self.__dataframe) == 0
+            or configuration != self.__previous_configuration
+        ):
+            if configuration['filename'] is not None:
+                allowed_record_types = None if self.record_type is None else [self.record_type]
+                atcf_file = configuration['filename']
+            else:
+                # Only accept request `BEST` or `OFCL` (official) records by default
+                allowed_record_types = (
+                    ['BEST', 'OFCL'] if self.record_type is None else [self.record_type]
+                )
+                atcf_file = self.remote_atcf
+
+            dataframe = read_atcf(atcf_file, allowed_record_types=allowed_record_types)
+            dataframe.sort_values(['datetime', 'record_type'], inplace=True)
+            dataframe.reset_index(inplace=True)
+
+            self.__dataframe = dataframe
+            self.__previous_configuration = configuration
+
+        # if location values have changed, recompute velocity
+        location_hash = pandas.util.hash_pandas_object(
+            self.__dataframe[['longitude', 'latitude']]
+        ).sum()
+        if self.__location_hash is None or location_hash != self.__location_hash:
+            self.__compute_velocity()
+            self.__location_hash = location_hash
+
+        return self.__dataframe
+
+    @dataframe.setter
+    def dataframe(self, dataframe: DataFrame):
+        self.__dataframe = dataframe
+
+    @property
     def record_numbers(self) -> numpy.ndarray:
         record_numbers = numpy.empty((len(self.data)), dtype=int)
         for index, record_datetime in enumerate(self.data['datetime'].unique()):
             record_numbers[self.data['datetime'] == record_datetime] = index + 1
         return record_numbers
-
-    @property
-    def __file_end_date(self):
-        unique_dates = numpy.unique(self.dataframe['datetime'])
-        for date in unique_dates:
-            if date >= numpy.datetime64(self.end_date):
-                return date
-
-    def __copy__(self) -> 'VortexTrack':
-        return self.__class__(
-            storm=self.dataframe.copy(),
-            start_date=self.start_date,
-            end_date=self.end_date,
-            file_deck=self.file_deck,
-            record_type=self.record_type,
-        )
-
-    def __eq__(self, other: 'VortexTrack') -> bool:
-        return self.data.equals(other.data)
 
     def __compute_velocity(self):
         geodetic = Geod(ellps='WGS84')
@@ -680,47 +683,24 @@ class VortexTrack:
                 record_data.loc[cluster_indices, 'speed'] = speeds[index]
                 record_data.loc[cluster_indices, 'direction'] = bearings[index]
 
-    @classmethod
-    def from_fort22(
-        cls, fort22: PathLike, start_date: datetime = None, end_date: datetime = None,
-    ) -> 'VortexTrack':
-        """
-        read a ``fort.22`` file
-        """
+    @property
+    def __file_end_date(self):
+        unique_dates = numpy.unique(self.dataframe['datetime'])
+        for date in unique_dates:
+            if date >= numpy.datetime64(self.end_date):
+                return date
 
-        filename = None
-        if pathlib.Path(fort22).exists():
-            filename = fort22
-        return cls(
-            storm=read_atcf(fort22),
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=None,
-            mode=None,
-            record_type=None,
-            filename=filename,
+    def __copy__(self) -> 'VortexTrack':
+        return self.__class__(
+            storm=self.dataframe.copy(),
+            start_date=self.start_date,
+            end_date=self.end_date,
+            file_deck=self.file_deck,
+            record_type=self.record_type,
         )
 
-    @classmethod
-    def from_atcf_file(
-        cls, atcf: PathLike, start_date: datetime = None, end_date: datetime = None,
-    ) -> 'VortexTrack':
-        """
-        read an ATCF file
-        """
-
-        filename = None
-        if pathlib.Path(atcf).exists():
-            filename = atcf
-        return cls(
-            storm=atcf,
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=None,
-            mode=None,
-            record_type=None,
-            filename=filename,
-        )
+    def __eq__(self, other: 'VortexTrack') -> bool:
+        return self.data.equals(other.data)
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.storm_id, self.start_date, self.end_date, self.file_deck, self.mode, self.record_type, self.filename])})'
