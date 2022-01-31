@@ -223,7 +223,7 @@ class VortexTrack:
                 )
             else:
                 background_pressure = normalize_atcf_value(
-                    row['background_pressure'], to_type=int, round_digits=0,
+                    record['background_pressure'], to_type=int, round_digits=0,
                 )
             line.append(f'{background_pressure:>5}')
 
@@ -524,7 +524,7 @@ class VortexTrack:
             self.__dataframe[['longitude', 'latitude']]
         ).sum()
         if self.__location_hash is None or location_hash != self.__location_hash:
-            self.__dataframe = self.__compute_velocity(self.__dataframe)
+            self.__compute_velocity()
             self.__location_hash = location_hash
 
         return self.__dataframe
@@ -641,50 +641,36 @@ class VortexTrack:
     def __eq__(self, other: 'VortexTrack') -> bool:
         return numpy.all(self.dataframe == other.dataframe)
 
-    @staticmethod
-    def __compute_velocity(data: DataFrame) -> DataFrame:
+    def __compute_velocity(self):
         geodetic = Geod(ellps='WGS84')
 
-        unique_datetimes = numpy.unique(data['datetime'])
-        for datetime_index, unique_datetime in enumerate(unique_datetimes):
-            unique_datetime_indices = numpy.where(
-                numpy.asarray(data['datetime']) == unique_datetime
-            )[0]
-            for unique_datetime_index in unique_datetime_indices:
-                if unique_datetime_indices[-1] + 1 < len(data['datetime']):
-                    dt = (
-                        data['datetime'].iloc[unique_datetime_indices[-1] + 1]
-                        - data['datetime'].iloc[unique_datetime_index]
-                    )
-                    forward_azimuth, inverse_azimuth, distance = geodetic.inv(
-                        data['longitude'].iloc[unique_datetime_indices[-1] + 1],
-                        data['latitude'].iloc[unique_datetime_indices[-1] + 1],
-                        data['longitude'].iloc[unique_datetime_index],
-                        data['latitude'].iloc[unique_datetime_index],
-                    )
-                else:
-                    dt = (
-                        data['datetime'].iloc[unique_datetime_index]
-                        - data['datetime'].iloc[unique_datetime_indices[0] - 1]
-                    )
-                    forward_azimuth, inverse_azimuth, distance = geodetic.inv(
-                        data['longitude'].iloc[unique_datetime_indices[0] - 1],
-                        data['latitude'].iloc[unique_datetime_indices[0] - 1],
-                        data['longitude'].iloc[unique_datetime_index],
-                        data['latitude'].iloc[unique_datetime_index],
-                    )
+        data = self.__dataframe
 
-                speed = distance / (dt / timedelta(seconds=1))
-                bearing = inverse_azimuth % 360
+        for record_type in pandas.unique(data['record_type']):
+            record_data = data.loc[data['record_type'] == record_type]
 
-                data['speed'].iloc[unique_datetime_index] = speed
-                data['direction'].iloc[unique_datetime_index] = bearing
+            indices = [
+                numpy.where(record_data['datetime'] == unique_datetime)[0][0]
+                for unique_datetime in pandas.unique(record_data['datetime'])
+            ]
+            shifted_indices = numpy.roll(indices, 1)
+            shifted_indices[0] = 0
 
-                data['speed'] = data['speed'].astype('float', copy=False)
-                data['direction'] = data['direction'].astype('float', copy=False)
+            _, inverse_azimuths, distances = geodetic.inv(
+                record_data.loc[indices, 'longitude'],
+                record_data.loc[indices, 'latitude'],
+                record_data.loc[shifted_indices, 'longitude'],
+                record_data.loc[shifted_indices, 'latitude'],
+            )
 
-        # Output has units of meters per second.
-        return data
+            intervals = record_data.loc[indices, 'datetime'].diff()
+            speeds = distances / (intervals / pandas.to_timedelta(1, 's'))
+            bearings = pandas.Series(inverse_azimuths % 360, index=speeds.index)
+
+            for index in indices:
+                cluster_indices = record_data['datetime'] == record_data.loc[index, 'datetime']
+                record_data.loc[cluster_indices, 'speed'] = speeds[index]
+                record_data.loc[cluster_indices, 'direction'] = bearings[index]
 
     @classmethod
     def from_fort22(
