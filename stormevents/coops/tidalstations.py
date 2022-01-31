@@ -444,8 +444,11 @@ class COOPS_Query:
                 self.__error = data['error']['message']
                 data = DataFrame(columns=fields)
             else:
-                data = DataFrame(data['data'], columns=fields, dtype=numpy.float32)
-                data = data.astype({'f': 'string', 'q': 'string'}, errors='ignore')
+                data = DataFrame(data['data'], columns=fields)
+                data = data.astype(
+                    {'v': numpy.float32, 's': numpy.float32, 'f': 'string', 'q': 'string'},
+                    errors='ignore',
+                )
                 data['t'] = pandas.to_datetime(data['t'])
 
             data.set_index('t', inplace=True)

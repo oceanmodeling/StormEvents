@@ -113,8 +113,8 @@ def test_recompute_velocity():
 
     vortex = VortexTrack('irma2017')
 
-    vortex.dataframe['latitude'][5] += 0.1
-    vortex.dataframe['longitude'][5] -= 0.1
+    vortex.dataframe.at[5, 'longitude'] -= 0.1
+    vortex.dataframe.at[5, 'latitude'] += 0.1
 
     vortex.write(output_directory / 'irma2017_fort.22', overwrite=True)
 
