@@ -169,15 +169,13 @@ def get_atcf_file(
 def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -> Any:
     if type(value).__name__ == 'Quantity':
         value = value.magnitude
-    if (
-        round_digits is not None
-        and issubclass(to_type, (int, float))
-        and not (value is None or pandas.isna(value) or value == '')
-    ):
-        if isinstance(value, str):
-            value = float(value)
-        value = round(value, round_digits)
-    return typepigeon.convert_value(value, to_type)
+    if not (value is None or pandas.isna(value) or value == ''):
+        if round_digits is not None and issubclass(to_type, (int, float)):
+            if isinstance(value, str):
+                value = float(value)
+            value = round(value, round_digits)
+        value = typepigeon.convert_value(value, to_type)
+    return value
 
 
 def read_atcf(
@@ -211,8 +209,9 @@ def read_atcf(
 
     records = []
     for line in atcf:
-        line = line.decode('UTF-8')
-        if line.split(',')[4].strip() in allowed_record_types:
+        if isinstance(line, bytes):
+            line = line.decode('UTF-8')
+        if allowed_record_types is None or line.split(',')[4].strip() in allowed_record_types:
             records.append(read_atcf_line(line))
 
     if len(records) == 0:
@@ -274,14 +273,14 @@ def read_atcf_line(line: str) -> Dict[str, Any]:
 
     record.update(
         {
-            'max_sustained_wind_speed': typepigeon.convert_value(line[8], int),
-            'central_pressure': typepigeon.convert_value(line[9], int),
+            'max_sustained_wind_speed': normalize_atcf_value(line[8], int),
+            'central_pressure': normalize_atcf_value(line[9], int),
             'development_level': line[10],
         }
     )
 
     try:
-        record['isotach'] = typepigeon.convert_value(line[11], int)
+        record['isotach'] = normalize_atcf_value(line[11], int)
     except ValueError:
         raise Exception(
             'Error: No radial wind information for this storm; '
@@ -291,19 +290,19 @@ def read_atcf_line(line: str) -> Dict[str, Any]:
     record.update(
         {
             'quadrant': line[12],
-            'radius_for_NEQ': typepigeon.convert_value(line[13], int),
-            'radius_for_SEQ': typepigeon.convert_value(line[14], int),
-            'radius_for_SWQ': typepigeon.convert_value(line[15], int),
-            'radius_for_NWQ': typepigeon.convert_value(line[16], int),
+            'radius_for_NEQ': normalize_atcf_value(line[13], int),
+            'radius_for_SEQ': normalize_atcf_value(line[14], int),
+            'radius_for_SWQ': normalize_atcf_value(line[15], int),
+            'radius_for_NWQ': normalize_atcf_value(line[16], int),
         }
     )
 
     if len(line) > 18:
         record.update(
             {
-                'background_pressure': typepigeon.convert_value(line[17], int),
-                'radius_of_last_closed_isobar': typepigeon.convert_value(line[18], int),
-                'radius_of_maximum_winds': typepigeon.convert_value(line[19], int),
+                'background_pressure': normalize_atcf_value(line[17], int),
+                'radius_of_last_closed_isobar': normalize_atcf_value(line[18], int),
+                'radius_of_maximum_winds': normalize_atcf_value(line[19], int),
             }
         )
     else:
@@ -318,8 +317,8 @@ def read_atcf_line(line: str) -> Dict[str, Any]:
     if len(line) > 23:
         record.update(
             {
-                'direction': typepigeon.convert_value(line[25], int),
-                'speed': typepigeon.convert_value(line[26], int),
+                'direction': normalize_atcf_value(line[25], int),
+                'speed': normalize_atcf_value(line[26], int),
             }
         )
     else:

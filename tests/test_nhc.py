@@ -30,18 +30,16 @@ def test_nhc_gis_storms():
 
 
 def test_nhc_storms():
+    output_directory = OUTPUT_DIRECTORY / 'test_nhc_storms'
     reference_directory = REFERENCE_DIRECTORY / 'test_nhc_storms'
 
+    if not output_directory.exists():
+        output_directory.mkdir(exist_ok=True, parents=True)
+
     storms = nhc_storms(year=tuple(range(1851, 2021 + 1)))
+    storms.to_csv(output_directory / 'storms.csv')
 
-    reference_storms = pandas.read_csv(
-        reference_directory / 'storms.csv',
-        index_col='nhc_code',
-        parse_dates=['start_date', 'end_date'],
-        na_values='',
-    )
-
-    pandas.testing.assert_frame_equal(storms, reference_storms)
+    check_reference_directory(output_directory, reference_directory)
 
 
 def test_vortex():

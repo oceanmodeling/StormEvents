@@ -68,6 +68,7 @@ setup(
         'requests',
         'shapely',
         'typepigeon>=1.0.5',
+        'xarray',
     ],
     # test and development dependencies
     extras_require={

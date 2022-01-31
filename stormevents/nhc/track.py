@@ -647,7 +647,7 @@ class VortexTrack:
         )
 
     def __eq__(self, other: 'VortexTrack') -> bool:
-        return numpy.all(self.dataframe == other.dataframe)
+        return self.data.equals(other.data)
 
     def __compute_velocity(self):
         geodetic = Geod(ellps='WGS84')
@@ -723,4 +723,4 @@ class VortexTrack:
         )
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}('{self.storm_id}')"
+        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.storm_id, self.start_date, self.end_date, self.file_deck, self.mode, self.record_type, self.filename])})'
