@@ -1,15 +1,10 @@
 from datetime import datetime, timedelta
-import ftplib
-from functools import wraps
-import gzip
 import io
 import logging
 import os
 from os import PathLike
 import pathlib
-import socket
-from time import sleep
-from typing import Collection, List, TextIO, Union
+from typing import List, Union
 
 from dateutil.parser import parse as parse_date
 import numpy
@@ -26,8 +21,9 @@ from stormevents.nhc.atcf import (
     atcf_id_from_storm_name,
     ATCF_Mode,
     ATCF_RecordType,
-    atcf_url,
+    get_atcf_file,
     normalize_atcf_value,
+    read_atcf,
 )
 
 
@@ -507,168 +503,18 @@ class VortexTrack:
             or configuration != self.__previous_configuration
         ):
             if configuration['filename'] is not None:
-                dataframe = read_atcf(configuration['filename'])
+                allowed_record_types = None if self.record_type is None else [self.record_type]
+                atcf_file = configuration['filename']
             else:
-                # https://www.nrlmry.navy.mil/atcf_web/docs/database/new/abdeck.txt
+                # Only accept request `BEST` or `OFCL` (official) records by default
+                allowed_record_types = (
+                    ['BEST', 'OFCL'] if self.record_type is None else [self.record_type]
+                )
+                atcf_file = self.remote_atcf
 
-                columns = [
-                    'basin',
-                    'storm_number',
-                    'datetime',
-                    'record_type',
-                    'latitude',
-                    'longitude',
-                    'max_sustained_wind_speed',
-                    'central_pressure',
-                    'development_level',
-                    'isotach',
-                    'quadrant',
-                    'radius_for_NEQ',
-                    'radius_for_SEQ',
-                    'radius_for_SWQ',
-                    'radius_for_NWQ',
-                    'background_pressure',
-                    'radius_of_last_closed_isobar',
-                    'radius_of_maximum_winds',
-                    'name',
-                    'direction',
-                    'speed',
-                ]
-
-                atcf = self.atcf
-                if isinstance(atcf, io.BytesIO):
-                    # test if Gzip file
-                    atcf.seek(0)  # rewind
-                    first_two_bytes = atcf.read(2)
-                    atcf.seek(0)  # rewind
-                    if first_two_bytes == b'\x1f\x8b':
-                        atcf = gzip.GzipFile(fileobj=atcf)
-                    elif len(first_two_bytes) == 0:
-                        raise ValueError('empty file')
-
-                start_date = self.start_date
-                # Only accept request record type or
-                # BEST track or OFCL (official) advisory by default
-                allowed_record_types = self.record_type
-                if allowed_record_types is None:
-                    allowed_record_types = ['BEST', 'OFCL']
-                records = []
-
-                for line_index, line in enumerate(atcf):
-                    line = line.decode('UTF-8').split(',')
-
-                    record = {
-                        'basin': line[0],
-                        'storm_number': line[1].strip(' '),
-                    }
-
-                    record['record_type'] = line[4].strip(' ')
-
-                    if record['record_type'] not in allowed_record_types:
-                        continue
-
-                    # computing the actual datetime based on record_type
-                    if record['record_type'] == 'BEST':
-                        # Add minutes line to base datetime
-                        minutes = line[3].strip(' ')
-                        if minutes == "":
-                            minutes = '00'
-                        record['datetime'] = parse_date(line[2].strip(' ') + minutes)
-                    else:
-                        # Add validation time to base datetime
-                        minutes = '00'
-                        record['datetime'] = parse_date(line[2].strip(' ') + minutes)
-                        if start_date is not None:
-                            # Only keep records where base date == start time for advisories
-                            if start_date != record['datetime']:
-                                continue
-                        validation_time = int(line[5].strip(' '))
-                        record['datetime'] = record['datetime'] + timedelta(
-                            hours=validation_time
-                        )
-
-                    latitude = line[6]
-                    if 'N' in latitude:
-                        latitude = float(latitude.strip('N '))
-                    elif 'S' in latitude:
-                        latitude = float(latitude.strip('S ')) * -1
-                    latitude *= 0.1
-                    record['latitude'] = latitude
-
-                    longitude = line[7]
-                    if 'E' in longitude:
-                        longitude = float(longitude.strip('E ')) * 0.1
-                    elif 'W' in longitude:
-                        longitude = float(longitude.strip('W ')) * -0.1
-                    record['longitude'] = longitude
-
-                    record.update(
-                        {
-                            'max_sustained_wind_speed': float(line[8].strip(' ')),
-                            'central_pressure': float(line[9].strip(' ')),
-                            'development_level': line[10].strip(' '),
-                        }
-                    )
-
-                    try:
-                        record['isotach'] = int(line[11].strip(' '))
-                    except ValueError:
-                        raise Exception(
-                            'Error: No radial wind information for this storm; '
-                            'parametric wind model cannot be built.'
-                        )
-
-                    record.update(
-                        {
-                            'quadrant': line[12].strip(' '),
-                            'radius_for_NEQ': int(line[13].strip(' ')),
-                            'radius_for_SEQ': int(line[14].strip(' ')),
-                            'radius_for_SWQ': int(line[15].strip(' ')),
-                            'radius_for_NWQ': int(line[16].strip(' ')),
-                        }
-                    )
-
-                    if len(line) > 18:
-                        record.update(
-                            {
-                                'background_pressure': int(line[17].strip(' ')),
-                                'radius_of_last_closed_isobar': int(line[18].strip(' ')),
-                                'radius_of_maximum_winds': int(line[19].strip(' ')),
-                            }
-                        )
-
-                        if len(line) > 23:
-                            storm_name = line[27].strip()
-                        else:
-                            storm_name = ''
-
-                        record['name'] = storm_name
-                    else:
-                        previous_record = records[-1]
-
-                        record.update(
-                            {
-                                'background_pressure': previous_record['background_pressure'],
-                                'radius_of_last_closed_isobar': previous_record[
-                                    'radius_of_last_closed_isobar'
-                                ],
-                                'radius_of_maximum_winds': previous_record[
-                                    'radius_of_maximum_winds'
-                                ],
-                                'name': previous_record['name'],
-                            }
-                        )
-
-                    for key, value in record.items():
-                        if isinstance(value, str) and r'\n' in value:
-                            record[key] = value.replace(r'\n', '')
-
-                    records.append(record)
-
-                if len(records) == 0:
-                    raise ValueError(f'no records found with type(s) "{allowed_record_types}"')
-
-                dataframe = DataFrame.from_records(data=records, columns=columns)
+            dataframe = read_atcf(atcf_file, allowed_record_types=allowed_record_types)
+            dataframe.sort_values(['datetime', 'record_type'], inplace=True)
+            dataframe.reset_index(inplace=True)
 
             self.__dataframe = dataframe
             self.__previous_configuration = configuration
@@ -884,169 +730,3 @@ class VortexTrack:
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}('{self.storm_id}')"
-
-
-def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
-    """Retry calling the decorated function using an exponential backoff.
-
-    http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
-    original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
-
-    :param ExceptionToCheck: the exception to check. may be a tuple of
-        exceptions to check
-    :type ExceptionToCheck: Exception or tuple
-    :param tries: number of times to try (not retry) before giving up
-    :type tries: int
-    :param delay: initial delay between retries in seconds
-    :type delay: int
-    :param backoff: backoff multiplier e.g. value of 2 will double the delay
-        each retry
-    :type backoff: int
-    :param logger: logger to use. If None, print
-    :type logger: logging.Logger instance
-    """
-
-    def deco_retry(f):
-        @wraps(f)
-        def f_retry(*args, **kwargs):
-            mtries, mdelay = tries, delay
-            while mtries > 1:
-                try:
-                    return f(*args, **kwargs)
-                except ExceptionToCheck as e:
-                    msg = '%s, Retrying in %d seconds...' % (str(e), mdelay)
-                    if logger:
-                        logger.warning(msg)
-                    # else:
-                    #     print(msg)
-                    sleep(mdelay)
-                    mtries -= 1
-                    mdelay *= backoff
-            return f(*args, **kwargs)
-
-        return f_retry  # true decorator
-
-    return deco_retry
-
-
-def get_atcf_file(
-    storm_id: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
-) -> io.BytesIO:
-    url = atcf_url(file_deck=file_deck, storm_id=storm_id, mode=mode).replace('ftp://', "")
-    logging.info(f'Downloading storm data from {url}')
-
-    hostname, filename = url.split('/', 1)
-
-    handle = io.BytesIO()
-
-    try:
-        ftp = ftplib.FTP(hostname, 'anonymous', "")
-        ftp.encoding = 'utf-8'
-        ftp.retrbinary(f'RETR {filename}', handle.write)
-    except socket.gaierror:
-        raise ConnectionError(f'cannot connect to {hostname}')
-
-    return handle
-
-
-def read_atcf(track: PathLike) -> DataFrame:
-    try:
-        if not isinstance(track, TextIO):
-            track = open(track)
-        track = track.readlines()
-    except FileNotFoundError:
-        # check if the entire track file was passed as a string
-        track = str(track).splitlines()
-        if len(track) == 1:
-            raise
-
-    data = {
-        'basin': [],
-        'storm_number': [],
-        'datetime': [],
-        'record_type': [],
-        'latitude': [],
-        'longitude': [],
-        'max_sustained_wind_speed': [],
-        'central_pressure': [],
-        'development_level': [],
-        'isotach': [],
-        'quadrant': [],
-        'radius_for_NEQ': [],
-        'radius_for_SEQ': [],
-        'radius_for_SWQ': [],
-        'radius_for_NWQ': [],
-        'background_pressure': [],
-        'radius_of_last_closed_isobar': [],
-        'radius_of_maximum_winds': [],
-        'name': [],
-        'direction': [],
-        'speed': [],
-    }
-
-    for index, row in enumerate(track):
-        row = [value.strip() for value in row.split(',')]
-
-        if len(row) >= 27:
-            row_data = {key: None for key in data}
-
-            row_data['basin'] = row[0]
-            row_data['storm_number'] = row[1]
-            row_data['datetime'] = datetime.strptime(row[2], '%Y%m%d%H')
-            row_data['record_type'] = row[4]
-
-            latitude = row[6]
-            if 'N' in latitude:
-                latitude = float(latitude[:-1]) * 0.1
-            elif 'S' in latitude:
-                latitude = float(latitude[:-1]) * -0.1
-            row_data['latitude'] = latitude
-
-            longitude = row[7]
-            if 'E' in longitude:
-                longitude = float(longitude[:-1]) * 0.1
-            elif 'W' in longitude:
-                longitude = float(longitude[:-1]) * -0.1
-            row_data['longitude'] = longitude
-
-            row_data['max_sustained_wind_speed'] = normalize_atcf_value(
-                row[8], to_type=int, round_digits=0,
-            )
-            row_data['central_pressure'] = normalize_atcf_value(
-                row[9], to_type=int, round_digits=0
-            )
-            row_data['development_level'] = row[10]
-            row_data['isotach'] = normalize_atcf_value(row[11], to_type=int, round_digits=0)
-            row_data['quadrant'] = row[12]
-            row_data['radius_for_NEQ'] = normalize_atcf_value(
-                row[13], to_type=int, round_digits=0
-            )
-            row_data['radius_for_SEQ'] = normalize_atcf_value(
-                row[14], to_type=int, round_digits=0
-            )
-            row_data['radius_for_SWQ'] = normalize_atcf_value(
-                row[15], to_type=int, round_digits=0
-            )
-            row_data['radius_for_NWQ'] = normalize_atcf_value(
-                row[16], to_type=int, round_digits=0
-            )
-            row_data['background_pressure'] = normalize_atcf_value(
-                row[17], to_type=int, round_digits=0
-            )
-            row_data['radius_of_last_closed_isobar'] = normalize_atcf_value(
-                row[18], to_type=int, round_digits=0,
-            )
-            row_data['radius_of_maximum_winds'] = normalize_atcf_value(
-                row[19], to_type=int, round_digits=0,
-            )
-            row_data['direction'] = normalize_atcf_value(row[25], to_type=int)
-            row_data['speed'] = normalize_atcf_value(row[26], to_type=int)
-            row_data['name'] = row[27]
-
-            for key, value in row_data.items():
-                if isinstance(data[key], Collection):
-                    data[key].append(value)
-                elif data[key] is None:
-                    data[key] = value
-
-    return DataFrame(data=data)
