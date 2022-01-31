@@ -220,6 +220,8 @@ class HighWaterMarks:
         if self.__data is None or self.__previous_query != self.query:
             response = requests.get(self.URL, params=self.query)
             data = pandas.DataFrame(response.json())
+            data['survey_date'] = pandas.to_datetime(data['survey_date'])
+            data['flag_date'] = pandas.to_datetime(data['flag_date'])
             data.set_index('hwm_id', inplace=True)
             self.__data = data
             self.__previous_query = self.query

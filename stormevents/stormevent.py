@@ -6,6 +6,7 @@ from typing import List
 import pandas
 from pandas import DataFrame
 from shapely.geometry import MultiPoint
+import typepigeon
 
 from stormevents.coops import COOPS_Station, coops_stations_within_region
 from stormevents.coops.tidalstations import (
@@ -227,9 +228,11 @@ class StormEvent:
         high_water_marks = StormHighWaterMarks(name=self.name, year=self.year)
         data = high_water_marks.data
         if start_date is not None:
-            data = data['date'] >= start_date
+            start_date = typepigeon.convert_value(start_date, datetime)
+            data = data[data['survey_date'] >= start_date]
         if end_date is not None:
-            data = data['date'] <= end_date
+            end_date = typepigeon.convert_value(end_date, datetime)
+            data = data[data['survey_date'] <= end_date]
         return data
 
     @lru_cache(maxsize=None)
