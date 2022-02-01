@@ -3,9 +3,11 @@ from functools import lru_cache
 from os import PathLike
 from typing import List
 
-import pandas
 from pandas import DataFrame
 from shapely.geometry import MultiPoint
+import typepigeon
+import xarray
+from xarray import Dataset
 
 from stormevents.coops import COOPS_Station, coops_stations_within_region
 from stormevents.coops.tidalstations import (
@@ -227,9 +229,11 @@ class StormEvent:
         high_water_marks = StormHighWaterMarks(name=self.name, year=self.year)
         data = high_water_marks.data
         if start_date is not None:
-            data = data['date'] >= start_date
+            start_date = typepigeon.convert_value(start_date, datetime)
+            data = data[data['survey_date'] >= start_date]
         if end_date is not None:
-            data = data['date'] <= end_date
+            end_date = typepigeon.convert_value(end_date, datetime)
+            data = data[data['survey_date'] <= end_date]
         return data
 
     @lru_cache(maxsize=None)
@@ -245,7 +249,7 @@ class StormEvent:
         time_zone: COOPS_TimeZone = None,
         interval: COOPS_Interval = None,
         track_filename: PathLike = None,
-    ) -> DataFrame:
+    ) -> Dataset:
         """
         retrieve CO-OPS tidal station data within the specified isotach of the storm
 
@@ -260,6 +264,22 @@ class StormEvent:
         :param interval: time interval
         :param track_filename: file path to ``fort.22``
         :return: data frame of CO-OPS station data
+
+        >>> florence2018 = StormEvent('florence', 2018)
+        >>> florence2018.tidal_data_within_isotach(34, start_date='2018-09-13', end_date='2018-09-13 06:00:00')
+        <xarray.Dataset>
+        Dimensions:  (t: 121, nos_id: 7)
+        Coordinates:
+          * t        (t) datetime64[ns] 2018-09-13T12:00:00 ... 2018-09-14
+          * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8658120 8658163 8661070
+            nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'WLON7' 'JMPN7' 'MROS1'
+            x        (nos_id) float64 -75.75 -75.56 -75.69 -76.69 -77.94 -77.81 -78.94
+            y        (nos_id) float64 36.19 35.78 35.22 34.72 34.22 34.22 33.66
+        Data variables:
+            v        (nos_id, t) float32 6.562 6.631 6.682 6.766 ... 9.6 9.634 9.686
+            s        (nos_id, t) float32 0.66 0.537 0.496 0.516 ... 0.049 0.047 0.054
+            f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
+            q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
 
         track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
@@ -273,9 +293,10 @@ class StormEvent:
             isotach=isotach, track=track, station_type=station_type
         )
 
-        return pandas.concat(
-            [
-                station.get(
+        if len(stations) > 0:
+            stations_data = []
+            for station in stations:
+                station_data = station.get(
                     start_date=start_date,
                     end_date=end_date,
                     product=product,
@@ -284,9 +305,15 @@ class StormEvent:
                     time_zone=time_zone,
                     interval=interval,
                 )
-                for station in stations
-            ]
-        )
+                stations_data.append(station_data)
+
+            stations = xarray.combine_nested(stations_data, concat_dim='nos_id',)
+        else:
+            stations = Dataset(
+                coords={'t': None, 'nos_id': None, 'nws_id': None, 'x': None, 'y': None,},
+            )
+
+        return stations
 
     @lru_cache(maxsize=None)
     def tidal_data_within_bounding_box(
@@ -300,7 +327,7 @@ class StormEvent:
         time_zone: COOPS_TimeZone = None,
         interval: COOPS_Interval = None,
         track_filename: PathLike = None,
-    ) -> DataFrame:
+    ) -> Dataset:
         """
         retrieve CO-OPS tidal station data within the bounding box of the track
 
@@ -310,10 +337,26 @@ class StormEvent:
         :param product: CO-OPS product
         :param datum: tidal datum
         :param units: either ``metric`` or ``english``
-        :param time_zone: time zone
-        :param interval: time interval
+        :param time_zone: time zone of data
+        :param interval: time interval of data
         :param track_filename: file path to ``fort.22``
-        :return: data frame of CO-OPS station data
+        :return: data array of CO-OPS station data
+
+        >>> florence2018 = StormEvent('florence', 2018)
+        >>> florence2018.tidal_data_within_bounding_box(start_date='2018-09-13', end_date='2018-09-13 06:00:00')
+        <xarray.Dataset>
+        Dimensions:  (t: 61, nos_id: 65)
+        Coordinates:
+          * t        (t) datetime64[ns] 2018-09-13 ... 2018-09-13T06:00:00
+          * nos_id   (nos_id) int64 8652587 8654467 8654467 ... 8652587 8652587 8652587
+            nws_id   (nos_id) <U5 'ORIN7' 'HCGN7' 'HCGN7' ... 'ORIN7' 'ORIN7' 'ORIN7'
+            x        (nos_id) float64 -75.55 -75.7 -75.7 -75.7 ... -75.55 -75.55 -75.55
+            y        (nos_id) float64 35.8 35.21 35.21 35.21 ... 35.8 35.8 35.8 35.8
+        Data variables:
+            v        (nos_id, t) float32 1.141 1.149 1.149 1.156 ... 1.175 1.167 1.164
+            s        (nos_id, t) float32 0.003 0.003 0.003 0.004 ... 0.004 0.003 0.007
+            f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
+            q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
 
         track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
@@ -324,13 +367,14 @@ class StormEvent:
             end_date = track.end_date
 
         stations = coops_stations_within_bounding_box(
-            *MultiPoint(track.data[['Longitude', 'Latitude']]).bounds,
+            *MultiPoint(track.data[['longitude', 'latitude']].values).bounds,
             station_type=station_type,
         )
 
-        return pandas.concat(
-            [
-                station.get(
+        if len(stations) > 0:
+            stations_data = []
+            for station in stations:
+                station_data = station.get(
                     start_date=start_date,
                     end_date=end_date,
                     product=product,
@@ -339,9 +383,15 @@ class StormEvent:
                     time_zone=time_zone,
                     interval=interval,
                 )
-                for station in stations
-            ]
-        )
+                if len(station_data['t']) > 0:
+                    stations_data.append(station_data)
+            stations = xarray.combine_nested(stations_data, concat_dim='nos_id')
+        else:
+            stations = Dataset(
+                coords={'t': None, 'nos_id': None, 'nws_id': None, 'x': None, 'y': None}
+            )
+
+        return stations
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.__name}, {self.year})'

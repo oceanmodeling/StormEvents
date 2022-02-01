@@ -1,5 +1,6 @@
 # ! /usr/bin/env python
 from copy import copy
+from datetime import timedelta
 
 from dateutil.parser import parse as parse_date
 import pandas
@@ -30,18 +31,16 @@ def test_nhc_gis_storms():
 
 
 def test_nhc_storms():
+    output_directory = OUTPUT_DIRECTORY / 'test_nhc_storms'
     reference_directory = REFERENCE_DIRECTORY / 'test_nhc_storms'
 
+    if not output_directory.exists():
+        output_directory.mkdir(exist_ok=True, parents=True)
+
     storms = nhc_storms(year=tuple(range(1851, 2021 + 1)))
+    storms.to_csv(output_directory / 'storms.csv')
 
-    reference_storms = pandas.read_csv(
-        reference_directory / 'storms.csv',
-        index_col='nhc_code',
-        parse_dates=['start_date', 'end_date'],
-        na_values='',
-    )
-
-    pandas.testing.assert_frame_equal(storms, reference_storms)
+    check_reference_directory(output_directory, reference_directory)
 
 
 def test_vortex():
@@ -63,9 +62,10 @@ def test_vortex():
         'isabel2003',
     ]
 
+    storms = [VortexTrack(storm, start_date=timedelta(days=-1)) for storm in storms]
+
     for storm in storms:
-        vortex = VortexTrack(storm)
-        vortex.write(output_directory / f'{storm}.fort.22')
+        storm.write(output_directory / f'{storm.name}{storm.year}.fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 
@@ -115,8 +115,8 @@ def test_recompute_velocity():
 
     vortex = VortexTrack('irma2017')
 
-    vortex.dataframe['latitude'][5] += 0.1
-    vortex.dataframe['longitude'][5] -= 0.1
+    vortex.dataframe.at[5, 'longitude'] -= 0.1
+    vortex.dataframe.at[5, 'latitude'] += 0.1
 
     vortex.write(output_directory / 'irma2017_fort.22', overwrite=True)
 

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas
 import pytest
 
@@ -49,6 +51,8 @@ def test_track(florence2018):
 
     reference_track = VortexTrack('florence2018')
 
+    pandas.testing.assert_frame_equal(track.data, reference_track.data)
+
     assert track == reference_track
 
 
@@ -60,3 +64,27 @@ def test_high_water_marks(florence2018):
     ).data
 
     pandas.testing.assert_frame_equal(high_water_marks, reference_high_water_marks)
+
+
+def test_tidal_data_within_isotach(florence2018):
+    start_date = datetime(2018, 9, 13, 23)
+    end_date = datetime(2018, 9, 14)
+
+    tidal_data = florence2018.tidal_data_within_isotach(
+        34, start_date=start_date, end_date=end_date
+    )
+
+    assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
+    assert tidal_data.sizes == {'t': 11, 'nos_id': 10}
+
+
+def test_tidal_data_within_bounding_box(florence2018):
+    start_date = datetime(2018, 9, 13, 23)
+    end_date = datetime(2018, 9, 14)
+
+    tidal_data = florence2018.tidal_data_within_bounding_box(
+        start_date=start_date, end_date=end_date
+    )
+
+    assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
+    assert tidal_data.sizes == {'t': 11, 'nos_id': 8}

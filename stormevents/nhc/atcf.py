@@ -1,10 +1,21 @@
+from datetime import timedelta
 from enum import Enum
 import ftplib
-from typing import Any, List
+from functools import wraps
+import gzip
+import io
+import logging
+from os import PathLike
+import socket
+import time
+from typing import Any, Dict, List, TextIO, Union
 from urllib.error import URLError
 
+from dateutil.parser import parse as parse_date
+import numpy
 import pandas
-from pandas import Series
+from pandas import DataFrame, Series
+import typepigeon
 
 
 def atcf_storm_ids(file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None) -> List[str]:
@@ -135,23 +146,231 @@ def atcf_url(
     return url
 
 
-def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None) -> Any:
+def get_atcf_file(
+    storm_id: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
+) -> io.BytesIO:
+    url = atcf_url(file_deck=file_deck, storm_id=storm_id, mode=mode).replace('ftp://', "")
+    logging.info(f'Downloading storm data from {url}')
+
+    hostname, filename = url.split('/', 1)
+
+    handle = io.BytesIO()
+
+    try:
+        ftp = ftplib.FTP(hostname, 'anonymous', "")
+        ftp.encoding = 'utf-8'
+        ftp.retrbinary(f'RETR {filename}', handle.write)
+    except socket.gaierror:
+        raise ConnectionError(f'cannot connect to {hostname}')
+
+    return handle
+
+
+def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -> Any:
     if type(value).__name__ == 'Quantity':
         value = value.magnitude
-    if issubclass(to_type, Enum):
-        try:
-            value = to_type[value]
-        except (KeyError, ValueError):
-            try:
-                value = to_type(value)
-            except (KeyError, ValueError):
-                raise ValueError(
-                    f'unrecognized entry "{value}"; must be one of {list(to_type)}'
-                )
-    elif not pandas.isna(value) and value is not None and value != "":
+    if not (value is None or pandas.isna(value) or value == ''):
         if round_digits is not None and issubclass(to_type, (int, float)):
             if isinstance(value, str):
                 value = float(value)
             value = round(value, round_digits)
-        value = to_type(value)
+        value = typepigeon.convert_value(value, to_type)
     return value
+
+
+def read_atcf(
+    atcf: Union[PathLike, io.BytesIO, TextIO], record_types: List[ATCF_RecordType] = None,
+) -> DataFrame:
+    if record_types is not None:
+        record_types = [
+            typepigeon.convert_value(record_type, str) for record_type in record_types
+        ]
+
+    if isinstance(atcf, io.BytesIO):
+        # test if Gzip file
+        atcf.seek(0)  # rewind
+        first_two_bytes = atcf.read(2)
+        atcf.seek(0)  # rewind
+        if first_two_bytes == b'\x1f\x8b':
+            atcf = gzip.GzipFile(fileobj=atcf)
+        elif len(first_two_bytes) == 0:
+            raise ValueError('empty file')
+    else:
+        try:
+            if not isinstance(atcf, TextIO):
+                atcf = open(atcf)
+            atcf = atcf.readlines()
+        except FileNotFoundError:
+            # check if the entire track file was passed as a string
+            atcf = str(atcf).splitlines()
+            if len(atcf) == 1:
+                raise
+
+    records = []
+    for line in atcf:
+        if isinstance(line, bytes):
+            line = line.decode('UTF-8')
+        if record_types is None or line.split(',')[4].strip() in record_types:
+            records.append(read_atcf_line(line))
+
+    if len(records) == 0:
+        raise ValueError(f'no records found with type(s) "{record_types}"')
+
+    return DataFrame(records)
+
+
+def read_atcf_line(line: str) -> Dict[str, Any]:
+    """
+    https://dtcenter.org/metplus-practical-session-guide-july-2019/metplus-practical-session-guide-july-2019/session-5-trkintfeature-relative/met-tool-tc-pairs
+    https://www.nrlmry.navy.mil/atcf_web/docs/database/new/abdeck.txt
+
+    :param line: ATCF line
+    :return: dictionary record of parsed values
+    """
+
+    line = [value.strip() for value in line.split(',')]
+
+    for index, value in enumerate(line):
+        if isinstance(value, str) and r'\n' in value:
+            line[index] = value.replace(r'\n', '')
+
+    record = {
+        'basin': line[0],
+        'storm_number': line[1],
+    }
+
+    record['record_type'] = line[4]
+
+    # computing the actual datetime based on record_type
+    minutes = '00'
+    if record['record_type'] == 'BEST':
+        # Add minutes line to base datetime
+        if len(line[3]) > 0:
+            minutes = line[3]
+
+    record['datetime'] = parse_date(f'{line[2]}{minutes}')
+
+    # Add forecast period to base datetime
+    forecast_hours = int(line[5])
+    if forecast_hours != 0:
+        record['datetime'] += timedelta(hours=forecast_hours)
+
+    latitude = line[6]
+    if 'N' in latitude:
+        latitude = float(latitude.strip('N'))
+    elif 'S' in latitude:
+        latitude = float(latitude.strip('S')) * -1
+    latitude *= 0.1
+    record['latitude'] = latitude
+
+    longitude = line[7]
+    if 'E' in longitude:
+        longitude = float(longitude.strip('E')) * 0.1
+    elif 'W' in longitude:
+        longitude = float(longitude.strip('W')) * -0.1
+    record['longitude'] = longitude
+
+    record.update(
+        {
+            'max_sustained_wind_speed': normalize_atcf_value(line[8], int),
+            'central_pressure': normalize_atcf_value(line[9], int),
+            'development_level': line[10],
+        }
+    )
+
+    try:
+        record['isotach'] = normalize_atcf_value(line[11], int)
+    except ValueError:
+        raise Exception(
+            'Error: No radial wind information for this storm; '
+            'parametric wind model cannot be built.'
+        )
+
+    record.update(
+        {
+            'quadrant': line[12],
+            'radius_for_NEQ': normalize_atcf_value(line[13], int),
+            'radius_for_SEQ': normalize_atcf_value(line[14], int),
+            'radius_for_SWQ': normalize_atcf_value(line[15], int),
+            'radius_for_NWQ': normalize_atcf_value(line[16], int),
+        }
+    )
+
+    if len(line) > 18:
+        record.update(
+            {
+                'background_pressure': normalize_atcf_value(line[17], int),
+                'radius_of_last_closed_isobar': normalize_atcf_value(line[18], int),
+                'radius_of_maximum_winds': normalize_atcf_value(line[19], int),
+            }
+        )
+    else:
+        record.update(
+            {
+                'background_pressure': numpy.nan,
+                'radius_of_last_closed_isobar': numpy.nan,
+                'radius_of_maximum_winds': numpy.nan,
+            }
+        )
+
+    if len(line) > 23:
+        record.update(
+            {
+                'direction': normalize_atcf_value(line[25], int),
+                'speed': normalize_atcf_value(line[26], int),
+            }
+        )
+    else:
+        record.update(
+            {'direction': numpy.nan, 'speed': numpy.nan,}
+        )
+
+    if len(line) > 27:
+        storm_name = line[27]
+    else:
+        storm_name = ''
+
+    record['name'] = storm_name
+
+    return record
+
+
+def retry(
+    exception_to_check: Exception,
+    tries: int = 4,
+    delay: float = 3,
+    backoff: int = 2,
+    logger: logging.Logger = None,
+):
+    """
+    Retry calling the decorated function using an exponential backoff.
+
+    http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
+    original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
+
+    :param exception_to_check: the exception to check. may be a tuple of exceptions to check
+    :param tries: number of times to try (not retry) before giving up
+    :param delay: initial delay between retries in seconds
+    :param backoff: backoff multiplier e.g. value of 2 will double the delay each retry
+    :param logger: logger to use. If None, print
+    """
+
+    def deco_retry(f):
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except exception_to_check as e:
+                    msg = '%s, Retrying in %d seconds...' % (str(e), mdelay)
+                    if logger is not None:
+                        logger.warning(msg)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+
+        return f_retry  # true decorator
+
+    return deco_retry
