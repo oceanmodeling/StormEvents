@@ -190,8 +190,8 @@ class VortexTrack:
 
             if name.strip() == '':
                 storms = nhc_storms(year=self.year)
-                if self.storm_id.lower() in storms.index:
-                    storm = storms.loc[self.storm_id.lower()]
+                if self.storm_id.upper() in storms.index:
+                    storm = storms.loc[self.storm_id.upper()]
                     name = storm['name'].lower()
 
             self.__name = name
