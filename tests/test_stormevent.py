@@ -75,7 +75,7 @@ def test_tidal_data_within_isotach(florence2018):
     )
 
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
-    assert tidal_data.sizes == {'t': 11, 'nos_id': 7}
+    assert tidal_data.sizes == {'t': 11, 'nos_id': 10}
 
 
 def test_tidal_data_within_bounding_box(florence2018):

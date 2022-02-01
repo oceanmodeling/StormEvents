@@ -673,10 +673,13 @@ class VortexTrack:
         ).sum()
         if self.__location_hash is None or location_hash != self.__location_hash:
             if self.__location_hash is None:
-                data = self.__dataframe[pandas.isna(self.__dataframe['speed'])]
+                velocity_update_indices = pandas.isna(self.__dataframe['speed'])
             else:
-                data = self.__dataframe
-            self.__compute_velocity(data)
+                velocity_update_indices = self.__dataframe.index.isnull()
+
+            self.__dataframe[velocity_update_indices] = self.__compute_velocity(
+                self.__dataframe[velocity_update_indices]
+            )
             self.__location_hash = location_hash
 
         return self.__dataframe
@@ -723,9 +726,13 @@ class VortexTrack:
             bearings = pandas.Series(inverse_azimuths % 360, index=speeds.index)
 
             for index in indices:
-                cluster_indices = record_data['datetime'] == record_data.loc[index, 'datetime']
-                record_data.loc[cluster_indices, 'speed'] = speeds[index]
-                record_data.loc[cluster_indices, 'direction'] = bearings[index]
+                cluster_index = record_data['datetime'] == record_data.loc[index, 'datetime']
+                record_data.loc[cluster_index, 'speed'] = speeds[index]
+                record_data.loc[cluster_index, 'direction'] = bearings[index]
+
+            data.loc[data['record_type'] == record_type] = record_data
+
+        data.loc[pandas.isna(data['speed']), 'speed'] = 0
 
         return data
 
