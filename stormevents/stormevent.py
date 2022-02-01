@@ -394,7 +394,7 @@ class StormEvent:
         return stations
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({self.__name}, {self.year})'
+        return f'{self.__class__.__name__}({", ".join(repr(value) for value in (self.__name, self.year))})'
 
 
 def coops_stations_within_vortextrack_isotach(

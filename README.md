@@ -28,6 +28,10 @@ from stormevents import StormEvent
 florence2018 = StormEvent('florence', 2018)
 ```
 
+```python
+StormEvent('FLORENCE', 2018)
+```
+
 or from the NHC storm code (i.e. `AL062018`),
 
 ```python
@@ -36,12 +40,20 @@ from stormevents import StormEvent
 paine2016 = StormEvent.from_nhc_code('EP172016')
 ```
 
+```python
+StormEvent('PAINE', 2016)
+```
+
 or from the USGS flood event ID (i.e. `283`).
 
 ```python
 from stormevents import StormEvent
 
 henri2021 = StormEvent.from_usgs_id(310)
+```
+
+```python
+StormEvent('HENRI', 2021)
 ```
 
 For this storm, you can then retrieve track data from NHC,
@@ -54,6 +66,11 @@ florence2018 = StormEvent('florence', 2018)
 track = florence2018.track()
 ```
 
+```python
+VortexTrack('AL062018', Timestamp('2018-08-29 06:00:00'), Timestamp('2018-09-22 18:00:00'), 
+            ATCF_FileDeck.a, ATCF_Mode.historical, None, None)
+```
+
 high-water mark data from USGS,
 
 ```python
@@ -64,6 +81,24 @@ florence2018 = StormEvent('florence', 2018)
 high_water_marks = florence2018.high_water_marks()
 ```
 
+```
+         latitude  ...  siteZone
+hwm_id             ...          
+33496   37.298440  ...       NaN
+33502   35.342089  ...       NaN
+33503   35.378963  ...       NaN
+33505   35.216282  ...       NaN
+33508   35.199859  ...       NaN
+  ...         ...  ...       ...
+34191   33.724722  ...       NaN
+34235   34.936308  ...          
+34840   34.145930  ...       NaN
+34871   35.424707  ...       NaN
+34876   35.301135  ...       NaN
+
+[509 rows x 51 columns]
+```
+
 and water level products from CO-OPS.
 
 ```python
@@ -71,7 +106,22 @@ from stormevents import StormEvent
 
 florence2018 = StormEvent('florence', 2018)
 
-water_levels = florence2018.tidal_data_within_isotach(isotach=34)
+water_levels = florence2018.tidal_data_within_isotach(isotach=34, start_date='20180913230000', end_date='20180914')
+```
+
+```
+Dimensions:  (t: 11, nos_id: 10)
+Coordinates:
+  * t        (t) datetime64[ns] 2018-09-13T23:00:00 ... 2018-09-14
+  * nos_id   (nos_id) int64 8639348 8651370 8652587 ... 8661070 8662245 8665530
+    nws_id   (nos_id) <U5 'MNPV2' 'DUKN7' 'ORIN7' ... 'MROS1' 'NITS1' 'CHTS1'
+    x        (nos_id) float64 -76.31 -75.75 -75.56 ... -78.94 -79.19 -79.94
+    y        (nos_id) float64 36.78 36.19 35.78 35.22 ... 33.66 33.34 32.78
+Data variables:
+    v        (nos_id, t) float32 7.271 7.274 7.27 7.27 ... 1.549 1.587 1.624
+    s        (nos_id, t) float32 0.005 0.004 0.005 0.004 ... 0.005 0.007 0.006
+    f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
+    q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
 ```
 
 By default, these functions operate within the time interval defined by the NHC best track.
@@ -87,21 +137,21 @@ nhc_storms = nhc_storms()
 ```
 
 ```
-             name class  year  ...    source          start_date            end_date
-nhc_code                       ...
-AL021851  UNNAMED    HU  1851  ...   ARCHIVE 1851-07-05 12:00:00 1851-07-05 12:00:00
-AL031851  UNNAMED    TS  1851  ...   ARCHIVE 1851-07-10 12:00:00 1851-07-10 12:00:00
-AL041851  UNNAMED    HU  1851  ...   ARCHIVE 1851-08-16 00:00:00 1851-08-27 18:00:00
-AL051851  UNNAMED    TS  1851  ...   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
-AL061851  UNNAMED    TS  1851  ...   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
-           ...   ...   ...  ...       ...                 ...                 ...
-CP902021   INVEST    LO  2021  ...  METWATCH 2021-07-24 12:00:00                 NaT
-CP912021   INVEST    DB  2021  ...  METWATCH 2021-08-07 18:00:00                 NaT
-EP922021   INVEST    DB  2021  ...  METWATCH 2021-06-05 06:00:00                 NaT
-AL952021   INVEST    DB  2021  ...  METWATCH 2021-10-28 12:00:00                 NaT
-AL962021   INVEST    EX  2021  ...  METWATCH 2021-11-07 12:00:00                 NaT
+                name class  ...          start_date            end_date
+nhc_code                    ...                                        
+AL021851     UNNAMED    HU  ... 1851-07-05 12:00:00 1851-07-05 12:00:00
+AL031851     UNNAMED    TS  ... 1851-07-10 12:00:00 1851-07-10 12:00:00
+AL041851     UNNAMED    HU  ... 1851-08-16 00:00:00 1851-08-27 18:00:00
+AL051851     UNNAMED    TS  ... 1851-09-13 00:00:00 1851-09-16 18:00:00
+AL061851     UNNAMED    TS  ... 1851-10-16 00:00:00 1851-10-19 18:00:00
+     ...         ...   ...  ...                 ...                 ...
+EP922021      INVEST    DB  ... 2021-06-05 06:00:00                 NaT
+AL952021      INVEST    DB  ... 2021-10-28 12:00:00                 NaT
+AL962021      INVEST    EX  ... 2021-11-07 12:00:00                 NaT
+EP712022  GENESIS001    DB  ... 2022-01-20 12:00:00                 NaT
+EP902022      INVEST    LO  ... 2022-01-20 12:00:00                 NaT
 
-[2730 rows x 6 columns]
+[2729 rows x 8 columns]
 ```
 
 #### retrieve storm tracks provided by the NHC
@@ -114,7 +164,7 @@ from stormevents.nhc.atcf import ATCF_FileDeck
 vortex = VortexTrack('AL112017')
 
 # you can specify the file deck with `file_deck`
-vortex = VortexTrack('AL112017', file_deck=ATCF_FileDeck.f)
+vortex = VortexTrack('AL112017', file_deck=ATCF_FileDeck.b)
 
 # you can also use the storm name and year in the lookup
 vortex = VortexTrack('irma2017')
@@ -214,21 +264,21 @@ stations = coops_stations()
 ```
 
 ```
-        NWS ID  Latitude  ...                   Station Name   Removed Date/Time
-NOS ID                    ...                                                   
-1600012  46125  37.75008  ...                      QREB buoy                 NaT
-1611400  NWWH1  21.95440  ...                     Nawiliwili                 NaT
-1612340  OOUH1  21.30669  ...                       Honolulu                 NaT
-1612480  MOKH1  21.43306  ...                       Mokuoloe                 NaT
-1615680  KLIH1  20.89500  ...        Kahului, Kahului Harbor                 NaT
-    ...    ...       ...  ...                            ...                 ...
-8637689  YKTV2  37.22650  ...  Yorktown USCG Training Center 2010-09-13 13:00:00
-8637689  YKTV2  37.22650  ...  Yorktown USCG Training Center 2015-08-20 00:00:00
-8637689  YKTV2  37.22650  ...  Yorktown USCG Training Center 2014-12-12 15:29:00
-9414458  ZSMC1  37.58000  ...               San Mateo Bridge 2005-04-05 00:00:00
-9414458  ZSMC1  37.58000  ...               San Mateo Bridge 2005-04-05 23:59:00
+        nws_id         x          y                          name state removed
+nos_id                                                                         
+1600012  46125  122.6250  37.750000                     QREB buoy           NaT
+1611400  NWWH1 -159.3750  21.953125                    Nawiliwili    HI     NaT
+1612340  OOUH1 -157.8750  21.312500                      Honolulu    HI     NaT
+1612480  MOKH1 -157.7500  21.437500                      Mokuoloe    HI     NaT
+1615680  KLIH1 -156.5000  20.890625       Kahului, Kahului Harbor    HI     NaT
+        ...       ...        ...                           ...   ...     ...
+9759394  MGZP4  -67.1875  18.218750                      Mayaguez    PR     NaT
+9759938  MISP4  -67.9375  18.093750                   Mona Island           NaT
+9761115  BARA9  -61.8125  17.593750                       Barbuda           NaT
+9999530  FRCB6  -64.6875  32.375000  Bermuda, Ferry Reach Channel           NaT
+9999531         -93.3125  29.765625        Calcasieu Test Station    LA     NaT
 
-[7877 rows x 6 columns]
+[363 rows x 6 columns]
 ```
 
 #### list CO-OPS tidal stations within a region

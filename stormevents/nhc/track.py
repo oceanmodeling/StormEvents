@@ -394,10 +394,13 @@ class VortexTrack:
         self.__mode = mode
 
     @property
-    def record_type(self) -> str:
+    def record_type(self) -> ATCF_RecordType:
         """
         :return: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
         """
+
+        if self.file_deck == ATCF_FileDeck.b:
+            self.__record_type = ATCF_RecordType.best
 
         return self.__record_type
 
@@ -420,14 +423,12 @@ class VortexTrack:
             # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
             # there are more but they may not have enough columns
             valid_record_types = [
-                ATCF_RecordType.ofcl.value,
-                ATCF_RecordType.ofcp.value,
-                ATCF_RecordType.hwrf.value,
-                ATCF_RecordType.hmon.value,
-                ATCF_RecordType.carq.value,
+                entry.value for entry in ATCF_RecordType if entry != ATCF_RecordType.best
             ]
         elif self.file_deck == ATCF_FileDeck.b:
             valid_record_types = [ATCF_RecordType.best.value]
+        elif self.file_deck == ATCF_FileDeck.f:
+            valid_record_types = [entry.value for entry in ATCF_RecordType]
         else:
             raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
 
@@ -736,12 +737,14 @@ class VortexTrack:
             or configuration != self.__previous_configuration
         ):
             if configuration['filename'] is not None:
-                record_types = None if self.record_type is None else [self.record_type]
+                record_types = None if self.record_type is None else [self.record_type.value]
                 atcf_file = configuration['filename']
             else:
                 # Only accept request `BEST` or `OFCL` (official) records by default
                 record_types = (
-                    self.valid_record_types if self.record_type is None else [self.record_type]
+                    self.valid_record_types
+                    if self.record_type is None
+                    else [self.record_type.value]
                 )
                 atcf_file = self.remote_atcf
 
