@@ -179,12 +179,11 @@ def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -
 
 
 def read_atcf(
-    atcf: Union[PathLike, io.BytesIO, TextIO],
-    allowed_record_types: List[ATCF_RecordType] = None,
+    atcf: Union[PathLike, io.BytesIO, TextIO], record_types: List[ATCF_RecordType] = None,
 ) -> DataFrame:
-    if allowed_record_types is not None:
-        allowed_record_types = [
-            typepigeon.convert_value(record_type, str) for record_type in allowed_record_types
+    if record_types is not None:
+        record_types = [
+            typepigeon.convert_value(record_type, str) for record_type in record_types
         ]
 
     if isinstance(atcf, io.BytesIO):
@@ -211,11 +210,11 @@ def read_atcf(
     for line in atcf:
         if isinstance(line, bytes):
             line = line.decode('UTF-8')
-        if allowed_record_types is None or line.split(',')[4].strip() in allowed_record_types:
+        if record_types is None or line.split(',')[4].strip() in record_types:
             records.append(read_atcf_line(line))
 
     if len(records) == 0:
-        raise ValueError(f'no records found with type(s) "{allowed_record_types}"')
+        raise ValueError(f'no records found with type(s) "{record_types}"')
 
     return DataFrame(records)
 

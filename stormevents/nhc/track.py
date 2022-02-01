@@ -75,7 +75,7 @@ class VortexTrack:
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of `a`, `b`, `f`
         :param mode: ATCF mode; either `historical` or `realtime`
-        :param record_type: ATCF advisory; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
+        :param record_type: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
         :param filename: file path to `fort.22`
         """
 
@@ -341,28 +341,36 @@ class VortexTrack:
 
     @property
     def record_type(self) -> str:
+        """
+        :return: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
+        """
         return self.__record_type
 
     @record_type.setter
     def record_type(self, record_type: ATCF_RecordType):
-        # e.g. BEST, OFCL, HWRF, etc.
+        # e.g. `BEST`, `OFCL`, `HWRF`, etc.
         if record_type is not None:
             if not isinstance(record_type, str):
                 record_type = typepigeon.convert_value(record_type, str)
             record_type = record_type.upper()
-            if self.file_deck == ATCF_FileDeck.a:
-                # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
-                # there are more but they may not have enough columns
-                allowed_record_types = ['OFCL', 'OFCP', 'HWRF', 'HMON', 'CARQ']
-            elif self.file_deck == ATCF_FileDeck.b:
-                allowed_record_types = ['BEST']
-            else:
-                raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
-            if record_type not in allowed_record_types:
+            if record_type not in self.valid_record_types:
                 raise ValueError(
-                    f'request_record_type = {record_type} not allowed, select from {allowed_record_types}'
+                    f'invalid advisory "{record_type}"; not one of {self.valid_record_types}'
                 )
         self.__record_type = record_type
+
+    @property
+    def valid_record_types(self) -> List[ATCF_RecordType]:
+        if self.file_deck == ATCF_FileDeck.a:
+            # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
+            # there are more but they may not have enough columns
+            valid_record_types = ['OFCL', 'OFCP', 'HWRF', 'HMON', 'CARQ']
+        elif self.file_deck == ATCF_FileDeck.b:
+            valid_record_types = ['BEST']
+        else:
+            raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
+
+        return valid_record_types
 
     @property
     def filename(self) -> pathlib.Path:
@@ -643,16 +651,16 @@ class VortexTrack:
             or configuration != self.__previous_configuration
         ):
             if configuration['filename'] is not None:
-                allowed_record_types = None if self.record_type is None else [self.record_type]
+                record_types = None if self.record_type is None else [self.record_type]
                 atcf_file = configuration['filename']
             else:
                 # Only accept request `BEST` or `OFCL` (official) records by default
-                allowed_record_types = (
-                    ['BEST', 'OFCL'] if self.record_type is None else [self.record_type]
+                record_types = (
+                    self.valid_record_types if self.record_type is None else [self.record_type]
                 )
                 atcf_file = self.remote_atcf
 
-            dataframe = read_atcf(atcf_file, allowed_record_types=allowed_record_types)
+            dataframe = read_atcf(atcf_file, record_types=record_types)
             dataframe.sort_values(['datetime', 'record_type'], inplace=True)
             dataframe.reset_index(inplace=True, drop=True)
 
