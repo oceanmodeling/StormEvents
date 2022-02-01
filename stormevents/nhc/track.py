@@ -344,6 +344,7 @@ class VortexTrack:
         """
         :return: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
         """
+
         return self.__record_type
 
     @record_type.setter
@@ -511,12 +512,17 @@ class VortexTrack:
 
     @property
     def linestring(self) -> LineString:
-        """ spatial linestring of current track """
+        """
+        :return: spatial linestring of current track
+        """
+
         return LineString(self.data[['longitude', 'latitude']])
 
     @property
     def distance(self) -> float:
-        """ length, in meters, of the track over the default WGS84 that comes with pyPROJ """
+        """
+        :return: length, in meters, of the track over the default WGS84 that comes with pyPROJ
+        """
 
         geodetic = Geod(ellps='WGS84')
         _, _, distances = geodetic.inv(
