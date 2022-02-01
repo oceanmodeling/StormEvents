@@ -1,5 +1,6 @@
 # ! /usr/bin/env python
 from copy import copy
+from datetime import timedelta
 
 from dateutil.parser import parse as parse_date
 import pandas
@@ -61,9 +62,10 @@ def test_vortex():
         'isabel2003',
     ]
 
+    storms = [VortexTrack(storm, start_date=timedelta(days=-1)) for storm in storms]
+
     for storm in storms:
-        vortex = VortexTrack(storm)
-        vortex.write(output_directory / f'{storm}.fort.22')
+        storm.write(output_directory / f'{storm.name}{storm.year}.fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 

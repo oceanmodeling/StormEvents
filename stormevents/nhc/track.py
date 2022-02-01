@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import io
 import logging
+from numbers import Number
 import os
 from os import PathLike
 import pathlib
@@ -29,7 +30,7 @@ from stormevents.nhc.atcf import (
 
 class VortexTrack:
     """
-    interface to an ATCF vortex track (i.e. HURDAT, best track, etc.)
+    interface to an ATCF vortex track (i.e. HURDAT, best track, HWRF, etc.)
 
     .. code-block:: python
 
@@ -68,6 +69,16 @@ class VortexTrack:
         record_type: ATCF_RecordType = None,
         filename: PathLike = None,
     ):
+        """
+        :param storm: storm ID, or storm name and year
+        :param start_date: start date of track
+        :param end_date: end date of track
+        :param file_deck: ATCF file deck; one of `a`, `b`, `f`
+        :param mode: ATCF mode; either `historical` or `realtime`
+        :param record_type: ATCF advisory; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
+        :param filename: file path to `fort.22`
+        """
+
         self.__dataframe = None
         self.__filename = None
 
@@ -253,18 +264,25 @@ class VortexTrack:
 
     @start_date.setter
     def start_date(self, start_date: datetime):
+        data_start = self.dataframe['datetime'].iloc[0]
+        data_end = self.dataframe['datetime'].iloc[-1]
+
         if start_date is None:
-            start_date = self.dataframe['datetime'].iloc[0]
+            start_date = data_start
         else:
-            if not isinstance(start_date, datetime):
+            # interpret timedelta as a temporal movement around start / end
+            if isinstance(start_date, timedelta) or isinstance(start_date, Number):
+                start_date = typepigeon.convert_value(start_date, timedelta)
+                if start_date >= timedelta(0):
+                    start_date = data_start + start_date
+                else:
+                    start_date = data_end + start_date
+            elif not isinstance(start_date, datetime):
                 start_date = parse_date(start_date)
-            if (
-                start_date < self.dataframe['datetime'].iloc[0]
-                or start_date > self.dataframe['datetime'].iloc[-1]
-            ):
-                raise ValueError(
-                    f'given start date is outside of data bounds ({self.dataframe["datetime"].iloc[0]} - {self.dataframe["datetime"].iloc[-1]})'
-                )
+
+            if start_date < data_start or start_date > data_end:
+                raise ValueError(f'"{self.start_date}" outside "{data_start} - {data_end}"')
+
         self.__start_date = start_date
 
     @property
@@ -273,20 +291,28 @@ class VortexTrack:
 
     @end_date.setter
     def end_date(self, end_date: datetime):
+        data_start = self.dataframe['datetime'].iloc[0]
+        data_end = self.dataframe['datetime'].iloc[-1]
+
         if end_date is None:
-            end_date = self.dataframe['datetime'].iloc[-1]
+            end_date = data_end
         else:
-            if not isinstance(end_date, datetime):
+            # interpret timedelta as a temporal movement around start / end
+            if isinstance(end_date, timedelta) or isinstance(end_date, Number):
+                end_date = typepigeon.convert_value(end_date, timedelta)
+                if end_date >= timedelta(0):
+                    end_date = data_start + end_date
+                else:
+                    end_date = data_end + end_date
+            elif not isinstance(end_date, datetime):
                 end_date = parse_date(end_date)
-            if (
-                end_date < self.dataframe['datetime'].iloc[0]
-                or end_date > self.dataframe['datetime'].iloc[-1]
-            ):
-                raise ValueError(
-                    f'given end date is outside of data bounds ({self.dataframe["datetime"].iloc[0]} - {self.dataframe["datetime"].iloc[-1]})'
-                )
+
+            if end_date < data_start or end_date > data_end:
+                raise ValueError(f'"{self.end_date}" outside "{data_start} - {data_end}"')
+
             if end_date <= self.start_date:
-                raise ValueError(f'end date must be after start date ({self.start_date})')
+                raise ValueError(f'"{self.end_date}" is not after "{self.start_date}"')
+
         self.__end_date = end_date
 
     @property
@@ -431,21 +457,23 @@ class VortexTrack:
                 record['background_pressure'] = self.data['background_pressure'].iloc[
                     index - 1
                 ]
-            if (
-                not pandas.isna(record['central_pressure'])
-                and record['background_pressure'] <= record['central_pressure']
-                and 1013 > record['central_pressure']
-            ):
-                background_pressure = 1013
-            elif (
-                not pandas.isna(record['central_pressure'])
-                and record['background_pressure'] <= record['central_pressure']
-                and 1013 <= record['central_pressure']
-            ):
-                background_pressure = normalize_atcf_value(
-                    record['central_pressure'] + 1, to_type=int, round_digits=0,
-                )
-            else:
+
+            try:
+                if (
+                    not pandas.isna(record['central_pressure'])
+                    and record['background_pressure'] <= record['central_pressure']
+                ):
+                    if 1013 > record['central_pressure']:
+                        background_pressure = 1013
+                    else:
+                        background_pressure = normalize_atcf_value(
+                            record['central_pressure'] + 1, to_type=int, round_digits=0,
+                        )
+                else:
+                    background_pressure = normalize_atcf_value(
+                        record['background_pressure'], to_type=int, round_digits=0,
+                    )
+            except:
                 background_pressure = normalize_atcf_value(
                     record['background_pressure'], to_type=int, round_digits=0,
                 )
@@ -626,7 +654,7 @@ class VortexTrack:
 
             dataframe = read_atcf(atcf_file, allowed_record_types=allowed_record_types)
             dataframe.sort_values(['datetime', 'record_type'], inplace=True)
-            dataframe.reset_index(inplace=True)
+            dataframe.reset_index(inplace=True, drop=True)
 
             self.__dataframe = dataframe
             self.__previous_configuration = configuration
@@ -636,7 +664,11 @@ class VortexTrack:
             self.__dataframe[['longitude', 'latitude']]
         ).sum()
         if self.__location_hash is None or location_hash != self.__location_hash:
-            self.__compute_velocity()
+            if self.__location_hash is None:
+                data = self.__dataframe[pandas.isna(self.__dataframe['speed'])]
+            else:
+                data = self.__dataframe
+            self.__compute_velocity(data)
             self.__location_hash = location_hash
 
         return self.__dataframe
@@ -652,20 +684,24 @@ class VortexTrack:
             record_numbers[self.data['datetime'] == record_datetime] = index + 1
         return record_numbers
 
-    def __compute_velocity(self):
+    @staticmethod
+    def __compute_velocity(data: DataFrame) -> DataFrame:
         geodetic = Geod(ellps='WGS84')
-
-        data = self.__dataframe
 
         for record_type in pandas.unique(data['record_type']):
             record_data = data.loc[data['record_type'] == record_type]
 
-            indices = [
-                numpy.where(record_data['datetime'] == unique_datetime)[0][0]
-                for unique_datetime in pandas.unique(record_data['datetime'])
-            ]
+            indices = numpy.array(
+                [
+                    numpy.where(record_data['datetime'] == unique_datetime)[0][0]
+                    for unique_datetime in pandas.unique(record_data['datetime'])
+                ]
+            )
             shifted_indices = numpy.roll(indices, 1)
             shifted_indices[0] = 0
+
+            indices = record_data.index[indices]
+            shifted_indices = record_data.index[shifted_indices]
 
             _, inverse_azimuths, distances = geodetic.inv(
                 record_data.loc[indices, 'longitude'],
@@ -682,6 +718,8 @@ class VortexTrack:
                 cluster_indices = record_data['datetime'] == record_data.loc[index, 'datetime']
                 record_data.loc[cluster_indices, 'speed'] = speeds[index]
                 record_data.loc[cluster_indices, 'direction'] = bearings[index]
+
+        return data
 
     @property
     def __file_end_date(self):

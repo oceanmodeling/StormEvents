@@ -217,7 +217,7 @@ def read_atcf(
     if len(records) == 0:
         raise ValueError(f'no records found with type(s) "{allowed_record_types}"')
 
-    return DataFrame.from_records(records)
+    return DataFrame(records)
 
 
 def read_atcf_line(line: str) -> Dict[str, Any]:
@@ -327,7 +327,7 @@ def read_atcf_line(line: str) -> Dict[str, Any]:
         )
 
     if len(line) > 27:
-        storm_name = line[27].strip()
+        storm_name = line[27]
     else:
         storm_name = ''
 
