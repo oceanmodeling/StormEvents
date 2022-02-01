@@ -420,14 +420,14 @@ class VortexTrack:
             # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
             # there are more but they may not have enough columns
             valid_record_types = [
-                ATCF_RecordType.ofcl,
-                ATCF_RecordType.ofcp,
-                ATCF_RecordType.hwrf,
-                ATCF_RecordType.hmon,
-                ATCF_RecordType.carq,
+                ATCF_RecordType.ofcl.value,
+                ATCF_RecordType.ofcp.value,
+                ATCF_RecordType.hwrf.value,
+                ATCF_RecordType.hmon.value,
+                ATCF_RecordType.carq.value,
             ]
         elif self.file_deck == ATCF_FileDeck.b:
-            valid_record_types = [ATCF_RecordType.best]
+            valid_record_types = [ATCF_RecordType.best.value]
         else:
             raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
 
