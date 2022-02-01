@@ -138,10 +138,22 @@ class VortexTrack:
         record_type: str = None,
         filename: PathLike = None,
     ):
+        """
+        :param name: storm name
+        :param year: storm year
+        :param start_date: start date of track
+        :param end_date: end date of track
+        :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
+        :param mode: ATCF mode; either ``historical`` or ``realtime``
+        :param record_type: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
+        :param filename: file path to ``fort.22``
+        """
+
         year = int(year)
         atcf_id = atcf_id_from_storm_name(storm_name=name, year=year)
         if atcf_id is None:
             raise ValueError(f'No storm found with name "{name}" in {year}')
+
         return cls(
             storm=atcf_id,
             start_date=start_date,
@@ -157,12 +169,15 @@ class VortexTrack:
         cls, fort22: PathLike, start_date: datetime = None, end_date: datetime = None,
     ) -> 'VortexTrack':
         """
-        read a ``fort.22`` file
+        :param fort22: file path to ``fort.22``
+        :param start_date: start date of track
+        :param end_date: end date of track
         """
 
         filename = None
         if pathlib.Path(fort22).exists():
             filename = fort22
+
         return cls(
             storm=read_atcf(fort22),
             start_date=start_date,
@@ -178,12 +193,15 @@ class VortexTrack:
         cls, atcf: PathLike, start_date: datetime = None, end_date: datetime = None,
     ) -> 'VortexTrack':
         """
-        read an ATCF file
+        :param atcf: file path to ATCF data
+        :param start_date: start date of track
+        :param end_date: end date of track
         """
 
         filename = None
         if pathlib.Path(atcf).exists():
             filename = atcf
+
         return cls(
             storm=atcf,
             start_date=start_date,
@@ -196,6 +214,10 @@ class VortexTrack:
 
     @property
     def name(self) -> str:
+        """
+        :return: NHC storm name
+        """
+
         if self.__name is None:
             name = self.data['name'].value_counts()[:].index.tolist()[0]
 
@@ -211,18 +233,34 @@ class VortexTrack:
 
     @property
     def basin(self) -> str:
+        """
+        :return: basin of track
+        """
+
         return self.data['basin'].iloc[0]
 
     @property
     def storm_number(self) -> str:
+        """
+        :return: ordinal number of storm within the basin and year
+        """
+
         return self.data['storm_number'].iloc[0]
 
     @property
     def year(self) -> int:
+        """
+        :return: year of storm
+        """
+
         return self.data['datetime'].iloc[0].year
 
     @property
     def storm_id(self) -> str:
+        """
+        :return: storm NHC ID
+        """
+
         if self.__storm_id is None and not self.__invalid_storm_name:
             if self.__dataframe is not None:
                 storm_id = (
@@ -260,6 +298,10 @@ class VortexTrack:
 
     @property
     def start_date(self) -> datetime:
+        """
+        :return: filter start time
+        """
+
         return self.__start_date
 
     @start_date.setter
@@ -287,6 +329,10 @@ class VortexTrack:
 
     @property
     def end_date(self) -> datetime:
+        """
+        :return: filter end time
+        """
+
         return self.__end_date
 
     @end_date.setter
@@ -317,6 +363,10 @@ class VortexTrack:
 
     @property
     def file_deck(self) -> ATCF_FileDeck:
+        """
+        :return: ATCF file deck; one of ``a``, ``b``, ``f``
+        """
+
         return self.__file_deck
 
     @file_deck.setter
@@ -329,6 +379,10 @@ class VortexTrack:
 
     @property
     def mode(self) -> ATCF_Mode:
+        """
+        :return: ATCF mode; either ``historical`` or ``realtime``
+        """
+
         return self.__mode
 
     @mode.setter
@@ -342,7 +396,7 @@ class VortexTrack:
     @property
     def record_type(self) -> str:
         """
-        :return: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
+        :return: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
         """
 
         return self.__record_type
@@ -365,9 +419,15 @@ class VortexTrack:
         if self.file_deck == ATCF_FileDeck.a:
             # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
             # there are more but they may not have enough columns
-            valid_record_types = ['OFCL', 'OFCP', 'HWRF', 'HMON', 'CARQ']
+            valid_record_types = [
+                ATCF_RecordType.ofcl,
+                ATCF_RecordType.ofcp,
+                ATCF_RecordType.hwrf,
+                ATCF_RecordType.hmon,
+                ATCF_RecordType.carq,
+            ]
         elif self.file_deck == ATCF_FileDeck.b:
-            valid_record_types = ['BEST']
+            valid_record_types = [ATCF_RecordType.best]
         else:
             raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
 
@@ -375,6 +435,10 @@ class VortexTrack:
 
     @property
     def filename(self) -> pathlib.Path:
+        """
+        :return: file path to read file (optional)
+        """
+
         return self.__filename
 
     @filename.setter
@@ -398,6 +462,13 @@ class VortexTrack:
             ]
 
     def write(self, path: PathLike, overwrite: bool = False):
+        """
+        write track to file path
+
+        :param path: output file path
+        :param overwrite: overwrite existing file
+        """
+
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)
         if overwrite or not path.exists():
@@ -407,7 +478,7 @@ class VortexTrack:
             logging.warning(f'skipping existing file "{path}"')
 
     def __str__(self):
-        record_numbers = self.record_numbers
+        record_numbers = self.__record_numbers
         lines = []
 
         dataframe = self.data
@@ -617,6 +688,10 @@ class VortexTrack:
 
     @property
     def duration(self) -> float:
+        """
+        :return: total sum of time intervals within the storm track
+        """
+
         return self.data['datetime'].diff().sum()
 
     @property
@@ -643,6 +718,10 @@ class VortexTrack:
 
     @property
     def dataframe(self) -> DataFrame:
+        """
+        :return: data frame containing all track data for the specified storm and file deck
+        """
+
         configuration = {
             'storm_id': self.storm_id,
             'file_deck': self.file_deck,
@@ -695,7 +774,7 @@ class VortexTrack:
         self.__dataframe = dataframe
 
     @property
-    def record_numbers(self) -> numpy.ndarray:
+    def __record_numbers(self) -> numpy.ndarray:
         record_numbers = numpy.empty((len(self.data)), dtype=int)
         for index, record_datetime in enumerate(self.data['datetime'].unique()):
             record_numbers[self.data['datetime'] == record_datetime] = index + 1
