@@ -9,13 +9,14 @@ from os import PathLike
 import socket
 import time
 from typing import Any, Dict, List, TextIO, Union
-from urllib.error import URLError
 
 from dateutil.parser import parse as parse_date
 import numpy
 import pandas
 from pandas import DataFrame, Series
 import typepigeon
+
+from stormevents.nhc.storms import nhc_storms
 
 
 def atcf_storm_ids(file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None) -> List[str]:
@@ -35,10 +36,6 @@ def atcf_storm_ids(file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None) 
         filenames = [filename for filename in filenames if filename[0] == file_deck.value]
 
     return sorted((filename.split('.')[0] for filename in filenames), reverse=True)
-
-
-def atcf_id_from_storm_name(storm_name: str, year: int) -> str:
-    return get_atcf_entry(storm_name=storm_name, year=year)[20].strip()
 
 
 class ATCF_FileDeck(Enum):
@@ -69,30 +66,28 @@ class ATCF_RecordType(Enum):
 def get_atcf_entry(
     year: int, basin: str = None, storm_number: int = None, storm_name: str = None,
 ) -> Series:
-    url = 'ftp://ftp.nhc.noaa.gov/atcf/archive/storm.table'
+    storms = nhc_storms(year=year)
 
-    try:
-        storm_table = pandas.read_csv(url, header=None)
-    except URLError:
-        raise ConnectionError(f'cannot connect to "{url}"')
-
-    if basin is not None and storm_number is not None:
-        rows = storm_table[
-            (storm_table[1] == f'{basin.upper():>3}') & (storm_table[7] == storm_number)
-        ]
-    elif storm_name is not None:
-        rows = storm_table[storm_table[0].str.contains(storm_name.upper())]
-    else:
+    if storm_name is None and (basin is None and storm_number is None):
         raise ValueError('need either storm name + year OR basin + storm number + year')
 
-    if len(rows) > 0:
-        rows = rows[rows[8] == int(year)]
-        if len(rows) > 0:
-            return list(rows.iterrows())[0][1]
+    if basin is not None:
+        storms = storms[storms['basin'].str.contains(basin.upper())]
+    if storm_number is not None:
+        storms = storms[storms['number'] == storm_number]
+    if storm_name is not None:
+        storms = storms[storms['name'].str.contains(storm_name.upper())]
+
+    if len(storms) > 0:
+        return storms.iloc[0]
+    else:
+        message = f'no storms with given info'
+        if storm_name is not None:
+            message = f'{message} ("{storm_name}")'
         else:
-            raise ValueError(
-                f'no storms with given info ("{storm_name}" / "{basin}{storm_number}") found in year "{year}"'
-            )
+            message = f'{message} ("{basin}{storm_number}")'
+        message = f'{message} found in {year}'
+        raise ValueError(message)
 
 
 def atcf_url(

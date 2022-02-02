@@ -19,9 +19,9 @@ import typepigeon
 from stormevents.nhc import nhc_storms
 from stormevents.nhc.atcf import (
     ATCF_FileDeck,
-    atcf_id_from_storm_name,
     ATCF_Mode,
     ATCF_RecordType,
+    get_atcf_entry,
     get_atcf_file,
     normalize_atcf_value,
     read_atcf,
@@ -150,9 +150,7 @@ class VortexTrack:
         """
 
         year = int(year)
-        atcf_id = atcf_id_from_storm_name(storm_name=name, year=year)
-        if atcf_id is None:
-            raise ValueError(f'No storm found with name "{name}" in {year}')
+        atcf_id = get_atcf_entry(storm_name=name, year=year).name
 
         return cls(
             storm=atcf_id,
@@ -272,10 +270,10 @@ class VortexTrack:
                     self.storm_id = storm_id
                 except ValueError:
                     try:
-                        storm_id = atcf_id_from_storm_name(
+                        storm_id = get_atcf_entry(
                             storm_name=self.__dataframe['name'].tolist()[-1],
                             year=self.__dataframe['datetime'].tolist()[-1].year,
-                        )
+                        ).name
                         self.storm_id = storm_id
                     except ValueError:
                         self.__invalid_storm_name = True
@@ -288,9 +286,9 @@ class VortexTrack:
             digits = sum([1 for character in storm_id if character.isdigit()])
 
             if digits == 4:
-                atcf_id = atcf_id_from_storm_name(
+                atcf_id = get_atcf_entry(
                     storm_name=storm_id[:-4], year=int(storm_id[-4:])
-                )
+                ).name
                 if atcf_id is None:
                     raise ValueError(f'No storm with id: {storm_id}')
                 storm_id = atcf_id
