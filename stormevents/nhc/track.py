@@ -372,7 +372,7 @@ class VortexTrack:
         if file_deck is None:
             file_deck = ATCF_FileDeck.a
         elif not isinstance(file_deck, ATCF_FileDeck):
-            file_deck = normalize_atcf_value(file_deck, ATCF_FileDeck)
+            file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
         self.__file_deck = file_deck
 
     @property
@@ -388,7 +388,7 @@ class VortexTrack:
         if mode is None:
             mode = ATCF_Mode.historical
         elif not isinstance(mode, ATCF_Mode):
-            mode = normalize_atcf_value(mode, ATCF_Mode)
+            mode = typepigeon.convert_value(mode, ATCF_Mode)
         self.__mode = mode
 
     @property
