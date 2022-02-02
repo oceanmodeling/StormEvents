@@ -12,7 +12,7 @@ NHC_GIS_ARCHIVE_START_YEAR = 2008
 
 
 @lru_cache(maxsize=None)
-def nhc_gis_storms(year: int = None):
+def nhc_gis_storms(year: int = None) -> pandas.DataFrame:
     """
     retrieve list of hurricanes from GIS archive since 2008
 
@@ -119,6 +119,7 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     [2730 rows x 8 columns]
     """
 
+    # archive CSV: https://ftp.nhc.noaa.gov/atcf/archive/storm.table
     url = 'https://ftp.nhc.noaa.gov/atcf/index/storm_list.txt'
     columns = [
         'name',
