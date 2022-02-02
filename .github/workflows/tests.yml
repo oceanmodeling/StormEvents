@@ -24,10 +24,8 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}-
-      - name: Install wheel
-        run: pip install wheel
       - name: Install dependencies
-        run: pip install -e ".[testing,development]"
+        run: pip install ".[testing,development]"
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
