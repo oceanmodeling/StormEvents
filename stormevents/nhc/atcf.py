@@ -23,7 +23,7 @@ def atcf_storm_ids(file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None) 
     if file_deck is None:
         file_deck = ATCF_FileDeck.a
     elif not isinstance(file_deck, ATCF_FileDeck):
-        file_deck = normalize_atcf_value(file_deck, ATCF_FileDeck)
+        file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
 
     url = atcf_url(file_deck=file_deck, mode=mode).replace('ftp://', "")
     hostname, directory = url.split('/', 1)
@@ -100,11 +100,14 @@ def atcf_url(
 
     if mode is None:
         entry = get_atcf_entry(basin=storm_id[:2], storm_number=int(storm_id[2:4]), year=year)
-        mode = entry[18].strip()
+        if entry['source'] == 'ARCHIVE':
+            mode = ATCF_Mode.historical
+        else:
+            mode = ATCF_Mode.realtime
 
     if file_deck is not None and not isinstance(file_deck, ATCF_FileDeck):
         try:
-            file_deck = normalize_atcf_value(file_deck, ATCF_FileDeck)
+            file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
         except ValueError:
             file_deck = None
     if file_deck is None:
@@ -112,11 +115,9 @@ def atcf_url(
 
     if mode is not None and not isinstance(mode, ATCF_Mode):
         try:
-            mode = normalize_atcf_value(mode, ATCF_Mode)
+            mode = typepigeon.convert_value(mode, ATCF_Mode)
         except ValueError:
             mode = None
-    if mode is None:
-        mode = ATCF_Mode.realtime
 
     if mode == ATCF_Mode.historical:
         nhc_dir = f'archive/{year}'

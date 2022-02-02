@@ -1,7 +1,7 @@
 from datetime import datetime
 from functools import lru_cache
 import re
-from typing import Iterable
+from typing import Iterable, List
 
 from bs4 import BeautifulSoup
 import numpy
@@ -9,6 +9,39 @@ import pandas
 import requests
 
 NHC_GIS_ARCHIVE_START_YEAR = 2008
+
+
+@lru_cache(maxsize=None)
+def nhc_archive_storms() -> List[str]:
+    archive_url = 'https://ftp.nhc.noaa.gov/atcf/archive/storm.table'
+
+    columns = [
+        'name',
+        'basin',
+        2,
+        3,
+        4,
+        5,
+        6,
+        'number',
+        'year',
+        'class',
+        10,
+        'start_date',
+        'end_date',
+        13,
+        14,
+        15,
+        16,
+        17,
+        'source',
+        19,
+        'nhc_code',
+    ]
+
+    storms = pandas.read_csv(archive_url, header=0, names=columns,)
+
+    return storms['nhc_code'].to_list()
 
 
 @lru_cache(maxsize=None)

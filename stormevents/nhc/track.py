@@ -26,6 +26,7 @@ from stormevents.nhc.atcf import (
     normalize_atcf_value,
     read_atcf,
 )
+from stormevents.nhc.storms import nhc_archive_storms
 
 
 class VortexTrack:
@@ -381,13 +382,18 @@ class VortexTrack:
         :return: ATCF mode; either ``historical`` or ``realtime``
         """
 
+        if self.__mode is None:
+            mode = ATCF_Mode.realtime
+            if self.storm_id is not None:
+                archive_storms = nhc_archive_storms()
+                if self.storm_id in archive_storms:
+                    mode = ATCF_Mode.historical
+
         return self.__mode
 
     @mode.setter
     def mode(self, mode: ATCF_Mode):
-        if mode is None:
-            mode = ATCF_Mode.historical
-        elif not isinstance(mode, ATCF_Mode):
+        if mode is not None and not isinstance(mode, ATCF_Mode):
             mode = typepigeon.convert_value(mode, ATCF_Mode)
         self.__mode = mode
 
