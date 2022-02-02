@@ -392,13 +392,13 @@ class VortexTrack:
         self.__mode = mode
 
     @property
-    def record_type(self) -> ATCF_RecordType:
+    def record_type(self) -> str:
         """
         :return: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
         """
 
         if self.file_deck == ATCF_FileDeck.b:
-            self.__record_type = ATCF_RecordType.best
+            self.__record_type = ATCF_RecordType.best.value
 
         return self.__record_type
 
@@ -735,14 +735,12 @@ class VortexTrack:
             or configuration != self.__previous_configuration
         ):
             if configuration['filename'] is not None:
-                record_types = None if self.record_type is None else [self.record_type.value]
+                record_types = None if self.record_type is None else [self.record_type]
                 atcf_file = configuration['filename']
             else:
                 # Only accept request `BEST` or `OFCL` (official) records by default
                 record_types = (
-                    self.valid_record_types
-                    if self.record_type is None
-                    else [self.record_type.value]
+                    self.valid_record_types if self.record_type is None else [self.record_type]
                 )
                 atcf_file = self.remote_atcf
 
