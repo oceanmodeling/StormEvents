@@ -40,60 +40,58 @@ def test_storm_lookup():
     assert florence2018.year == 2018
     assert florence2018.nhc_code == 'AL062018'
     assert florence2018.usgs_id == 283
+    assert florence2018.start_date == datetime(2018, 8, 30, 6)
+    assert florence2018.end_date == datetime(2018, 9, 18, 12)
 
     assert paine2016.name == 'PAINE'
     assert paine2016.year == 2016
     assert paine2016.nhc_code == 'EP172016'
     assert paine2016.usgs_id is None
+    assert paine2016.start_date == datetime(2016, 9, 18)
+    assert paine2016.end_date == datetime(2016, 9, 21, 12)
 
     assert henri2021.name == 'HENRI'
     assert henri2021.year == 2021
     assert henri2021.nhc_code == 'AL082021'
     assert henri2021.usgs_id == 310
+    assert henri2021.start_date == datetime(2021, 8, 20, 18)
+    assert henri2021.end_date == datetime(2021, 8, 27, 18)
 
     assert ida2021.name == 'IDA'
     assert ida2021.year == 2021
     assert ida2021.nhc_code == 'AL092021'
     assert ida2021.usgs_id == 312
+    assert ida2021.start_date == datetime(2021, 8, 27, 18)
+    assert ida2021.end_date == datetime(2021, 9, 4, 6)
 
 
 def test_time_interval():
     florence2018 = StormEvent('florence', 2018, start_date=timedelta(days=-2))
     paine2016 = StormEvent.from_nhc_code('EP172016', end_date=timedelta(days=1))
-    henri2021 = StormEvent.from_usgs_id(310, start_date=None)
-    ida2021 = StormEvent('ida', 2021)
+    henri2021 = StormEvent.from_usgs_id(
+        310, start_date=timedelta(days=-4), end_date=timedelta(days=-2)
+    )
+    ida2021 = StormEvent(
+        'ida', 2021, start_date=datetime(2021, 8, 30), end_date=datetime(2021, 9, 1)
+    )
 
     with pytest.raises(ValueError):
-        StormEvent('nonexistent', 2021)
+        StormEvent('florence', 2018, start_date=timedelta(days=30))
 
     with pytest.raises(ValueError):
-        StormEvent.from_nhc_code('nonexistent')
+        StormEvent('florence', 2018, start_date=datetime(2018, 10, 1))
 
-    with pytest.raises(ValueError):
-        StormEvent.from_nhc_code('AL992021')
+    assert florence2018.start_date == datetime(2018, 9, 16, 12)
+    assert florence2018.end_date == datetime(2018, 9, 18, 12)
 
-    with pytest.raises(ValueError):
-        StormEvent.from_nhc_code(-1)
+    assert paine2016.start_date == datetime(2016, 9, 18)
+    assert paine2016.end_date == datetime(2016, 9, 19)
 
-    assert florence2018.name == 'FLORENCE'
-    assert florence2018.year == 2018
-    assert florence2018.nhc_code == 'AL062018'
-    assert florence2018.usgs_id == 283
+    assert henri2021.start_date == datetime(2021, 8, 23, 18)
+    assert henri2021.end_date == datetime(2021, 8, 25, 18)
 
-    assert paine2016.name == 'PAINE'
-    assert paine2016.year == 2016
-    assert paine2016.nhc_code == 'EP172016'
-    assert paine2016.usgs_id is None
-
-    assert henri2021.name == 'HENRI'
-    assert henri2021.year == 2021
-    assert henri2021.nhc_code == 'AL082021'
-    assert henri2021.usgs_id == 310
-
-    assert ida2021.name == 'IDA'
-    assert ida2021.year == 2021
-    assert ida2021.nhc_code == 'AL092021'
-    assert ida2021.usgs_id == 312
+    assert ida2021.start_date == datetime(2021, 8, 30)
+    assert ida2021.end_date == datetime(2021, 9, 1)
 
 
 def test_track(florence2018, ida2021):
