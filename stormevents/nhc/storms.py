@@ -6,6 +6,7 @@ from typing import Iterable, List
 from bs4 import BeautifulSoup
 import numpy
 import pandas
+import pooch as pooch
 import requests
 
 NHC_GIS_ARCHIVE_START_YEAR = 2008
@@ -13,7 +14,12 @@ NHC_GIS_ARCHIVE_START_YEAR = 2008
 
 @lru_cache(maxsize=None)
 def nhc_archive_storms(year: int = None) -> List[str]:
-    archive_url = 'https://ftp.nhc.noaa.gov/atcf/archive/storm.table'
+    url = 'https://ftp.nhc.noaa.gov/atcf/archive/storm.table'
+
+    # using Pooch, cache today's NHC storm list
+    local_filename = pooch.retrieve(
+        url=url, path=pooch.os_cache('nhc') / f'{datetime.today():%Y%m%d}', known_hash=None,
+    )
 
     columns = [
         'name',
@@ -39,7 +45,7 @@ def nhc_archive_storms(year: int = None) -> List[str]:
         'nhc_code',
     ]
 
-    storms = pandas.read_csv(archive_url, header=0, names=columns)
+    storms = pandas.read_csv(local_filename, header=0, names=columns)
 
     if year is not None:
         storms = storms[storms['year'] == year]
@@ -155,8 +161,13 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     [2730 rows x 8 columns]
     """
 
-    # archive CSV: https://ftp.nhc.noaa.gov/atcf/archive/storm.table
     url = 'https://ftp.nhc.noaa.gov/atcf/index/storm_list.txt'
+
+    # using Pooch, cache today's NHC storm list
+    local_filename = pooch.retrieve(
+        url=url, path=pooch.os_cache('nhc') / f'{datetime.today():%Y%m%d}', known_hash=None,
+    )
+
     columns = [
         'name',
         'basin',
@@ -181,7 +192,7 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
         'nhc_code',
     ]
     storms = pandas.read_csv(
-        url,
+        local_filename,
         header=0,
         names=columns,
         parse_dates=['start_date', 'end_date'],
