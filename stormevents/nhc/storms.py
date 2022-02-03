@@ -69,13 +69,12 @@ def nhc_gis_storms(year: int = None) -> pandas.DataFrame:
     AL032008  CRISTOBAL    TS  2008    AL       3  GIS_ARCHIVE
     AL042008      DOLLY    HU  2008    AL       4  GIS_ARCHIVE
     AL052008    EDOUARD    TS  2008    AL       5  GIS_ARCHIVE
-                 ...   ...   ...   ...     ...          ...
+         ...        ...   ...   ...   ...     ...          ...
     EP152021       OLAF    HU  2021    EP      15  GIS_ARCHIVE
     EP162021     PAMELA    HU  2021    EP      16  GIS_ARCHIVE
     EP172021       RICK    HU  2021    EP      17  GIS_ARCHIVE
     EP182021      TERRY    TS  2021    EP      18  GIS_ARCHIVE
     EP192021     SANDRA    TS  2021    EP      19  GIS_ARCHIVE
-
     [523 rows x 6 columns]
     """
 
@@ -151,13 +150,12 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     AL041851  UNNAMED    HU  1851  ...   ARCHIVE 1851-08-16 00:00:00 1851-08-27 18:00:00
     AL051851  UNNAMED    TS  1851  ...   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
     AL061851  UNNAMED    TS  1851  ...   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
-               ...   ...   ...  ...       ...                 ...                 ...
+         ...      ...   ...   ...  ...       ...                 ...                 ...
     CP902021   INVEST    LO  2021  ...  METWATCH 2021-07-24 12:00:00                 NaT
     CP912021   INVEST    DB  2021  ...  METWATCH 2021-08-07 18:00:00                 NaT
     EP922021   INVEST    DB  2021  ...  METWATCH 2021-06-05 06:00:00                 NaT
     AL952021   INVEST    DB  2021  ...  METWATCH 2021-10-28 12:00:00                 NaT
     AL962021   INVEST    EX  2021  ...  METWATCH 2021-11-07 12:00:00                 NaT
-
     [2730 rows x 8 columns]
     """
 
