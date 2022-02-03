@@ -1,4 +1,3 @@
-# ! /usr/bin/env python
 from copy import copy
 from datetime import timedelta
 

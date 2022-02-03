@@ -1,13 +1,11 @@
 from datetime import timedelta
 from enum import Enum
 import ftplib
-from functools import wraps
 import gzip
 import io
 import logging
 from os import PathLike
 import socket
-import time
 from typing import Any, Dict, List, TextIO, Union
 
 from dateutil.parser import parse as parse_date
@@ -329,44 +327,3 @@ def read_atcf_line(line: str) -> Dict[str, Any]:
     record['name'] = storm_name
 
     return record
-
-
-def retry(
-    exception_to_check: Exception,
-    tries: int = 4,
-    delay: float = 3,
-    backoff: int = 2,
-    logger: logging.Logger = None,
-):
-    """
-    Retry calling the decorated function using an exponential backoff.
-
-    http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
-    original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
-
-    :param exception_to_check: the exception to check. may be a tuple of exceptions to check
-    :param tries: number of times to try (not retry) before giving up
-    :param delay: initial delay between retries in seconds
-    :param backoff: backoff multiplier e.g. value of 2 will double the delay each retry
-    :param logger: logger to use. If None, print
-    """
-
-    def deco_retry(f):
-        @wraps(f)
-        def f_retry(*args, **kwargs):
-            mtries, mdelay = tries, delay
-            while mtries > 1:
-                try:
-                    return f(*args, **kwargs)
-                except exception_to_check as e:
-                    msg = '%s, Retrying in %d seconds...' % (str(e), mdelay)
-                    if logger is not None:
-                        logger.warning(msg)
-                    time.sleep(mdelay)
-                    mtries -= 1
-                    mdelay *= backoff
-            return f(*args, **kwargs)
-
-        return f_retry  # true decorator
-
-    return deco_retry

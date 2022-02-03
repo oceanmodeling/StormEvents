@@ -1,13 +1,11 @@
 from datetime import datetime, timedelta
 import io
 import logging
-from numbers import Number
 import os
 from os import PathLike
 import pathlib
 from typing import List, Union
 
-from dateutil.parser import parse as parse_date
 import numpy
 import pandas
 from pandas import DataFrame
@@ -27,6 +25,7 @@ from stormevents.nhc.atcf import (
     read_atcf,
 )
 from stormevents.nhc.storms import nhc_archive_storms
+from stormevents.utilities import subset_time_interval
 
 
 class VortexTrack:
@@ -95,10 +94,10 @@ class VortexTrack:
         self.__invalid_storm_name = False
         self.__location_hash = None
 
+        self.filename = filename
         self.file_deck = file_deck
         self.mode = mode
         self.record_type = record_type
-        self.filename = filename
 
         if isinstance(storm, DataFrame):
             self.dataframe = storm
@@ -306,23 +305,15 @@ class VortexTrack:
     @start_date.setter
     def start_date(self, start_date: datetime):
         data_start = self.dataframe['datetime'].iloc[0]
-        data_end = self.dataframe['datetime'].iloc[-1]
 
         if start_date is None:
             start_date = data_start
         else:
             # interpret timedelta as a temporal movement around start / end
-            if isinstance(start_date, timedelta) or isinstance(start_date, Number):
-                start_date = typepigeon.convert_value(start_date, timedelta)
-                if start_date >= timedelta(0):
-                    start_date = data_start + start_date
-                else:
-                    start_date = data_end + start_date
-            elif not isinstance(start_date, datetime):
-                start_date = parse_date(start_date)
-
-            if start_date < data_start or start_date > data_end:
-                raise ValueError(f'"{self.start_date}" outside "{data_start} - {data_end}"')
+            data_end = self.dataframe['datetime'].iloc[-1]
+            start_date, _ = subset_time_interval(
+                start=data_start, end=data_end, subset_start=start_date,
+            )
 
         self.__start_date = start_date
 
@@ -336,27 +327,16 @@ class VortexTrack:
 
     @end_date.setter
     def end_date(self, end_date: datetime):
-        data_start = self.dataframe['datetime'].iloc[0]
         data_end = self.dataframe['datetime'].iloc[-1]
 
         if end_date is None:
             end_date = data_end
         else:
             # interpret timedelta as a temporal movement around start / end
-            if isinstance(end_date, timedelta) or isinstance(end_date, Number):
-                end_date = typepigeon.convert_value(end_date, timedelta)
-                if end_date >= timedelta(0):
-                    end_date = data_start + end_date
-                else:
-                    end_date = data_end + end_date
-            elif not isinstance(end_date, datetime):
-                end_date = parse_date(end_date)
-
-            if end_date < data_start or end_date > data_end:
-                raise ValueError(f'"{self.end_date}" outside "{data_start} - {data_end}"')
-
-            if end_date <= self.start_date:
-                raise ValueError(f'"{self.end_date}" is not after "{self.start_date}"')
+            data_start = self.dataframe['datetime'].iloc[0]
+            _, end_date = subset_time_interval(
+                start=data_start, end=data_end, subset_start=end_date,
+            )
 
         self.__end_date = end_date
 
@@ -383,11 +363,15 @@ class VortexTrack:
         """
 
         if self.__mode is None:
-            mode = ATCF_Mode.realtime
-            if self.storm_id is not None:
-                archive_storms = nhc_archive_storms()
-                if self.storm_id in archive_storms:
-                    mode = ATCF_Mode.historical
+            if self.filename is None:
+                mode = ATCF_Mode.realtime
+                if self.storm_id is not None:
+                    archive_storms = nhc_archive_storms()
+                    if self.storm_id.upper() in archive_storms:
+                        mode = ATCF_Mode.historical
+            else:
+                mode = ATCF_Mode.historical
+            self.__mode = mode
 
         return self.__mode
 
@@ -840,6 +824,7 @@ class VortexTrack:
             end_date=self.end_date,
             file_deck=self.file_deck,
             record_type=self.record_type,
+            filename=self.filename,
         )
 
     def __eq__(self, other: 'VortexTrack') -> bool:

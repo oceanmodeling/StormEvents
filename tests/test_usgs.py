@@ -1,5 +1,3 @@
-# ! /usr/bin/env python
-
 import pandas
 
 from stormevents.usgs import usgs_highwatermark_events

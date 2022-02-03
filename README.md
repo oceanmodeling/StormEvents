@@ -19,66 +19,77 @@ Full documentation can be found at https://stormevents.readthedocs.io
 
 ### storm interface
 
-You can instantiate a new `StormEvent` object from the NHC storm name and year
-(i.e. `FLORENCE 2018`),
+You can instantiate a new `StormEvent` object from its identifiers:
 
 ```python
 from stormevents import StormEvent
 
-florence2018 = StormEvent('florence', 2018)
+# from NHC storm name and year
+StormEvent('florence', 2018)
+
+# from NHC storm code
+StormEvent.from_nhc_code('EP172016')
+
+# from USGS flood event ID
+StormEvent.from_usgs_id(310)
 ```
 
-```python
+```
 StormEvent('FLORENCE', 2018)
-```
-
-or from the NHC storm code (i.e. `AL062018`),
-
-```python
-from stormevents import StormEvent
-
-paine2016 = StormEvent.from_nhc_code('EP172016')
-```
-
-```python
 StormEvent('PAINE', 2016)
-```
-
-or from the USGS flood event ID (i.e. `283`).
-
-```python
-from stormevents import StormEvent
-
-henri2021 = StormEvent.from_usgs_id(310)
-```
-
-```python
 StormEvent('HENRI', 2021)
 ```
 
-For this storm, you can then retrieve track data from NHC,
+#### storm time interval
+
+To constrain the time interval, do the following:
+
+```python
+from stormevents import StormEvent
+from datetime import datetime, timedelta
+
+# constrain to an absolute datetime range
+paine2016 = StormEvent('paine', 2016, start_date='2016-09-18', end_date=datetime(2016, 9, 19, 12))
+
+# constrain to relative times (compared to storm start and end times provided by the NHC)
+florence2018 = StormEvent('florence', 2018, start_date=timedelta(days=2))  # <- start 2 days after NHC start time
+henri2021 = StormEvent(
+    'henri',
+    2021,
+    start_date=timedelta(days=-3),  # start 3 days before NHC end time
+    end_date=timedelta(days=-2),  # <- end 2 days before NHC end time
+)
+ida2021 = StormEvent('ida', 2021, end_date=timedelta(days=2))  # <- end 2 days after NHC start time 
+```
+
+```
+StormEvent('PAINE', 2016, end_date='2016-09-19 12:00:00')
+StormEvent('FLORENCE', 2018, start_date='2018-09-01 06:00:00')
+StormEvent('HENRI', 2021)
+StormEvent('IDA', 2021)
+```
+
+#### storm data
+
+You can then retrieve data for this storm:
 
 ```python
 from stormevents import StormEvent
 
 florence2018 = StormEvent('florence', 2018)
 
-track = florence2018.track()
+# track dataset from the NHC
+florence2018.track()
+
+# high-water mark data from the USGS
+florence2018.high_water_marks
+
+# water level products from NOAA CO-OPS tidal buoys
+florence2018.tidal_data_within_isotach(isotach=34, start_date='20180913230000', end_date='20180914')
 ```
 
-```python
-VortexTrack('AL062018', Timestamp('2018-08-29 06:00:00'), Timestamp('2018-09-22 18:00:00'), 
-            ATCF_FileDeck.a, ATCF_Mode.historical, None, None)
 ```
-
-high-water mark data from USGS,
-
-```python
-from stormevents import StormEvent
-
-florence2018 = StormEvent('florence', 2018)
-
-high_water_marks = florence2018.high_water_marks()
+VortexTrack('AL062018', Timestamp('2018-08-29 06:00:00'), Timestamp('2018-09-22 18:00:00'), ATCF_FileDeck.a, ATCF_Mode.historical, None, None)
 ```
 
 ```
@@ -99,16 +110,6 @@ hwm_id             ...
 [509 rows x 51 columns]
 ```
 
-and water level products from CO-OPS.
-
-```python
-from stormevents import StormEvent
-
-florence2018 = StormEvent('florence', 2018)
-
-water_levels = florence2018.tidal_data_within_isotach(isotach=34, start_date='20180913230000', end_date='20180914')
-```
-
 ```
 Dimensions:  (t: 11, nos_id: 10)
 Coordinates:
@@ -124,7 +125,7 @@ Data variables:
     q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
 ```
 
-By default, these functions operate within the time interval defined by the NHC best track.
+By default, these functions operate within the time interval defined by the NHC.
 
 ### storm data from the National Hurricane Center (NHC)
 

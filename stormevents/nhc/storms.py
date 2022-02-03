@@ -12,7 +12,7 @@ NHC_GIS_ARCHIVE_START_YEAR = 2008
 
 
 @lru_cache(maxsize=None)
-def nhc_archive_storms() -> List[str]:
+def nhc_archive_storms(year: int = None) -> List[str]:
     archive_url = 'https://ftp.nhc.noaa.gov/atcf/archive/storm.table'
 
     columns = [
@@ -39,9 +39,12 @@ def nhc_archive_storms() -> List[str]:
         'nhc_code',
     ]
 
-    storms = pandas.read_csv(archive_url, header=0, names=columns,)
+    storms = pandas.read_csv(archive_url, header=0, names=columns)
 
-    return storms['nhc_code'].to_list()
+    if year is not None:
+        storms = storms[storms['year'] == year]
+
+    return storms['nhc_code'].str.strip().to_list()
 
 
 @lru_cache(maxsize=None)
