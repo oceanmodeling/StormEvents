@@ -94,10 +94,10 @@ class VortexTrack:
         self.__invalid_storm_name = False
         self.__location_hash = None
 
+        self.filename = filename
         self.file_deck = file_deck
         self.mode = mode
         self.record_type = record_type
-        self.filename = filename
 
         if isinstance(storm, DataFrame):
             self.dataframe = storm
@@ -363,11 +363,14 @@ class VortexTrack:
         """
 
         if self.__mode is None:
-            mode = ATCF_Mode.realtime
-            if self.storm_id is not None:
-                archive_storms = nhc_archive_storms()
-                if self.storm_id in archive_storms:
-                    mode = ATCF_Mode.historical
+            if self.filename is None:
+                mode = ATCF_Mode.realtime
+                if self.storm_id is not None:
+                    archive_storms = nhc_archive_storms()
+                    if self.storm_id.upper() in archive_storms:
+                        mode = ATCF_Mode.historical
+            else:
+                mode = ATCF_Mode.historical
             self.__mode = mode
 
         return self.__mode
@@ -821,6 +824,7 @@ class VortexTrack:
             end_date=self.end_date,
             file_deck=self.file_deck,
             record_type=self.record_type,
+            filename=self.filename,
         )
 
     def __eq__(self, other: 'VortexTrack') -> bool:

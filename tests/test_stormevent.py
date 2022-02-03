@@ -101,9 +101,14 @@ def test_track(florence2018, ida2021):
     ida_track = ida2021.track()
 
     florence_reference_track = VortexTrack.from_storm_name(
-        florence2018.name, florence2018.year
+        florence2018.name,
+        florence2018.year,
+        start_date=florence2018.start_date,
+        end_date=florence2018.end_date,
     )
-    ida_reference_track = VortexTrack.from_storm_name(ida2021.name, ida2021.year)
+    ida_reference_track = VortexTrack.from_storm_name(
+        ida2021.name, ida2021.year, start_date=ida2021.start_date, end_date=ida2021.end_date
+    )
 
     pandas.testing.assert_frame_equal(florence_track.data, florence_reference_track.data)
     pandas.testing.assert_frame_equal(ida_track.data, ida_reference_track.data)
@@ -131,7 +136,7 @@ def test_tidal_data_within_isotach(florence2018):
     )
 
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
-    assert tidal_data.sizes == {'t': 11, 'nos_id': 10}
+    assert tidal_data.sizes == {'t': 11, 'nos_id': 44}
 
 
 def test_tidal_data_within_bounding_box(florence2018):
@@ -143,4 +148,4 @@ def test_tidal_data_within_bounding_box(florence2018):
     )
 
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
-    assert tidal_data.sizes == {'t': 11, 'nos_id': 8}
+    assert tidal_data.sizes == {'t': 11, 'nos_id': 110}

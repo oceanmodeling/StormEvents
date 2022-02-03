@@ -51,7 +51,7 @@ def test_vortex():
 
     storms = [
         'michael2018',
-        'stormevent',
+        'florence2018',
         'irma2017',
         'maria2017',
         'harvey2017',
@@ -169,7 +169,7 @@ def test_no_internet():
         output_directory.mkdir(parents=True, exist_ok=True)
 
     with pytest.raises((ConnectionError, SocketBlockedError)):
-        VortexTrack(storm='stormevent')
+        VortexTrack(storm='florence2018')
 
     with pytest.raises((ConnectionError, SocketBlockedError)):
         VortexTrack(storm='al062018', start_date='20180911', end_date=None)

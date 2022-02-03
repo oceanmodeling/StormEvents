@@ -36,8 +36,10 @@ def test_usgs_highwatermark_storms():
 def test_HurricaneHighWaterMarks():
     reference_directory = REFERENCE_DIRECTORY / 'test_StormHighWaterMarks'
 
-    hwm_florence2018 = HighWaterMarks.from_csv(reference_directory / 'stormevent.csv')
+    hwm_florence2018 = HighWaterMarks.from_csv(reference_directory / 'florence2018.csv')
 
-    reference_hwm = pandas.read_csv(reference_directory / 'stormevent.csv', index_col='hwm_id')
+    reference_hwm = pandas.read_csv(
+        reference_directory / 'florence2018.csv', index_col='hwm_id'
+    )
 
     pandas.testing.assert_frame_equal(hwm_florence2018.data, reference_hwm)
