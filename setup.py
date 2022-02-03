@@ -59,7 +59,6 @@ setup(
     python_requires='>=3.6',
     setup_requires=['dunamai', 'setuptools>=41.2'],
     install_requires=[
-        'appdirs',
         'bs4',
         'numpy',
         'python-dateutil',

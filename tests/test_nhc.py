@@ -1,4 +1,3 @@
-# ! /usr/bin/env python
 from copy import copy
 from datetime import timedelta
 
@@ -52,7 +51,7 @@ def test_vortex():
 
     storms = [
         'michael2018',
-        'florence2018',
+        'stormevent',
         'irma2017',
         'maria2017',
         'harvey2017',
@@ -170,7 +169,7 @@ def test_no_internet():
         output_directory.mkdir(parents=True, exist_ok=True)
 
     with pytest.raises((ConnectionError, SocketBlockedError)):
-        VortexTrack(storm='florence2018')
+        VortexTrack(storm='stormevent')
 
     with pytest.raises((ConnectionError, SocketBlockedError)):
         VortexTrack(storm='al062018', start_date='20180911', end_date=None)

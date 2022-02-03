@@ -225,7 +225,10 @@ class HighWaterMarks:
             data.set_index('hwm_id', inplace=True)
             self.__data = data
             self.__previous_query = self.query
-        return self.__data
+        else:
+            data = self.__data
+
+        return data
 
     def __eq__(self, other: 'HighWaterMarks') -> bool:
         return self.data.equals(other.data)

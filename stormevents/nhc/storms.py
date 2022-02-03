@@ -41,7 +41,7 @@ def nhc_archive_storms() -> List[str]:
 
     storms = pandas.read_csv(archive_url, header=0, names=columns,)
 
-    return storms['nhc_code'].to_list()
+    return storms['nhc_code'].str.strip().to_list()
 
 
 @lru_cache(maxsize=None)
