@@ -63,6 +63,7 @@ setup(
         'numpy',
         'python-dateutil',
         'pandas',
+        'pooch',
         'pyproj>=2.6',
         'requests',
         'shapely',

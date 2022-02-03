@@ -4,10 +4,21 @@ from pathlib import Path
 import re
 from typing import Dict, List
 
+import pytest
+
+from stormevents import nhc_storms
+from stormevents.nhc.storms import nhc_archive_storms
+
 DATA_DIRECTORY = Path(__file__).parent.absolute().resolve() / 'data'
 INPUT_DIRECTORY = DATA_DIRECTORY / 'input'
 OUTPUT_DIRECTORY = DATA_DIRECTORY / 'output'
 REFERENCE_DIRECTORY = DATA_DIRECTORY / 'reference'
+
+
+@pytest.fixture(scope='session', autouse=True)
+def cache_nhc_storms():
+    nhc_storms()
+    nhc_archive_storms()
 
 
 def check_reference_directory(
