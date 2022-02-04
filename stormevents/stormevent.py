@@ -22,7 +22,7 @@ from stormevents.coops.tidalstations import (
 from stormevents.nhc import nhc_storms, VortexTrack
 from stormevents.nhc.atcf import ATCF_FileDeck, ATCF_Mode
 from stormevents.usgs import StormHighWaterMarks, usgs_highwatermark_storms
-from stormevents.utilities import subset_time_interval
+from stormevents.utilities import relative_to_time_interval, subset_time_interval
 
 
 class StormEvent:
@@ -331,12 +331,20 @@ class StormEvent:
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
 
-        track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
-
         if start_date is None:
-            start_date = track.start_date
+            start_date = self.start_date
+        else:
+            start_date = relative_to_time_interval(
+                start=self.start_date, end=self.end_date, relative=start_date
+            )
         if end_date is None:
-            end_date = track.end_date
+            end_date = self.end_date
+        else:
+            end_date = relative_to_time_interval(
+                start=self.start_date, end=self.end_date, relative=end_date
+            )
+
+        track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
 
         stations = coops_stations_within_vortextrack_isotach(
             isotach=isotach, track=track, station_type=station_type
@@ -408,12 +416,12 @@ class StormEvent:
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
 
-        track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
-
         if start_date is None:
-            start_date = track.start_date
+            start_date = self.start_date
         if end_date is None:
-            end_date = track.end_date
+            end_date = self.end_date
+
+        track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
 
         stations = coops_stations_within_bounding_box(
             *MultiPoint(track.data[['longitude', 'latitude']].values).bounds,
@@ -455,14 +463,14 @@ class StormEvent:
 
 def coops_stations_within_vortextrack_isotach(
     track: VortexTrack, isotach: int, station_type: COOPS_StationType = None,
-) -> List[COOPS_Station]:
+) -> DataFrame:
     """
     retrieve stations from within the wind swath of a given storm at the given isotach (contour of equal wind speed)
 
     :param track: vortex track
     :param isotach: wind speed (in knots) at which to create isotach wind swath
     :param station_type: either ``current`` or ``historical``
-    :return: list of stations within the wind swatch
+    :return: data frame of stations within the wind swatch
 
     >>> florence2018 = StormEvent('florence', 2018)
     >>> coops_stations_within_vortextrack_isotach(florence2018.track(), isotach=34)

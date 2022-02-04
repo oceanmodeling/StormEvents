@@ -469,7 +469,7 @@ def __coops_stations_html_tables() -> bs4.element.ResultSet:
 
 
 @lru_cache(maxsize=None)
-def coops_stations(station_type: COOPS_StationType = None) -> Dataset:
+def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
     """
     retrieve a list of CO-OPS stations with associated metadata
 
@@ -550,7 +550,7 @@ def coops_stations(station_type: COOPS_StationType = None) -> Dataset:
 
 def coops_stations_within_region(
     region: Polygon, station_type: COOPS_StationType = None,
-) -> List['COOPS_Station']:
+) -> DataFrame:
     """
     retrieve all stations within the specified region of interest
 
@@ -575,12 +575,12 @@ def coops_stations_within_region(
         [index for index, point in enumerate(points) if point.within(region)]
     ]
 
-    return [COOPS_Station(id=nos_id) for nos_id in stations_within_region.index]
+    return stations_within_region
 
 
 def coops_stations_within_bounding_box(
     minx: float, miny: float, maxx: float, maxy: float, station_type: COOPS_StationType = None,
-) -> List[COOPS_Station]:
+) -> DataFrame:
     region = box(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
     return coops_stations_within_region(region=region, station_type=station_type)
 
@@ -625,7 +625,7 @@ def coops_data_within_region(
     stations = coops_stations_within_region(region=region, station_type=station_type)
     return pandas.concat(
         [
-            station.get(
+            COOPS_Station(station).get(
                 start_date=start_date,
                 end_date=end_date,
                 product=product,

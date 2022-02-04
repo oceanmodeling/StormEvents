@@ -36,8 +36,14 @@ def test_storm_lookup():
     with pytest.raises(ValueError):
         StormEvent.from_nhc_code(-1)
 
+    with pytest.raises(ValueError):
+        StormEvent.from_usgs_id(-1)
+
     assert florence2018.name == 'FLORENCE'
     assert florence2018.year == 2018
+    assert florence2018.basin == 'AL'
+    assert florence2018.number == 6
+    assert florence2018._StormEvent__data_start == datetime(2018, 8, 30, 6)
     assert florence2018.nhc_code == 'AL062018'
     assert florence2018.usgs_id == 283
     assert florence2018.start_date == datetime(2018, 8, 30, 6)
@@ -50,7 +56,6 @@ def test_storm_lookup():
     assert paine2016.usgs_id is None
     assert paine2016.start_date == datetime(2016, 9, 18)
     assert paine2016.end_date == datetime(2016, 9, 21, 12)
-    assert repr(paine2016) == "StormEvent('PAINE', 2016)"
 
     assert henri2021.name == 'HENRI'
     assert henri2021.year == 2021
@@ -58,7 +63,6 @@ def test_storm_lookup():
     assert henri2021.usgs_id == 310
     assert henri2021.start_date == datetime(2021, 8, 20, 18)
     assert henri2021.end_date == datetime(2021, 8, 27, 18)
-    assert repr(henri2021) == "StormEvent('HENRI', 2021, end_date='2021-08-27 18:00:00')"
 
     assert ida2021.name == 'IDA'
     assert ida2021.year == 2021
@@ -66,7 +70,6 @@ def test_storm_lookup():
     assert ida2021.usgs_id == 312
     assert ida2021.start_date == datetime(2021, 8, 27, 18)
     assert ida2021.end_date == datetime(2021, 9, 4, 6)
-    assert repr(ida2021) == "StormEvent('IDA', 2021, end_date='2021-09-04 06:00:00')"
 
 
 def test_time_interval():
@@ -142,24 +145,30 @@ def test_high_water_marks(florence2018):
 
 
 def test_tidal_data_within_isotach(florence2018):
-    start_date = datetime(2018, 9, 13, 23)
-    end_date = datetime(2018, 9, 14)
+    null_data = florence2018.tidal_data_within_isotach(
+        34, start_date=timedelta(minutes=10), end_date=timedelta(minutes=20)
+    )
 
     tidal_data = florence2018.tidal_data_within_isotach(
-        34, start_date=start_date, end_date=end_date
+        34, start_date=datetime(2018, 9, 13, 23), end_date=datetime(2018, 9, 14)
     )
+
+    assert len(null_data['t']) == 0
 
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
     assert tidal_data.sizes == {'t': 11, 'nos_id': 44}
 
 
 def test_tidal_data_within_bounding_box(florence2018):
-    start_date = datetime(2018, 9, 13, 23)
-    end_date = datetime(2018, 9, 14)
+    null_data = florence2018.tidal_data_within_bounding_box(
+        start_date=timedelta(minutes=10), end_date=timedelta(minutes=20)
+    )
 
     tidal_data = florence2018.tidal_data_within_bounding_box(
-        start_date=start_date, end_date=end_date
+        start_date=datetime(2018, 9, 13, 23), end_date=datetime(2018, 9, 14)
     )
+
+    assert len(null_data['t']) == 0
 
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
     assert tidal_data.sizes == {'t': 11, 'nos_id': 110}

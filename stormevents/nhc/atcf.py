@@ -1,12 +1,13 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
 import ftplib
 import gzip
 import io
+import itertools
 import logging
 from os import PathLike
 import socket
-from typing import Any, Dict, List, TextIO, Union
+from typing import Any, Dict, Iterable, List, TextIO, Union
 
 from dateutil.parser import parse as parse_date
 import numpy
@@ -16,24 +17,63 @@ import typepigeon
 
 from stormevents.nhc.storms import nhc_storms
 
+ATCF_RECORD_START_YEAR = 1850
 
-def atcf_storm_ids(file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None) -> List[str]:
+
+def atcf_files(
+    file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None, year: int = None
+) -> List[str]:
     if file_deck is None:
-        file_deck = ATCF_FileDeck.a
-    elif not isinstance(file_deck, ATCF_FileDeck):
+        return list(
+            itertools.chain(
+                *(
+                    atcf_files(file_deck=file_deck.value, mode=mode, year=year)
+                    for file_deck in ATCF_FileDeck
+                )
+            )
+        )
+
+    if mode is None:
+        return list(
+            itertools.chain(
+                *(
+                    atcf_files(file_deck=file_deck, mode=mode.value, year=year)
+                    for mode in ATCF_Mode
+                )
+            )
+        )
+
+    if not isinstance(file_deck, ATCF_FileDeck):
         file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
 
-    url = atcf_url(file_deck=file_deck, mode=mode).replace('ftp://', "")
-    hostname, directory = url.split('/', 1)
-    ftp = ftplib.FTP(hostname, 'anonymous', "")
+    if not isinstance(mode, ATCF_Mode):
+        mode = typepigeon.convert_value(mode, ATCF_Mode)
+
+    if mode == ATCF_Mode.historical and year is None or isinstance(year, Iterable):
+        if year is None:
+            year = range(ATCF_RECORD_START_YEAR, datetime.today().year + 1)
+        return list(
+            itertools.chain(
+                *(atcf_files(file_deck=file_deck, mode=mode, year=entry) for entry in year)
+            )
+        )
+
+    url = atcf_url(file_deck=file_deck, mode=mode, year=year)
+    hostname, directory = url.split('/', 3)[2:]
+    ftp = ftplib.FTP(hostname.replace('ftp://', ''), 'anonymous', '')
 
     filenames = [
-        filename for filename, metadata in ftp.mlsd(directory) if metadata['type'] == 'file'
+        filename
+        for filename, metadata in ftp.mlsd(directory)
+        if metadata['type'] == 'file' and filename[0] == file_deck.value
     ]
-    if file_deck is not None:
-        filenames = [filename for filename in filenames if filename[0] == file_deck.value]
 
-    return sorted((filename.split('.')[0] for filename in filenames), reverse=True)
+    filenames = sorted((filename for filename in filenames), reverse=True)
+
+    if year is not None:
+        filenames = [filename for filename in filenames if str(year) in filename]
+
+    return [url + filename for filename in filenames]
 
 
 class ATCF_FileDeck(Enum):
@@ -77,6 +117,10 @@ def get_atcf_entry(
         storms = storms[storms['name'].str.contains(storm_name.upper())]
 
     if len(storms) > 0:
+        storms['name'] = storms['name'].str.strip()
+        storms['class'] = storms['class'].str.strip()
+        storms['basin'] = storms['basin'].str.strip()
+        storms['source'] = storms['source'].str.strip()
         return storms.iloc[0]
     else:
         message = f'no storms with given info'
@@ -89,15 +133,15 @@ def get_atcf_entry(
 
 
 def atcf_url(
-    file_deck: ATCF_FileDeck = None, storm_id: str = None, mode: ATCF_Mode = None,
+    nhc_code: str = None, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None, year=None,
 ) -> str:
-    if storm_id is not None:
-        year = int(storm_id[4:])
-    else:
-        year = None
+    if nhc_code is not None:
+        year = int(nhc_code[4:])
 
     if mode is None:
-        entry = get_atcf_entry(basin=storm_id[:2], storm_number=int(storm_id[2:4]), year=year)
+        if nhc_code is None:
+            raise ValueError('NHC storm code not given')
+        entry = get_atcf_entry(basin=nhc_code[:2], storm_number=int(nhc_code[2:4]), year=year)
         if entry['source'] == 'ARCHIVE':
             mode = ATCF_Mode.historical
         else:
@@ -118,32 +162,35 @@ def atcf_url(
             mode = None
 
     if mode == ATCF_Mode.historical:
+        if year is None:
+            raise ValueError('NHC storm code not given')
         nhc_dir = f'archive/{year}'
         suffix = '.dat.gz'
-    elif mode == ATCF_Mode.realtime:
+    else:
         if file_deck == ATCF_FileDeck.a:
             nhc_dir = 'aid_public'
             suffix = '.dat.gz'
         elif file_deck == ATCF_FileDeck.b:
             nhc_dir = 'btk'
             suffix = '.dat'
+        elif file_deck == ATCF_FileDeck.f:
+            nhc_dir = 'fix'
+            suffix = '.dat'
         else:
             raise NotImplementedError(f'filedeck "{file_deck}" is not implemented')
-    else:
-        raise NotImplementedError(f'mode "{mode}" is not implemented')
 
     url = f'ftp://ftp.nhc.noaa.gov/atcf/{nhc_dir}/'
 
-    if storm_id is not None:
-        url += f'{file_deck.value}{storm_id.lower()}{suffix}'
+    if nhc_code is not None:
+        url += f'{file_deck.value}{nhc_code.lower()}{suffix}'
 
     return url
 
 
 def get_atcf_file(
-    storm_id: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
+    nhc_code: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
 ) -> io.BytesIO:
-    url = atcf_url(file_deck=file_deck, storm_id=storm_id, mode=mode).replace('ftp://', "")
+    url = atcf_url(file_deck=file_deck, nhc_code=nhc_code, mode=mode).replace('ftp://', "")
     logging.info(f'Downloading storm data from {url}')
 
     hostname, filename = url.split('/', 1)
