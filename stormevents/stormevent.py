@@ -353,7 +353,7 @@ class StormEvent:
         if len(stations) > 0:
             stations_data = []
             for station in stations:
-                station_data = station.get(
+                station_data = COOPS_Station(station).get(
                     start_date=start_date,
                     end_date=end_date,
                     product=product,
@@ -431,7 +431,7 @@ class StormEvent:
         if len(stations) > 0:
             stations_data = []
             for station in stations:
-                station_data = station.get(
+                station_data = COOPS_Station(station).get(
                     start_date=start_date,
                     end_date=end_date,
                     product=product,
