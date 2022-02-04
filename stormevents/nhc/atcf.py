@@ -103,7 +103,7 @@ def atcf_url(
         else:
             mode = ATCF_Mode.realtime
 
-    if file_deck is not None and not isinstance(file_deck, ATCF_FileDeck):
+    if not isinstance(file_deck, ATCF_FileDeck):
         try:
             file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
         except ValueError:
@@ -111,7 +111,7 @@ def atcf_url(
     if file_deck is None:
         file_deck = ATCF_FileDeck.a
 
-    if mode is not None and not isinstance(mode, ATCF_Mode):
+    if not isinstance(mode, ATCF_Mode):
         try:
             mode = typepigeon.convert_value(mode, ATCF_Mode)
         except ValueError:
