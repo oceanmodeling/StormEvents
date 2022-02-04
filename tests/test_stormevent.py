@@ -42,6 +42,7 @@ def test_storm_lookup():
     assert florence2018.usgs_id == 283
     assert florence2018.start_date == datetime(2018, 8, 30, 6)
     assert florence2018.end_date == datetime(2018, 9, 18, 12)
+    assert repr(florence2018) == "StormEvent('FLORENCE', 2018)"
 
     assert paine2016.name == 'PAINE'
     assert paine2016.year == 2016
@@ -49,6 +50,7 @@ def test_storm_lookup():
     assert paine2016.usgs_id is None
     assert paine2016.start_date == datetime(2016, 9, 18)
     assert paine2016.end_date == datetime(2016, 9, 21, 12)
+    assert repr(paine2016) == "StormEvent('PAINE', 2016)"
 
     assert henri2021.name == 'HENRI'
     assert henri2021.year == 2021
@@ -56,6 +58,7 @@ def test_storm_lookup():
     assert henri2021.usgs_id == 310
     assert henri2021.start_date == datetime(2021, 8, 20, 18)
     assert henri2021.end_date == datetime(2021, 8, 27, 18)
+    assert repr(henri2021) == "StormEvent('HENRI', 2021, end_date='2021-08-27 18:00:00')"
 
     assert ida2021.name == 'IDA'
     assert ida2021.year == 2021
@@ -63,6 +66,7 @@ def test_storm_lookup():
     assert ida2021.usgs_id == 312
     assert ida2021.start_date == datetime(2021, 8, 27, 18)
     assert ida2021.end_date == datetime(2021, 9, 4, 6)
+    assert repr(ida2021) == "StormEvent('IDA', 2021, end_date='2021-09-04 06:00:00')"
 
 
 def test_time_interval():
@@ -83,15 +87,27 @@ def test_time_interval():
 
     assert florence2018.start_date == datetime(2018, 9, 16, 12)
     assert florence2018.end_date == datetime(2018, 9, 18, 12)
+    assert (
+        repr(florence2018) == "StormEvent('FLORENCE', 2018, start_date='2018-09-16 12:00:00')"
+    )
 
     assert paine2016.start_date == datetime(2016, 9, 18)
     assert paine2016.end_date == datetime(2016, 9, 19)
+    assert repr(paine2016) == "StormEvent('PAINE', 2016, end_date='2016-09-19 00:00:00')"
 
     assert henri2021.start_date == datetime(2021, 8, 23, 18)
     assert henri2021.end_date == datetime(2021, 8, 25, 18)
+    assert (
+        repr(henri2021)
+        == "StormEvent('HENRI', 2021, start_date='2021-08-23 18:00:00', end_date='2021-08-25 18:00:00')"
+    )
 
     assert ida2021.start_date == datetime(2021, 8, 30)
     assert ida2021.end_date == datetime(2021, 9, 1)
+    assert (
+        repr(ida2021)
+        == "StormEvent('IDA', 2021, start_date='2021-08-30 00:00:00', end_date='2021-09-01 00:00:00')"
+    )
 
 
 def test_track(florence2018, ida2021):
