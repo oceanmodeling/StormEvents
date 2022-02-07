@@ -145,30 +145,28 @@ def test_high_water_marks(florence2018):
 
 
 def test_tidal_data_within_isotach(florence2018):
-    null_data = florence2018.tidal_data_within_isotach(
-        34, start_date=timedelta(minutes=10), end_date=timedelta(minutes=20)
-    )
+    null_data = florence2018.tidal_data_within_isotach(34, end_date=timedelta(hours=12))
 
     tidal_data = florence2018.tidal_data_within_isotach(
         34, start_date=datetime(2018, 9, 13, 23), end_date=datetime(2018, 9, 14)
     )
 
-    assert len(null_data['t']) == 0
+    assert null_data['t'].sizes == {}
 
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
-    assert tidal_data.sizes == {'t': 11, 'nos_id': 44}
+    assert tidal_data.sizes == {'t': 11, 'nos_id': 10}
 
 
 def test_tidal_data_within_bounding_box(florence2018):
     null_data = florence2018.tidal_data_within_bounding_box(
-        start_date=timedelta(minutes=10), end_date=timedelta(minutes=20)
+        end_date=florence2018.start_date + timedelta(minutes=1)
     )
 
     tidal_data = florence2018.tidal_data_within_bounding_box(
-        start_date=datetime(2018, 9, 13, 23), end_date=datetime(2018, 9, 14)
+        start_date=datetime(2018, 9, 13, 23, 59), end_date=datetime(2018, 9, 14)
     )
 
-    assert len(null_data['t']) == 0
+    assert null_data['t'].sizes == {}
 
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
-    assert tidal_data.sizes == {'t': 11, 'nos_id': 110}
+    assert tidal_data.sizes == {'t': 1, 'nos_id': 8}

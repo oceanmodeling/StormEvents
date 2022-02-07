@@ -6,7 +6,7 @@ https://api.tidesandcurrents.noaa.gov/api/prod/
 from datetime import datetime
 from enum import Enum
 from functools import lru_cache
-from typing import List, Union
+from typing import Union
 
 import bs4
 from bs4 import BeautifulSoup

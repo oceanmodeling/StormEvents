@@ -1,7 +1,6 @@
 from datetime import datetime
 from functools import lru_cache
 from os import PathLike
-from typing import List
 
 import pandas
 from pandas import DataFrame
@@ -352,10 +351,10 @@ class StormEvent:
 
         if len(stations) > 0:
             stations_data = []
-            for station in stations:
+            for station in stations.index:
                 station_data = COOPS_Station(station).get(
-                    start_date=start_date,
-                    end_date=end_date,
+                    start_date=track.start_date,
+                    end_date=track.end_date,
                     product=product,
                     datum=datum,
                     units=units,
@@ -430,7 +429,7 @@ class StormEvent:
 
         if len(stations) > 0:
             stations_data = []
-            for station in stations:
+            for station in stations.index:
                 station_data = COOPS_Station(station).get(
                     start_date=start_date,
                     end_date=end_date,
