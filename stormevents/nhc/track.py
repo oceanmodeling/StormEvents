@@ -85,7 +85,7 @@ class VortexTrack:
         self.__remote_atcf = None
         self.__storm_id = None
         self.__name = None
-        self.__start_date = start_date  # initially used to filter A-deck here
+        self.__start_date = None
         self.__end_date = None
         self.__file_deck = None
         self.__mode = None
@@ -335,7 +335,7 @@ class VortexTrack:
             # interpret timedelta as a temporal movement around start / end
             data_start = self.dataframe['datetime'].iloc[0]
             _, end_date = subset_time_interval(
-                start=data_start, end=data_end, subset_start=end_date,
+                start=data_start, end=data_end, subset_end=end_date,
             )
 
         self.__end_date = end_date
@@ -442,13 +442,10 @@ class VortexTrack:
         :return: track data for the given parameters as a data frame
         """
 
-        start_date_mask = self.dataframe['datetime'] >= self.start_date
-        if self.end_date is None:
-            return self.dataframe.loc[start_date_mask]
-        else:
-            return self.dataframe.loc[
-                start_date_mask & (self.dataframe['datetime'] <= self.__file_end_date)
-            ]
+        return self.dataframe.loc[
+            (self.dataframe['datetime'] >= self.start_date)
+            & (self.dataframe['datetime'] <= self.end_date)
+        ]
 
     def write(self, path: PathLike, overwrite: bool = False):
         """
