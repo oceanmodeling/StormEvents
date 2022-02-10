@@ -79,17 +79,38 @@ class HighWaterMarks:
         :param survey_completed: whether HWM survey should be complete
         :param still_water: HWM still water filter
 
-        >>> hwm = HighWaterMarks(310)
+        >>> hwm = HighWaterMarks(182)
         >>> hwm.data
-                 latitude  longitude  ... flag_member_id survey_member_id
-        hwm_id                        ...
-        40935   41.281522 -72.283981  ...            NaN              NaN
-        40936   41.281522 -72.283981  ...            NaN              NaN
-        40937   41.302576 -72.240082  ...            NaN              NaN
-        40938   41.302576 -72.240082  ...            NaN              NaN
-        40940   41.102571 -73.416438  ...         2040.0           2040.0
-        [5 rows x 48 columns]
-
+                 latitude  longitude            eventName  ...   hwm_label files siteZone
+        hwm_id                                             ...
+        22636   32.007730 -81.238270  Irma September 2017  ...        HWM1    []      NaN
+        22757   30.510528 -81.460833  Irma September 2017  ...       HWM 1    []        0
+        22885   30.770560 -81.581390  Irma September 2017  ...  GACAM17842    []      NaN
+        22965   31.063150 -81.404540  Irma September 2017  ...         HWM    []      NaN
+        23052   30.845000 -81.560000  Irma September 2017  ...  GACAM17840    []      NaN
+        ...           ...        ...                  ...  ...         ...   ...      ...
+        25147   30.018190 -81.859657  Irma September 2017  ...       HWM01    []      NaN
+        25148   30.097214 -81.891451  Irma September 2017  ...      hwm 01    []      NaN
+        25150   30.038222 -81.880928  Irma September 2017  ...       HWM01    []      NaN
+        25158   29.720560 -81.506110  Irma September 2017  ...         HWM    []      NaN
+        25159   30.097514 -81.794375  Irma September 2017  ...       HWM 1    []      NaN
+        [221 rows x 51 columns]
+        >>> hwm.hwm_quality = 'EXCELLENT', 'GOOD'
+        >>> hwm.data
+                 latitude  longitude            eventName  ...   hwm_label files siteZone
+        hwm_id                                             ...
+        22636   32.007730 -81.238270  Irma September 2017  ...        HWM1    []      NaN
+        22885   30.770560 -81.581390  Irma September 2017  ...  GACAM17842    []      NaN
+        23130   31.034720 -81.640000  Irma September 2017  ...        HWM1    []      NaN
+        23216   32.035150 -81.045040  Irma September 2017  ...        HWM1    []      NaN
+        23236   32.083650 -81.157520  Irma September 2017  ...        HWM1    []      NaN
+        ...           ...        ...                  ...  ...         ...   ...      ...
+        25146   29.992580 -81.851518  Irma September 2017  ...      HWM 01    []      NaN
+        25148   30.097214 -81.891451  Irma September 2017  ...      hwm 01    []      NaN
+        25150   30.038222 -81.880928  Irma September 2017  ...       HWM01    []      NaN
+        25158   29.720560 -81.506110  Irma September 2017  ...         HWM    []      NaN
+        25159   30.097514 -81.794375  Irma September 2017  ...       HWM 1    []      NaN
+        [138 rows x 51 columns]
         """
 
         if event_status is None:
