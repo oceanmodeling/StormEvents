@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable, List
 
 import pandas
 import requests
+import typepigeon
 from typepigeon import convert_value
 
 from stormevents.nhc import nhc_storms
@@ -44,7 +45,9 @@ class HWMEnvironment(Enum):
 
 class HighWaterMarks:
     """
-    interface with the USGS high-water mark (HWM) Short-Term Network deployment service
+    representation of high-water mark (HWM) surveys for an arbitrary flood event
+
+    this class interfaces with the USGS high-water mark (HWM) Short-Term Network deployment service
 
     https://stn.wim.usgs.gov/stnweb/#!/
     """
@@ -54,7 +57,7 @@ class HighWaterMarks:
     def __init__(
         self,
         event_id: int,
-        event_type: EventType,
+        event_type: EventType = None,
         event_status: EventStatus = None,
         us_states: List[str] = None,
         us_counties: List[str] = None,
@@ -65,8 +68,6 @@ class HighWaterMarks:
         still_water: bool = False,
     ):
         """
-        representation of high-water mark (HWM) surveys for an arbitrary flood event
-
         :param event_id: USGS event ID
         :param event_type: type of flood event
         :param event_status: whether flood event had completed
@@ -77,6 +78,18 @@ class HighWaterMarks:
         :param hwm_environment: HWM environment filter
         :param survey_completed: whether HWM survey should be complete
         :param still_water: HWM still water filter
+
+        >>> hwm = HighWaterMarks(310)
+        >>> hwm.data
+                 latitude  longitude  ... flag_member_id survey_member_id
+        hwm_id                        ...
+        40935   41.281522 -72.283981  ...            NaN              NaN
+        40936   41.281522 -72.283981  ...            NaN              NaN
+        40937   41.302576 -72.240082  ...            NaN              NaN
+        40938   41.302576 -72.240082  ...            NaN              NaN
+        40940   41.102571 -73.416438  ...         2040.0           2040.0
+        [5 rows x 48 columns]
+
         """
 
         if event_status is None:
@@ -116,14 +129,18 @@ class HighWaterMarks:
         :return: high-water marks object
         """
 
-        events = usgs_highwatermark_events()
-        events = events[events['usgs_name'] == name]
-        if len(events) > 0:
+        events = usgs_highwatermark_events(year=year)
+        events = events[events['name'] == name]
+
+        if len(events) == 0:
+            raise ValueError(f'no event with name "{name}" found')
+
+        if year is not None:
             events = events[events['year'] == year]
-        event = events[0]
-        return cls(
-            event_id=event['usgs_id'], event_type=event_type, event_status=event_status,
-        )
+
+        event = events.iloc[0]
+
+        return cls(event_id=event.name, event_type=event_type, event_status=event_status)
 
     @classmethod
     def from_csv(
@@ -144,72 +161,87 @@ class HighWaterMarks:
         """
 
         data = pandas.read_csv(filename, index_col='hwm_id')
-        instance = cls(event_id=event_id, event_type=event_type, event_status=event_status,)
+        instance = cls(event_id=event_id, event_type=event_type, event_status=event_status)
         instance.__data = data
         return instance
 
     @property
-    def event_type(self) -> EventType:
+    def event_type(self) -> List[EventType]:
         return self.__event_type
 
     @event_type.setter
     def event_type(self, event_type: EventType):
-        self.__event_type = convert_value(event_type, EventType)
+        if event_type is not None:
+            self.__event_type = convert_value(event_type, List[EventType])
+        else:
+            self.__event_type = None
 
     @property
-    def hwm_quality(self) -> HWMQuality:
+    def hwm_quality(self) -> List[HWMQuality]:
         return self.__hwm_quality
 
     @hwm_quality.setter
     def hwm_quality(self, hwm_quality: HWMQuality):
-        self.__hwm_quality = convert_value(hwm_quality, HWMQuality)
+        if hwm_quality is not None:
+            self.__hwm_quality = convert_value(hwm_quality, List[HWMQuality])
+        else:
+            self.__hwm_quality = None
 
     @property
-    def hwm_type(self) -> HWMType:
+    def hwm_type(self) -> List[HWMType]:
         return self.__hwm_type
 
     @hwm_type.setter
     def hwm_type(self, hwm_type: HWMType):
-        self.__hwm_type = convert_value(hwm_type, HWMType)
+        if hwm_type is not None:
+            self.__hwm_type = convert_value(hwm_type, List[HWMType])
+        else:
+            self.__hwm_type = None
 
     @property
-    def hwm_environment(self) -> HWMEnvironment:
+    def hwm_environment(self) -> List[HWMEnvironment]:
         return self.__hwm_environment
 
     @hwm_environment.setter
     def hwm_environment(self, hwm_environment: HWMEnvironment):
-        self.__hwm_environment = convert_value(hwm_environment, HWMEnvironment)
+        if hwm_environment is not None:
+            self.__hwm_environment = convert_value(hwm_environment, List[HWMEnvironment])
+        else:
+            self.__hwm_environment = None
 
     @property
     def query(self) -> Dict[str, Any]:
-        event_type = self.event_type
-        if isinstance(event_type, Enum):
-            event_type = event_type.value
-        event_status = self.event_status
-        if isinstance(event_status, Enum):
-            event_status = event_status.value
-        hwm_type = self.hwm_type
-        if isinstance(hwm_type, Enum):
-            hwm_type = hwm_type.value
-        hwm_quality = self.hwm_quality
-        if isinstance(hwm_quality, Enum):
-            hwm_quality = hwm_quality.value
-        hwm_environment = self.hwm_environment
-        if isinstance(hwm_environment, Enum):
-            hwm_environment = hwm_environment.value
-
-        return {
+        query = {
             'Event': self.event_id,
-            'EventType': event_type,
-            'EventStatus': event_status,
+            'EventType': self.event_type,
+            'EventStatus': self.event_status,
             'States': self.us_states,
             'County': self.us_counties,
-            'HWMType': hwm_type,
-            'HWMQuality': hwm_quality,
-            'HWMEnvironment': hwm_environment,
+            'HWMType': self.hwm_type,
+            'HWMQuality': self.hwm_quality,
+            'HWMEnvironment': self.hwm_environment,
             'SurveyComplete': self.survey_completed,
             'StillWater': self.still_water,
         }
+
+        for key, value in query.items():
+            if key not in ['SurveyComplete', 'StillWater']:
+                if isinstance(value, Enum):
+                    value = value.value
+                elif isinstance(value, List):
+                    value = [
+                        entry.value if isinstance(entry, Enum) else entry for entry in value
+                    ]
+                    value = typepigeon.convert_value(value, List[str])
+
+                    if len(value) > 0:
+                        value = ','.join(value)
+                    else:
+                        value = None
+
+            query[key] = value
+
+        return query
 
     @property
     def data(self) -> pandas.DataFrame:
@@ -220,8 +252,64 @@ class HighWaterMarks:
         if self.__data is None or self.__previous_query != self.query:
             response = requests.get(self.URL, params=self.query)
             data = pandas.DataFrame(response.json())
-            data['survey_date'] = pandas.to_datetime(data['survey_date'])
-            data['flag_date'] = pandas.to_datetime(data['flag_date'])
+            if len(data) > 0:
+                data['survey_date'] = pandas.to_datetime(data['survey_date'])
+                data['flag_date'] = pandas.to_datetime(data['flag_date'])
+                data.loc[data['markerName'].str.len() == 0, 'markerName'] = None
+            else:
+                data = pandas.DataFrame(
+                    columns=[
+                        'latitude',
+                        'longitude',
+                        'eventName',
+                        'hwmTypeName',
+                        'hwmQualityName',
+                        'verticalDatumName',
+                        'verticalMethodName',
+                        'approvalMember',
+                        'markerName',
+                        'horizontalMethodName',
+                        'horizontalDatumName',
+                        'flagMemberName',
+                        'surveyMemberName',
+                        'site_no',
+                        'siteDescription',
+                        'sitePriorityName',
+                        'networkNames',
+                        'stateName',
+                        'countyName',
+                        'siteZone',
+                        'sitePermHousing',
+                        'site_latitude',
+                        'site_longitude',
+                        'hwm_id',
+                        'waterbody',
+                        'site_id',
+                        'event_id',
+                        'hwm_type_id',
+                        'hwm_quality_id',
+                        'latitude_dd',
+                        'longitude_dd',
+                        'survey_date',
+                        'elev_ft',
+                        'vdatum_id',
+                        'vcollect_method_id',
+                        'bank',
+                        'marker_id',
+                        'hcollect_method_id',
+                        'hwm_notes',
+                        'hwm_environment',
+                        'flag_date',
+                        'stillwater',
+                        'hdatum_id',
+                        'hwm_label',
+                        'files',
+                        'height_above_gnd',
+                        'hwm_locationdescription',
+                        'flag_member_id',
+                        'survey_member_id',
+                    ],
+                )
             data.set_index('hwm_id', inplace=True)
             self.__data = data
             self.__previous_query = self.query
@@ -235,6 +323,14 @@ class HighWaterMarks:
 
 
 class StormHighWaterMarks(HighWaterMarks):
+    """
+    representation of high-water mark (HWM) surveys for a named storm event
+
+    this class interfaces with the USGS high-water mark (HWM) Short-Term Network deployment service
+
+    https://stn.wim.usgs.gov/stnweb/#!/
+    """
+
     def __init__(
         self,
         name: str,
@@ -248,8 +344,6 @@ class StormHighWaterMarks(HighWaterMarks):
         still_water: bool = False,
     ):
         """
-        representation of high-water mark (HWM) surveys for a named storm event
-
         :param name: storm name
         :param year: storm year
         :param us_states: U.S. states in which to query

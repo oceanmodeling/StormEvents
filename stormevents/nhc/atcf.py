@@ -241,7 +241,7 @@ def read_atcf(
             if not isinstance(atcf, TextIO):
                 atcf = open(atcf)
             atcf = atcf.readlines()
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError):
             # check if the entire track file was passed as a string
             atcf = str(atcf).splitlines()
             if len(atcf) == 1:
@@ -252,7 +252,10 @@ def read_atcf(
         if isinstance(line, bytes):
             line = line.decode('UTF-8')
         if record_types is None or line.split(',')[4].strip() in record_types:
-            records.append(read_atcf_line(line))
+            try:
+                records.append(read_atcf_line(line))
+            except ValueError:
+                pass
 
     if len(records) == 0:
         raise ValueError(f'no records found with type(s) "{record_types}"')
