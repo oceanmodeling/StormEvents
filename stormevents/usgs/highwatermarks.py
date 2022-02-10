@@ -193,7 +193,7 @@ class HighWaterMarks:
     @event_type.setter
     def event_type(self, event_type: EventType):
         if event_type is not None:
-            self.__event_type = convert_value(event_type, List[EventType])
+            self.__event_type = convert_value(event_type, [EventType])
         else:
             self.__event_type = None
 
@@ -204,7 +204,7 @@ class HighWaterMarks:
     @hwm_quality.setter
     def hwm_quality(self, hwm_quality: HWMQuality):
         if hwm_quality is not None:
-            self.__hwm_quality = convert_value(hwm_quality, List[HWMQuality])
+            self.__hwm_quality = convert_value(hwm_quality, [HWMQuality])
         else:
             self.__hwm_quality = None
 
@@ -215,7 +215,7 @@ class HighWaterMarks:
     @hwm_type.setter
     def hwm_type(self, hwm_type: HWMType):
         if hwm_type is not None:
-            self.__hwm_type = convert_value(hwm_type, List[HWMType])
+            self.__hwm_type = convert_value(hwm_type, [HWMType])
         else:
             self.__hwm_type = None
 
@@ -226,7 +226,7 @@ class HighWaterMarks:
     @hwm_environment.setter
     def hwm_environment(self, hwm_environment: HWMEnvironment):
         if hwm_environment is not None:
-            self.__hwm_environment = convert_value(hwm_environment, List[HWMEnvironment])
+            self.__hwm_environment = convert_value(hwm_environment, [HWMEnvironment])
         else:
             self.__hwm_environment = None
 
@@ -253,7 +253,7 @@ class HighWaterMarks:
                     value = [
                         entry.value if isinstance(entry, Enum) else entry for entry in value
                     ]
-                    value = typepigeon.convert_value(value, List[str])
+                    value = typepigeon.convert_value(value, [str])
 
                     if len(value) > 0:
                         value = ','.join(value)
