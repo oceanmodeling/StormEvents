@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import pandas
 
+from stormevents import VortexTrack
 from stormevents.coops.tidalstations import COOPS_Station, coops_stations
 from stormevents.stormevent import coops_stations_within_vortextrack_isotach
 from tests import REFERENCE_DIRECTORY
@@ -14,9 +15,11 @@ def test_coops_stations():
 
 
 def test_coops_stations_within_vortextrack_isotach():
-    stations = coops_stations_within_vortextrack_isotach('florence2018', isotach=34)
+    track = VortexTrack('florence2018', file_deck='b')
 
-    assert len(stations) == 47
+    stations = coops_stations_within_vortextrack_isotach(track, isotach=34)
+
+    assert len(stations) == 10
 
 
 def test_COOPS_Station():
