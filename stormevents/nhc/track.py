@@ -741,15 +741,17 @@ class VortexTrack:
         # if location values have changed, recompute velocity
         location_hash = pandas.util.hash_pandas_object(
             self.__dataframe[['longitude', 'latitude']]
-        ).sum()
-        if self.__location_hash is None or location_hash != self.__location_hash:
-            if self.__location_hash is None:
-                velocity_update_indices = pandas.isna(self.__dataframe['speed'])
-            else:
-                velocity_update_indices = self.__dataframe.index.isnull()
+        )
 
-            self.__dataframe[velocity_update_indices] = self.__compute_velocity(
-                self.__dataframe[velocity_update_indices]
+        if self.__location_hash is None:
+            updated_locations = ~self.__dataframe.index.isnull()
+        else:
+            updated_locations = location_hash != self.__location_hash
+        updated_locations |= pandas.isna(self.__dataframe['speed'])
+
+        if updated_locations.any():
+            self.__dataframe.loc[updated_locations] = self.__compute_velocity(
+                self.__dataframe[updated_locations]
             )
             self.__location_hash = location_hash
 
