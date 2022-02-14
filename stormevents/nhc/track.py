@@ -4,7 +4,7 @@ import logging
 import os
 from os import PathLike
 import pathlib
-from typing import List, Union
+from typing import Any, Dict, List, Union
 
 import numpy
 import pandas
@@ -115,12 +115,7 @@ class VortexTrack:
                     else:
                         raise
 
-        self.__previous_configuration = {
-            'storm_id': self.storm_id,
-            'file_deck': self.file_deck,
-            'mode': self.mode,
-            'filename': self.filename,
-        }
+        self.__previous_configuration = self.__configuration
 
         # use start and end dates to mask dataframe here
         self.start_date = start_date
@@ -573,7 +568,7 @@ class VortexTrack:
         :return: spatial linestring of current track
         """
 
-        return LineString(self.data[['longitude', 'latitude']])
+        return LineString(self.data[['longitude', 'latitude']].values)
 
     @property
     def distance(self) -> float:
@@ -708,12 +703,7 @@ class VortexTrack:
         :return: data frame containing all track data for the specified storm and file deck
         """
 
-        configuration = {
-            'storm_id': self.storm_id,
-            'file_deck': self.file_deck,
-            'mode': self.mode,
-            'filename': self.filename,
-        }
+        configuration = self.__configuration
 
         # only download new file if the configuration has changed since the last download
         if (
@@ -743,7 +733,7 @@ class VortexTrack:
             self.__dataframe[['longitude', 'latitude']]
         )
 
-        if self.__location_hash is None:
+        if self.__location_hash is None or len(location_hash) != len(self.__location_hash):
             updated_locations = ~self.__dataframe.index.isnull()
         else:
             updated_locations = location_hash != self.__location_hash
@@ -760,6 +750,16 @@ class VortexTrack:
     @dataframe.setter
     def dataframe(self, dataframe: DataFrame):
         self.__dataframe = dataframe
+
+    @property
+    def __configuration(self) -> Dict[str, Any]:
+        return {
+            'storm_id': self.storm_id,
+            'file_deck': self.file_deck,
+            'mode': self.mode,
+            'record_type': self.record_type,
+            'filename': self.filename,
+        }
 
     @property
     def __record_numbers(self) -> numpy.ndarray:
@@ -815,6 +815,9 @@ class VortexTrack:
         for date in unique_dates:
             if date >= numpy.datetime64(self.end_date):
                 return date
+
+    def __len__(self) -> int:
+        return len(self.data)
 
     def __copy__(self) -> 'VortexTrack':
         return self.__class__(

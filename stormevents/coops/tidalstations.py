@@ -578,11 +578,12 @@ def coops_stations_within_region(
     return stations_within_region
 
 
-def coops_stations_within_bounding_box(
+def coops_stations_within_bounds(
     minx: float, miny: float, maxx: float, maxy: float, station_type: COOPS_StationType = None,
 ) -> DataFrame:
-    region = box(minx=minx, miny=miny, maxx=maxx, maxy=maxy)
-    return coops_stations_within_region(region=region, station_type=station_type)
+    return coops_stations_within_region(
+        region=box(minx=minx, miny=miny, maxx=maxx, maxy=maxy), station_type=station_type
+    )
 
 
 def coops_data_within_region(

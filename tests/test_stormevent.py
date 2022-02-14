@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 import pandas
 import pytest
+from shapely.geometry import box
 
 from stormevents.nhc import VortexTrack
 from stormevents.stormevent import StormEvent
@@ -145,28 +146,40 @@ def test_high_water_marks(florence2018):
 
 
 def test_tidal_data_within_isotach(florence2018):
-    null_data = florence2018.tidal_data_within_isotach(34, end_date=timedelta(hours=12))
-
-    tidal_data = florence2018.tidal_data_within_isotach(
-        34, start_date=datetime(2018, 9, 13, 23), end_date=datetime(2018, 9, 14)
+    null_data = florence2018.tidal_data_within_isotach(
+        wind_speed=34, end_date=florence2018.start_date + timedelta(minutes=1),
     )
 
-    assert null_data['t'].sizes == {}
+    tidal_data = florence2018.tidal_data_within_isotach(
+        wind_speed=34, start_date=datetime(2018, 9, 13, 23), end_date=datetime(2018, 9, 14),
+    )
 
+    assert len(null_data.data_vars) == 0
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
+
+    assert null_data['t'].sizes == {}
     assert tidal_data.sizes == {'t': 11, 'nos_id': 10}
 
 
-def test_tidal_data_within_bounding_box(florence2018):
-    null_data = florence2018.tidal_data_within_bounding_box(
-        end_date=florence2018.start_date + timedelta(minutes=1)
+def test_tidal_data_within_region(florence2018):
+    null_track = florence2018.track(end_date=florence2018.start_date + timedelta(minutes=1))
+    null_data = florence2018.tidal_data_within_region(
+        region=box(*null_track.linestring.bounds), end_date=null_track.end_date,
     )
 
-    tidal_data = florence2018.tidal_data_within_bounding_box(
-        start_date=datetime(2018, 9, 13, 23, 59), end_date=datetime(2018, 9, 14)
+    track = florence2018.track(
+        start_date=datetime(2018, 9, 13, 23, 59),
+        end_date=datetime(2018, 9, 14),
+        record_type='OFCL',
     )
+    tidal_data = florence2018.tidal_data_within_region(
+        region=box(*track.linestring.bounds),
+        start_date=track.start_date,
+        end_date=track.end_date,
+    )
+
+    assert len(null_data.data_vars) == 0
+    assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
 
     assert null_data['t'].sizes == {}
-
-    assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
     assert tidal_data.sizes == {'t': 1, 'nos_id': 8}

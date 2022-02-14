@@ -1,5 +1,5 @@
 from copy import copy
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from dateutil.parser import parse as parse_date
 import pandas
@@ -42,14 +42,14 @@ def test_nhc_storms():
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_vortex():
+def test_VortexTrack():
     output_directory = OUTPUT_DIRECTORY / 'test_vortex'
     reference_directory = REFERENCE_DIRECTORY / 'test_vortex'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    storms = [
+    tracks = [
         'michael2018',
         'florence2018',
         'irma2017',
@@ -61,12 +61,34 @@ def test_vortex():
         'isabel2003',
     ]
 
-    storms = [VortexTrack(storm, start_date=timedelta(days=-1)) for storm in storms]
+    tracks = [VortexTrack(storm, start_date=timedelta(days=-1)) for storm in tracks]
 
-    for storm in storms:
-        storm.write(output_directory / f'{storm.name}{storm.year}.fort.22', overwrite=True)
+    for track in tracks:
+        track.write(output_directory / f'{track.name}{track.year}.fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
+
+
+def test_VortexTrack_filters():
+    track = VortexTrack('florence2018')
+
+    assert len(track) == 10234
+
+    track.start_date = timedelta(days=1)
+
+    assert len(track) == 10224
+
+    track.end_date = datetime(2018, 9, 20)
+
+    assert len(track) == 10165
+
+    track.record_type = 'OFCL'
+
+    assert len(track) == 1313
+
+    track.end_date = None
+
+    assert len(track) == 1335
 
 
 def test_from_fort22():
