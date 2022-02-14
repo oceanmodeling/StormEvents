@@ -398,9 +398,9 @@ class StormEvent:
 
         if not isinstance(region, BaseGeometry):
             try:
-                region = typepigeon.convert_value(region, Polygon)
-            except ValueError:
                 region = typepigeon.convert_value(region, MultiPolygon)
+            except ValueError:
+                region = typepigeon.convert_value(region, Polygon)
 
         if start_date is None:
             start_date = self.start_date
