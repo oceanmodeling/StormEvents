@@ -83,7 +83,7 @@ class VortexTrack:
         self.__filename = None
 
         self.__remote_atcf = None
-        self.__storm_id = None
+        self.__nhc_code = None
         self.__name = None
         self.__start_date = None
         self.__end_date = None
@@ -100,7 +100,7 @@ class VortexTrack:
         self.record_type = record_type
 
         if isinstance(storm, DataFrame):
-            self.dataframe = storm
+            self.__unfiltered_data = storm
         elif isinstance(storm, io.BytesIO):
             self.__remote_atcf = storm
         elif isinstance(storm, (str, PathLike, pathlib.Path)):
@@ -108,7 +108,7 @@ class VortexTrack:
                 self.__remote_atcf = io.open(storm, 'rb')
             else:
                 try:
-                    self.storm_id = storm
+                    self.nhc_code = storm
                 except ValueError:
                     if pathlib.Path(storm).exists():
                         self.filename = storm
@@ -216,8 +216,8 @@ class VortexTrack:
 
             if name.strip() == '':
                 storms = nhc_storms(year=self.year)
-                if self.storm_id.upper() in storms.index:
-                    storm = storms.loc[self.storm_id.upper()]
+                if self.nhc_code.upper() in storms.index:
+                    storm = storms.loc[self.nhc_code.upper()]
                     name = storm['name'].lower()
 
             self.__name = name
@@ -249,12 +249,12 @@ class VortexTrack:
         return self.data['datetime'].iloc[0].year
 
     @property
-    def storm_id(self) -> str:
+    def nhc_code(self) -> str:
         """
-        :return: storm NHC ID
+        :return: storm NHC code (i.e. ``AL062018``)
         """
 
-        if self.__storm_id is None and not self.__invalid_storm_name:
+        if self.__nhc_code is None and not self.__invalid_storm_name:
             if self.__dataframe is not None:
                 storm_id = (
                     f'{self.__dataframe["basin"].iloc[-1]}'
@@ -262,20 +262,20 @@ class VortexTrack:
                     f'{self.__dataframe["datetime"].iloc[-1].year}'
                 )
                 try:
-                    self.storm_id = storm_id
+                    self.nhc_code = storm_id
                 except ValueError:
                     try:
                         storm_id = get_atcf_entry(
                             storm_name=self.__dataframe['name'].tolist()[-1],
                             year=self.__dataframe['datetime'].tolist()[-1].year,
                         ).name
-                        self.storm_id = storm_id
+                        self.nhc_code = storm_id
                     except ValueError:
                         self.__invalid_storm_name = True
-        return self.__storm_id
+        return self.__nhc_code
 
-    @storm_id.setter
-    def storm_id(self, storm_id: str):
+    @nhc_code.setter
+    def nhc_code(self, storm_id: str):
         if storm_id is not None:
             # check if name+year was given instead of basin+number+year
             digits = sum([1 for character in storm_id if character.isdigit()])
@@ -287,7 +287,7 @@ class VortexTrack:
                 if atcf_id is None:
                     raise ValueError(f'No storm with id: {storm_id}')
                 storm_id = atcf_id
-        self.__storm_id = storm_id
+        self.__nhc_code = storm_id
 
     @property
     def start_date(self) -> datetime:
@@ -299,13 +299,13 @@ class VortexTrack:
 
     @start_date.setter
     def start_date(self, start_date: datetime):
-        data_start = self.dataframe['datetime'].iloc[0]
+        data_start = self.__unfiltered_data['datetime'].iloc[0]
 
         if start_date is None:
             start_date = data_start
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_end = self.dataframe['datetime'].iloc[-1]
+            data_end = self.__unfiltered_data['datetime'].iloc[-1]
             start_date, _ = subset_time_interval(
                 start=data_start, end=data_end, subset_start=start_date,
             )
@@ -322,13 +322,13 @@ class VortexTrack:
 
     @end_date.setter
     def end_date(self, end_date: datetime):
-        data_end = self.dataframe['datetime'].iloc[-1]
+        data_end = self.__unfiltered_data['datetime'].iloc[-1]
 
         if end_date is None:
             end_date = data_end
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_start = self.dataframe['datetime'].iloc[0]
+            data_start = self.__unfiltered_data['datetime'].iloc[0]
             _, end_date = subset_time_interval(
                 start=data_start, end=data_end, subset_end=end_date,
             )
@@ -360,9 +360,9 @@ class VortexTrack:
         if self.__mode is None:
             if self.filename is None:
                 mode = ATCF_Mode.realtime
-                if self.storm_id is not None:
+                if self.nhc_code is not None:
                     archive_storms = nhc_archive_storms()
-                    if self.storm_id.upper() in archive_storms:
+                    if self.nhc_code.upper() in archive_storms:
                         mode = ATCF_Mode.historical
             else:
                 mode = ATCF_Mode.historical
@@ -437,9 +437,9 @@ class VortexTrack:
         :return: track data for the given parameters as a data frame
         """
 
-        return self.dataframe.loc[
-            (self.dataframe['datetime'] >= self.start_date)
-            & (self.dataframe['datetime'] <= self.end_date)
+        return self.__unfiltered_data.loc[
+            (self.__unfiltered_data['datetime'] >= self.start_date)
+            & (self.__unfiltered_data['datetime'] <= self.end_date)
         ]
 
     def write(self, path: PathLike, overwrite: bool = False):
@@ -682,23 +682,23 @@ class VortexTrack:
         """
 
         configuration = {
-            'storm_id': self.storm_id,
+            'storm_id': self.nhc_code,
             'file_deck': self.file_deck,
             'mode': self.mode,
             'filename': self.filename,
         }
 
         if (
-            self.storm_id is not None
+            self.nhc_code is not None
             and self.__remote_atcf is None
             or configuration != self.__previous_configuration
         ):
-            self.__remote_atcf = get_atcf_file(self.storm_id, self.file_deck, self.mode)
+            self.__remote_atcf = get_atcf_file(self.nhc_code, self.file_deck, self.mode)
 
         return self.__remote_atcf
 
     @property
-    def dataframe(self) -> DataFrame:
+    def __unfiltered_data(self) -> DataFrame:
         """
         :return: data frame containing all track data for the specified storm and file deck
         """
@@ -747,14 +747,14 @@ class VortexTrack:
 
         return self.__dataframe
 
-    @dataframe.setter
-    def dataframe(self, dataframe: DataFrame):
+    @__unfiltered_data.setter
+    def __unfiltered_data(self, dataframe: DataFrame):
         self.__dataframe = dataframe
 
     @property
     def __configuration(self) -> Dict[str, Any]:
         return {
-            'storm_id': self.storm_id,
+            'id': self.nhc_code,
             'file_deck': self.file_deck,
             'mode': self.mode,
             'record_type': self.record_type,
@@ -811,7 +811,7 @@ class VortexTrack:
 
     @property
     def __file_end_date(self):
-        unique_dates = numpy.unique(self.dataframe['datetime'])
+        unique_dates = numpy.unique(self.__unfiltered_data['datetime'])
         for date in unique_dates:
             if date >= numpy.datetime64(self.end_date):
                 return date
@@ -821,7 +821,7 @@ class VortexTrack:
 
     def __copy__(self) -> 'VortexTrack':
         return self.__class__(
-            storm=self.dataframe.copy(),
+            storm=self.__unfiltered_data.copy(),
             start_date=self.start_date,
             end_date=self.end_date,
             file_deck=self.file_deck,
@@ -833,4 +833,4 @@ class VortexTrack:
         return self.data.equals(other.data)
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.storm_id, self.start_date, self.end_date, self.file_deck, self.mode, self.record_type, self.filename])})'
+        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.mode, self.record_type, self.filename])})'
