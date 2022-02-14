@@ -90,6 +90,10 @@ def test_VortexTrack_filters():
 
     assert len(track) == 1335
 
+    track.nhc_code = 'AL072018'
+
+    assert len(track) == 1335
+
 
 def test_from_fort22():
     input_directory = INPUT_DIRECTORY / 'test_from_fort22'
@@ -101,7 +105,7 @@ def test_from_fort22():
 
     vortex = VortexTrack.from_fort22(fort22=input_directory / 'irma2017_fort.22',)
 
-    assert vortex.id == 'AL112017'
+    assert vortex.nhc_code == 'AL112017'
     assert vortex.name == 'IRMA'
 
     vortex.write(output_directory / 'irma2017_fort.22', overwrite=True)
@@ -119,7 +123,7 @@ def test_from_atcf():
 
     vortex = VortexTrack.from_atcf_file(atcf=input_directory / 'florence2018_atcf.trk',)
 
-    assert vortex.id == 'BT02008'
+    assert vortex.nhc_code == 'BT02008'
     assert vortex.name == 'WRT00001'
 
     vortex.write(output_directory / 'florence2018_fort.22', overwrite=True)
