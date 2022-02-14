@@ -92,7 +92,7 @@ def test_VortexTrack_filters():
 
     track.nhc_code = 'AL072018'
 
-    assert len(track) == 1335
+    assert len(track) == 175
 
 
 def test_from_fort22():
