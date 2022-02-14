@@ -100,7 +100,7 @@ class VortexTrack:
         self.record_type = record_type
 
         if isinstance(storm, DataFrame):
-            self.dataframe = storm
+            self.__unfiltered_data = storm
         elif isinstance(storm, io.BytesIO):
             self.__remote_atcf = storm
         elif isinstance(storm, (str, PathLike, pathlib.Path)):
@@ -299,13 +299,13 @@ class VortexTrack:
 
     @start_date.setter
     def start_date(self, start_date: datetime):
-        data_start = self.dataframe['datetime'].iloc[0]
+        data_start = self.__unfiltered_data['datetime'].iloc[0]
 
         if start_date is None:
             start_date = data_start
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_end = self.dataframe['datetime'].iloc[-1]
+            data_end = self.__unfiltered_data['datetime'].iloc[-1]
             start_date, _ = subset_time_interval(
                 start=data_start, end=data_end, subset_start=start_date,
             )
@@ -322,13 +322,13 @@ class VortexTrack:
 
     @end_date.setter
     def end_date(self, end_date: datetime):
-        data_end = self.dataframe['datetime'].iloc[-1]
+        data_end = self.__unfiltered_data['datetime'].iloc[-1]
 
         if end_date is None:
             end_date = data_end
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_start = self.dataframe['datetime'].iloc[0]
+            data_start = self.__unfiltered_data['datetime'].iloc[0]
             _, end_date = subset_time_interval(
                 start=data_start, end=data_end, subset_end=end_date,
             )
@@ -437,9 +437,9 @@ class VortexTrack:
         :return: track data for the given parameters as a data frame
         """
 
-        return self.dataframe.loc[
-            (self.dataframe['datetime'] >= self.start_date)
-            & (self.dataframe['datetime'] <= self.end_date)
+        return self.__unfiltered_data.loc[
+            (self.__unfiltered_data['datetime'] >= self.start_date)
+            & (self.__unfiltered_data['datetime'] <= self.end_date)
         ]
 
     def write(self, path: PathLike, overwrite: bool = False):
@@ -578,10 +578,10 @@ class VortexTrack:
 
         geodetic = Geod(ellps='WGS84')
         _, _, distances = geodetic.inv(
-            self.data['longitude'].iloc[:-1],
-            self.data['latitude'].iloc[:-1],
-            self.data['longitude'].iloc[1:],
-            self.data['latitude'].iloc[1:],
+                self.data['longitude'].iloc[:-1],
+                self.data['latitude'].iloc[:-1],
+                self.data['longitude'].iloc[1:],
+                self.data['latitude'].iloc[1:],
         )
         return numpy.sum(distances)
 
@@ -698,7 +698,7 @@ class VortexTrack:
         return self.__remote_atcf
 
     @property
-    def dataframe(self) -> DataFrame:
+    def __unfiltered_data(self) -> DataFrame:
         """
         :return: data frame containing all track data for the specified storm and file deck
         """
@@ -747,8 +747,8 @@ class VortexTrack:
 
         return self.__dataframe
 
-    @dataframe.setter
-    def dataframe(self, dataframe: DataFrame):
+    @__unfiltered_data.setter
+    def __unfiltered_data(self, dataframe: DataFrame):
         self.__dataframe = dataframe
 
     @property
@@ -811,7 +811,7 @@ class VortexTrack:
 
     @property
     def __file_end_date(self):
-        unique_dates = numpy.unique(self.dataframe['datetime'])
+        unique_dates = numpy.unique(self.__unfiltered_data['datetime'])
         for date in unique_dates:
             if date >= numpy.datetime64(self.end_date):
                 return date
@@ -821,7 +821,7 @@ class VortexTrack:
 
     def __copy__(self) -> 'VortexTrack':
         return self.__class__(
-            storm=self.dataframe.copy(),
+            storm=self.__unfiltered_data.copy(),
             start_date=self.start_date,
             end_date=self.end_date,
             file_deck=self.file_deck,

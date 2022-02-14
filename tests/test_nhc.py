@@ -101,7 +101,7 @@ def test_from_fort22():
 
     vortex = VortexTrack.from_fort22(fort22=input_directory / 'irma2017_fort.22',)
 
-    assert vortex.storm_id == 'AL112017'
+    assert vortex.id == 'AL112017'
     assert vortex.name == 'IRMA'
 
     vortex.write(output_directory / 'irma2017_fort.22', overwrite=True)
@@ -119,7 +119,7 @@ def test_from_atcf():
 
     vortex = VortexTrack.from_atcf_file(atcf=input_directory / 'florence2018_atcf.trk',)
 
-    assert vortex.storm_id == 'BT02008'
+    assert vortex.id == 'BT02008'
     assert vortex.name == 'WRT00001'
 
     vortex.write(output_directory / 'florence2018_fort.22', overwrite=True)
@@ -136,8 +136,8 @@ def test_recompute_velocity():
 
     vortex = VortexTrack('irma2017')
 
-    vortex.dataframe.at[5, 'longitude'] -= 0.1
-    vortex.dataframe.at[5, 'latitude'] += 0.1
+    vortex.data.at[5, 'longitude'] -= 0.1
+    vortex.data.at[5, 'latitude'] += 0.1
 
     vortex.write(output_directory / 'irma2017_fort.22', overwrite=True)
 
