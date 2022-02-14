@@ -4,7 +4,8 @@ from os import PathLike
 
 import pandas
 from pandas import DataFrame
-from shapely.geometry import MultiPoint
+from shapely.geometry import MultiPolygon, Polygon
+import typepigeon
 import xarray
 from xarray import Dataset
 
@@ -12,7 +13,6 @@ from stormevents.coops import COOPS_Station, coops_stations_within_region
 from stormevents.coops.tidalstations import (
     COOPS_Interval,
     COOPS_Product,
-    coops_stations_within_bounding_box,
     COOPS_StationType,
     COOPS_TidalDatum,
     COOPS_TimeZone,
@@ -287,7 +287,7 @@ class StormEvent:
     @lru_cache(maxsize=None)
     def tidal_data_within_isotach(
         self,
-        isotach: int,
+        wind_speed: int,
         station_type: COOPS_StationType = None,
         start_date: datetime = None,
         end_date: datetime = None,
@@ -296,12 +296,12 @@ class StormEvent:
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
         interval: COOPS_Interval = None,
-        track_filename: PathLike = None,
+        track: VortexTrack = None,
     ) -> Dataset:
         """
-        retrieve CO-OPS tidal station data within the specified isotach of the storm
+        retrieve CO-OPS tidal station data from within the specified polygon
 
-        :param isotach: the wind swath to extract (34-kt, 50-kt, or 64-kt)
+        :param wind_speed: wind speed in knots (one of ``34``, ``50``, or ``64``)
         :param station_type: either ``current`` or ``historical``
         :param start_date: start date
         :param end_date: end date
@@ -310,11 +310,11 @@ class StormEvent:
         :param units: either ``metric`` or ``english``
         :param time_zone: time zone
         :param interval: time interval
-        :param track_filename: file path to ``fort.22``
+        :param track: vortex track object or file path to ``fort.22``
         :return: CO-OPS station data
 
-        >>> stormevent = StormEvent('florence', 2018)
-        >>> stormevent.tidal_data_within_isotach(34, start_date='2018-09-13', end_date='2018-09-13 06:00:00')
+        >>> storm = StormEvent('florence', 2018)
+        >>> storm.tidal_data_within_isotach(wind_speed=34, start_date='2018-09-13', end_date='2018-09-13 06:00:00')
         <xarray.Dataset>
         Dimensions:  (t: 121, nos_id: 7)
         Coordinates:
@@ -330,50 +330,28 @@ class StormEvent:
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
 
-        if start_date is None:
-            start_date = self.start_date
+        if isinstance(track, VortexTrack):
+            track.start_date = start_date
+            track.end_date = end_date
         else:
-            start_date = relative_to_time_interval(
-                start=self.start_date, end=self.end_date, relative=start_date
-            )
-        if end_date is None:
-            end_date = self.end_date
-        else:
-            end_date = relative_to_time_interval(
-                start=self.start_date, end=self.end_date, relative=end_date
-            )
+            track = self.track(start_date=start_date, end_date=end_date, filename=track)
 
-        track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
-
-        stations = coops_stations_within_vortextrack_isotach(
-            isotach=isotach, track=track, station_type=station_type
+        return self.tidal_data_within_region(
+            region=track.wind_swath(wind_speed),
+            station_type=station_type,
+            start_date=start_date,
+            end_date=end_date,
+            product=product,
+            datum=datum,
+            units=units,
+            time_zone=time_zone,
+            interval=interval,
         )
 
-        if len(stations) > 0:
-            stations_data = []
-            for station in stations.index:
-                station_data = COOPS_Station(station).get(
-                    start_date=track.start_date,
-                    end_date=track.end_date,
-                    product=product,
-                    datum=datum,
-                    units=units,
-                    time_zone=time_zone,
-                    interval=interval,
-                )
-                stations_data.append(station_data)
-
-            stations_data = xarray.combine_nested(stations_data, concat_dim='nos_id',)
-        else:
-            stations_data = Dataset(
-                coords={'t': None, 'nos_id': None, 'nws_id': None, 'x': None, 'y': None,},
-            )
-
-        return stations_data
-
     @lru_cache(maxsize=None)
-    def tidal_data_within_bounding_box(
+    def tidal_data_within_region(
         self,
+        region: Polygon,
         station_type: COOPS_StationType = None,
         start_date: datetime = None,
         end_date: datetime = None,
@@ -382,24 +360,25 @@ class StormEvent:
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
         interval: COOPS_Interval = None,
-        track_filename: PathLike = None,
     ) -> Dataset:
         """
-        retrieve CO-OPS tidal station data within the bounding box of the track
+        retrieve CO-OPS tidal station data from within the specified region
 
+        :param region: a Shapely polygon denoting the region of interest
         :param station_type: either ``current`` or ``historical``
         :param start_date: start date
         :param end_date: end date
         :param product: CO-OPS product
         :param datum: tidal datum
         :param units: either ``metric`` or ``english``
-        :param time_zone: time zone of data
-        :param interval: time interval of data
-        :param track_filename: file path to ``fort.22``
+        :param time_zone: time zone
+        :param interval: time interval
         :return: CO-OPS station data
 
-        >>> stormevent = StormEvent('florence', 2018)
-        >>> stormevent.tidal_data_within_bounding_box(start_date='2018-09-13', end_date='2018-09-13 06:00:00')
+        >>> import shapely
+        >>> storm = StormEvent('florence', 2018)
+        >>> region = shapely.geometry.box(self.track().linestring.bounds)
+        >>> storm.tidal_data_within_region(region, start_date='2018-09-13', end_date='2018-09-13 06:00:00')
         <xarray.Dataset>
         Dimensions:  (t: 61, nos_id: 65)
         Coordinates:
@@ -415,17 +394,26 @@ class StormEvent:
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
 
+        if not isinstance(region, (Polygon, MultiPolygon)):
+            try:
+                region = typepigeon.convert_value(region, Polygon)
+            except ValueError:
+                region = typepigeon.convert_value(region, MultiPolygon)
+
         if start_date is None:
             start_date = self.start_date
+        else:
+            start_date = relative_to_time_interval(
+                start=self.start_date, end=self.end_date, relative=start_date
+            )
         if end_date is None:
             end_date = self.end_date
+        else:
+            end_date = relative_to_time_interval(
+                start=self.start_date, end=self.end_date, relative=end_date
+            )
 
-        track = self.track(start_date=start_date, end_date=end_date, filename=track_filename)
-
-        stations = coops_stations_within_bounding_box(
-            *MultiPoint(track.data[['longitude', 'latitude']].values).bounds,
-            station_type=station_type,
-        )
+        stations = coops_stations_within_region(region=region, station_type=station_type)
 
         if len(stations) > 0:
             stations_data = []
@@ -458,25 +446,3 @@ class StormEvent:
             attributes += f', end_date={repr(str(self.end_date))}'
 
         return f'{self.__class__.__name__}({attributes})'
-
-
-def coops_stations_within_vortextrack_isotach(
-    track: VortexTrack, isotach: int, station_type: COOPS_StationType = None,
-) -> DataFrame:
-    """
-    retrieve stations from within the wind swath of a given storm at the given isotach (contour of equal wind speed)
-
-    :param track: vortex track
-    :param isotach: wind speed (in knots) at which to create isotach wind swath
-    :param station_type: either ``current`` or ``historical``
-    :return: data frame of stations within the wind swatch
-
-    >>> florence2018 = StormEvent('florence', 2018)
-    >>> coops_stations_within_vortextrack_isotach(florence2018.track(), isotach=34)
-    """
-
-    if isinstance(track, str):
-        track = VortexTrack(track)
-
-    region = track.wind_swath(isotach=isotach)
-    return coops_stations_within_region(region=region, station_type=station_type)

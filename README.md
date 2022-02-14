@@ -80,16 +80,25 @@ florence2018 = StormEvent('florence', 2018)
 
 # track dataset from the NHC
 florence2018.track()
+florence2018.track(file_deck='b')
 
 # high-water mark data from the USGS
 florence2018.high_water_marks
 
 # water level products from NOAA CO-OPS tidal buoys
-florence2018.tidal_data_within_isotach(isotach=34, start_date='20180913230000', end_date='20180914')
+florence2018.tidal_data_within_isotach(
+    wind_speed=34,
+    start_date='20180913230000',
+    end_date='20180914',
+)
 ```
 
 ```
 VortexTrack('AL062018', Timestamp('2018-08-29 06:00:00'), Timestamp('2018-09-22 18:00:00'), ATCF_FileDeck.a, ATCF_Mode.historical, None, None)
+```
+
+```
+VortexTrack('AL062018', Timestamp('2018-08-29 06:00:00'), Timestamp('2018-09-22 18:00:00'), ATCF_FileDeck.b, ATCF_Mode.historical, None, None)
 ```
 
 ```

@@ -3,8 +3,11 @@ from datetime import datetime, timedelta
 import pandas
 
 from stormevents import VortexTrack
-from stormevents.coops.tidalstations import COOPS_Station, coops_stations
-from stormevents.stormevent import coops_stations_within_vortextrack_isotach
+from stormevents.coops.tidalstations import (
+    COOPS_Station,
+    coops_stations,
+    coops_stations_within_region,
+)
 from tests import REFERENCE_DIRECTORY
 
 
@@ -14,10 +17,10 @@ def test_coops_stations():
     assert stations.columns.to_list() == ['nws_id', 'x', 'y', 'name', 'state', 'removed']
 
 
-def test_coops_stations_within_vortextrack_isotach():
+def test_coops_stations_within_region():
     track = VortexTrack('florence2018', file_deck='b')
 
-    stations = coops_stations_within_vortextrack_isotach(track, isotach=34)
+    stations = coops_stations_within_region(region=track.wind_swath(34))
 
     assert len(stations) == 10
 

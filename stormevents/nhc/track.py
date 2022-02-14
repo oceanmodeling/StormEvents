@@ -573,7 +573,7 @@ class VortexTrack:
         :return: spatial linestring of current track
         """
 
-        return LineString(self.data[['longitude', 'latitude']])
+        return LineString(self.data[['longitude', 'latitude']].values)
 
     @property
     def distance(self) -> float:
