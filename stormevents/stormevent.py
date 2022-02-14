@@ -5,6 +5,7 @@ from os import PathLike
 import pandas
 from pandas import DataFrame
 from shapely.geometry import MultiPolygon, Polygon
+from shapely.geometry.base import BaseGeometry
 import typepigeon
 import xarray
 from xarray import Dataset
@@ -336,8 +337,10 @@ class StormEvent:
         else:
             track = self.track(start_date=start_date, end_date=end_date, filename=track)
 
+        region = track.wind_swath(wind_speed)
+
         return self.tidal_data_within_region(
-            region=track.wind_swath(wind_speed),
+            region=region,
             station_type=station_type,
             start_date=start_date,
             end_date=end_date,
@@ -348,7 +351,6 @@ class StormEvent:
             interval=interval,
         )
 
-    @lru_cache(maxsize=None)
     def tidal_data_within_region(
         self,
         region: Polygon,
@@ -394,7 +396,7 @@ class StormEvent:
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
 
-        if not isinstance(region, (Polygon, MultiPolygon)):
+        if not isinstance(region, BaseGeometry):
             try:
                 region = typepigeon.convert_value(region, Polygon)
             except ValueError:
