@@ -168,9 +168,15 @@ def test_tidal_data_within_region(florence2018):
     )
 
     track = florence2018.track(
-        start_date=datetime(2018, 9, 13, 23, 59), end_date=datetime(2018, 9, 14),
+        start_date=datetime(2018, 9, 13, 23, 59),
+        end_date=datetime(2018, 9, 14),
+        record_type='OFCL',
     )
-    tidal_data = florence2018.tidal_data_within_region(region=box(*track.linestring.bounds),)
+    tidal_data = florence2018.tidal_data_within_region(
+        region=box(*track.linestring.bounds),
+        start_date=track.start_date,
+        end_date=track.end_date,
+    )
 
     assert len(null_data.data_vars) == 0
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
