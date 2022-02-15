@@ -570,9 +570,10 @@ class VortexTrack:
 
         return MultiLineString(
             [
-                self.data.loc[
-                    self.data['record_type'] == record_type, ['longitude', 'latitude'],
-                ].values
+                self.data[self.data['record_type'] == record_type]
+                .sort_values('datetime')[['longitude', 'latitude']]
+                .drop_duplicates()
+                .values
                 for record_type in pandas.unique(self.data['record_type'])
             ]
         )
