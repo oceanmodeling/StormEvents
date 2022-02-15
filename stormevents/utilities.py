@@ -34,12 +34,18 @@ def subset_time_interval(
         raise ValueError(f'given start time ("{start}") ' f'exceeds end time ("{end}")')
 
     if not pandas.isna(subset_start):
-        subset_start = relative_to_time_interval(start, end, subset_start)
+        try:
+            subset_start = relative_to_time_interval(start, end, subset_start)
+        except ValueError:
+            subset_start = start
     else:
         subset_start = start
 
     if not pandas.isna(subset_end):
-        subset_end = relative_to_time_interval(start, end, subset_end)
+        try:
+            subset_end = relative_to_time_interval(start, end, subset_end)
+        except ValueError:
+            subset_end = end
     else:
         subset_end = end
 
