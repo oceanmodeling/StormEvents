@@ -346,7 +346,7 @@ class VortexTrack:
     @file_deck.setter
     def file_deck(self, file_deck: ATCF_FileDeck):
         if file_deck is None:
-            file_deck = ATCF_FileDeck.a
+            file_deck = ATCF_FileDeck.b
         elif not isinstance(file_deck, ATCF_FileDeck):
             file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
         self.__file_deck = file_deck
