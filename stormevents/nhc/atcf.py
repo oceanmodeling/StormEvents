@@ -19,6 +19,9 @@ from stormevents.nhc.storms import nhc_storms
 
 ATCF_RECORD_START_YEAR = 1850
 
+# suppress `SettingWithCopyWarning`
+pandas.options.mode.chained_assignment = None
+
 
 def atcf_files(
     file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None, year: int = None

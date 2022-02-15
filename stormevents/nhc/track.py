@@ -11,7 +11,7 @@ import pandas
 from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import GeometryCollection, MultiLineString, Polygon
 import typepigeon
 
 from stormevents.nhc import nhc_storms
@@ -132,7 +132,7 @@ class VortexTrack:
         mode: ATCF_Mode = None,
         record_type: str = None,
         filename: PathLike = None,
-    ):
+    ) -> 'VortexTrack':
         """
         :param name: storm name
         :param year: storm year
@@ -346,7 +346,7 @@ class VortexTrack:
     @file_deck.setter
     def file_deck(self, file_deck: ATCF_FileDeck):
         if file_deck is None:
-            file_deck = ATCF_FileDeck.a
+            file_deck = ATCF_FileDeck.b
         elif not isinstance(file_deck, ATCF_FileDeck):
             file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
         self.__file_deck = file_deck
@@ -563,12 +563,27 @@ class VortexTrack:
         return '\n'.join(lines)
 
     @property
-    def linestring(self) -> LineString:
+    def linestring(self) -> MultiLineString:
         """
         :return: spatial linestring of current track
         """
 
-        return LineString(self.data[['longitude', 'latitude']].values)
+        linestrings = [
+            self.data[self.data['record_type'] == record_type]
+            .sort_values('datetime')[['longitude', 'latitude']]
+            .drop_duplicates()
+            .values
+            for record_type in pandas.unique(self.data['record_type'])
+        ]
+
+        linestrings = [linestring for linestring in linestrings if linestring.size > 2]
+
+        if len(linestrings) > 0:
+            geometry = MultiLineString(linestrings)
+        else:
+            geometry = GeometryCollection(linestrings)
+
+        return geometry
 
     @property
     def distance(self) -> float:
@@ -715,7 +730,6 @@ class VortexTrack:
                 record_types = None if self.record_type is None else [self.record_type]
                 atcf_file = configuration['filename']
             else:
-                # Only accept request `BEST` or `OFCL` (official) records by default
                 record_types = (
                     self.valid_record_types if self.record_type is None else [self.record_type]
                 )
