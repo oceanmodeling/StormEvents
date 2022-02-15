@@ -247,11 +247,16 @@ class COOPS_Station:
         data['nos_id'] = self.nos_id
         data.set_index(['nos_id', data.index], inplace=True)
 
-        return data.to_xarray().assign_coords(
-            nws_id=('nos_id', [self.nws_id]),
-            x=('nos_id', [self.location.x]),
-            y=('nos_id', [self.location.y]),
-        )
+        data = data.to_xarray()
+
+        if len(data['t']) > 0:
+            data = data.assign_coords(
+                nws_id=('nos_id', [self.nws_id]),
+                x=('nos_id', [self.location.x]),
+                y=('nos_id', [self.location.y]),
+            )
+
+        return data
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} - {self.nos_id} ({self.name}) - {self.location}'

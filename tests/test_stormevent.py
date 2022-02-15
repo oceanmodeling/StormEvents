@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta
 
-import pandas
 import pytest
 from shapely.geometry import box
 
-from stormevents.nhc import VortexTrack
 from stormevents.stormevent import StormEvent
-from stormevents.usgs import StormHighWaterMarks
+from tests import check_reference_directory, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY
 
 
 @pytest.fixture
@@ -110,34 +108,33 @@ def test_time_interval():
 
 
 def test_track(florence2018, ida2021):
+    reference_directory = REFERENCE_DIRECTORY / 'test_track'
+    output_directory = OUTPUT_DIRECTORY / 'test_track'
+
+    if not output_directory.exists():
+        output_directory.mkdir(parents=True, exist_ok=True)
+
     florence_track = florence2018.track()
     ida_track = ida2021.track()
 
-    florence_reference_track = VortexTrack.from_storm_name(
-        florence2018.name,
-        florence2018.year,
-        start_date=florence2018.start_date,
-        end_date=florence2018.end_date,
-    )
-    ida_reference_track = VortexTrack.from_storm_name(
-        ida2021.name, ida2021.year, start_date=ida2021.start_date, end_date=ida2021.end_date
-    )
+    florence_track.write(output_directory / 'florence2018.fort.22')
+    ida_track.write(output_directory / 'ida2021.fort.22')
 
-    pandas.testing.assert_frame_equal(florence_track.data, florence_reference_track.data)
-    pandas.testing.assert_frame_equal(ida_track.data, ida_reference_track.data)
-
-    assert florence_track == florence_reference_track
-    assert ida_track == ida_reference_track
+    check_reference_directory(output_directory, reference_directory)
 
 
 def test_high_water_marks(florence2018):
+    reference_directory = REFERENCE_DIRECTORY / 'test_high_water_marks'
+    output_directory = OUTPUT_DIRECTORY / 'test_high_water_marks'
+
+    if not output_directory.exists():
+        output_directory.mkdir(parents=True, exist_ok=True)
+
     high_water_marks = florence2018.high_water_marks
 
-    reference_high_water_marks = StormHighWaterMarks(
-        name=florence2018.name, year=florence2018.year
-    ).data
+    high_water_marks.to_csv(output_directory / 'florence2018_hwm.csv')
 
-    pandas.testing.assert_frame_equal(high_water_marks, reference_high_water_marks)
+    check_reference_directory(output_directory, reference_directory)
 
 
 def test_tidal_data_within_isotach(florence2018):

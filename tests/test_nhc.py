@@ -2,7 +2,6 @@ from copy import copy
 from datetime import datetime, timedelta
 
 from dateutil.parser import parse as parse_date
-import pandas
 import pytest
 from pytest_socket import SocketBlockedError
 
@@ -19,14 +18,16 @@ from tests import (
 
 def test_nhc_gis_storms():
     reference_directory = REFERENCE_DIRECTORY / 'test_nhc_gis_storms'
+    output_directory = OUTPUT_DIRECTORY / 'test_nhc_gis_storms'
+
+    if not output_directory.exists():
+        output_directory.mkdir(parents=True, exist_ok=True)
 
     storms = nhc_gis_storms(year=tuple(range(2008, 2021 + 1)))
 
-    reference_storms = pandas.read_csv(
-        reference_directory / 'storms.csv', index_col='nhc_code', na_values='',
-    )
+    storms.to_csv(output_directory / 'storms.csv')
 
-    pandas.testing.assert_frame_equal(storms, reference_storms)
+    check_reference_directory(output_directory, reference_directory)
 
 
 def test_nhc_storms():
@@ -34,7 +35,7 @@ def test_nhc_storms():
     reference_directory = REFERENCE_DIRECTORY / 'test_nhc_storms'
 
     if not output_directory.exists():
-        output_directory.mkdir(exist_ok=True, parents=True)
+        output_directory.mkdir(parents=True, exist_ok=True)
 
     storms = nhc_storms(year=tuple(range(1851, 2021 + 1)))
     storms.to_csv(output_directory / 'storms.csv')

@@ -12,7 +12,13 @@ import pandas
 from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
-from shapely.geometry import GeometryCollection, MultiLineString, MultiPolygon, Polygon
+from shapely.geometry import (
+    GeometryCollection,
+    LineString,
+    MultiLineString,
+    MultiPolygon,
+    Polygon,
+)
 import typepigeon
 
 from stormevents.nhc import nhc_storms
@@ -589,11 +595,14 @@ class VortexTrack:
             self.data[self.data['record_type'] == record_type]
             .sort_values('datetime')['geometry']
             .drop_duplicates()
-            .values
             for record_type in pandas.unique(self.data['record_type'])
         ]
 
-        linestrings = [linestring for linestring in linestrings if linestring.size > 2]
+        linestrings = [
+            LineString(linestring.tolist())
+            for linestring in linestrings
+            if len(linestring) > 1
+        ]
 
         if len(linestrings) > 0:
             geometry = MultiLineString(linestrings)

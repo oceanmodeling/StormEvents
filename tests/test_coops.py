@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 
-import pandas
 from shapely import ops
 
 from stormevents import VortexTrack
@@ -10,7 +9,7 @@ from stormevents.coops.tidalstations import (
     coops_stations,
     coops_stations_within_region,
 )
-from tests import REFERENCE_DIRECTORY
+from tests import check_reference_directory, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY
 
 
 def test_coops_stations():
@@ -43,18 +42,25 @@ def test_coops_data_within_region():
 
 def test_COOPS_Station():
     reference_directory = REFERENCE_DIRECTORY / 'test_COOPS_Station'
+    output_directory = OUTPUT_DIRECTORY / 'test_COOPS_Station'
+
+    if not output_directory.exists():
+        output_directory.mkdir(parents=True, exist_ok=True)
+
+    start_date = datetime(2021, 1, 1)
+    end_date = datetime(2021, 1, 1, 0, 10)
 
     station_1 = COOPS_Station(1612480)
     station_2 = COOPS_Station('OOUH1')
     station_3 = COOPS_Station('Calcasieu Test Station')
 
-    station_1_data = station_1.get(datetime.today() - timedelta(days=10))
+    station_1_data = station_1.get(start_date, end_date)
     station_1_constituents = station_1.constituents
 
-    station_2_data = station_2.get(datetime.today() - timedelta(days=10))
+    station_2_data = station_2.get(start_date, end_date)
     station_2_constituents = station_2.constituents
 
-    station_3_data = station_3.get(datetime.today() - timedelta(days=10))
+    station_3_data = station_3.get(start_date, end_date)
     station_3_constituents = station_3.constituents
 
     assert station_1.nos_id == 1612480
@@ -67,17 +73,13 @@ def test_COOPS_Station():
     assert station_3.nws_id == ''
     assert station_3.name == 'Calcasieu Test Station'
 
-    assert list(station_1_data.data_vars) == ['v', 's', 'f', 'q']
-    assert list(station_2_data.data_vars) == ['v', 's', 'f', 'q']
-    assert list(station_3_data.data_vars) == ['v', 's', 'f', 'q']
+    station_1_constituents.to_csv(output_directory / 'station1612480_constituents.csv')
+    station_2_constituents.to_csv(output_directory / 'station1612340_constituents.csv')
 
-    station_1_reference_constituents = pandas.read_csv(
-        reference_directory / 'station1612480_constituents.csv', index_col='#',
-    )
-    station_2_reference_constituents = pandas.read_csv(
-        reference_directory / 'station1612340_constituents.csv', index_col='#',
-    )
-
-    pandas.testing.assert_frame_equal(station_1_constituents, station_1_reference_constituents)
-    pandas.testing.assert_frame_equal(station_2_constituents, station_2_reference_constituents)
+    assert len(station_3_data['t']) == 0
     assert len(station_3_constituents) == 0
+
+    assert station_1_data.sizes == {'nos_id': 1, 't': 2}
+    assert station_2_data.sizes == {'nos_id': 1, 't': 2}
+
+    check_reference_directory(output_directory, reference_directory)
