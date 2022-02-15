@@ -5,6 +5,7 @@ from shapely import ops
 
 from stormevents import VortexTrack
 from stormevents.coops.tidalstations import (
+    coops_data_within_region,
     COOPS_Station,
     coops_stations,
     coops_stations_within_region,
@@ -15,17 +16,29 @@ from tests import REFERENCE_DIRECTORY
 def test_coops_stations():
     stations = coops_stations()
 
-    assert stations.columns.to_list() == ['nws_id', 'x', 'y', 'name', 'state', 'removed']
+    assert stations.columns.to_list() == ['nws_id', 'name', 'state', 'removed', 'geometry']
 
 
 def test_coops_stations_within_region():
     track = VortexTrack('florence2018', file_deck='b')
+    combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
 
-    stations = coops_stations_within_region(
-        region=ops.unary_union(list(track.wind_swaths(34).values()))
-    )
+    stations = coops_stations_within_region(region=combined_wind_swaths)
 
     assert len(stations) == 10
+
+
+def test_coops_data_within_region():
+    track = VortexTrack('florence2018', file_deck='b')
+    combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
+
+    data = coops_data_within_region(
+        region=combined_wind_swaths,
+        start_date=datetime.now() - timedelta(hours=1),
+        end_date=datetime.now(),
+    )
+
+    assert len(data['nos_id']) == 10
 
 
 def test_COOPS_Station():

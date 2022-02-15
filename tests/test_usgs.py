@@ -62,8 +62,8 @@ def test_HighWaterMarks():
 def test_HighWaterMarks_data():
     hwm = HighWaterMarks(182)
 
-    assert hwm.data.shape == (221, 51)
+    assert len(hwm.data) == 221
 
     hwm.hwm_quality = 'EXCELLENT', 'GOOD'
 
-    assert hwm.data.shape == (138, 51)
+    assert len(hwm.data) == 138

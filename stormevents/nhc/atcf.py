@@ -10,6 +10,8 @@ import socket
 from typing import Any, Dict, Iterable, List, TextIO, Union
 
 from dateutil.parser import parse as parse_date
+import geopandas
+from geopandas import GeoDataFrame
 import numpy
 import pandas
 from pandas import DataFrame, Series
@@ -224,7 +226,7 @@ def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -
 
 def read_atcf(
     atcf: Union[PathLike, io.BytesIO, TextIO], record_types: List[ATCF_RecordType] = None,
-) -> DataFrame:
+) -> GeoDataFrame:
     if record_types is not None:
         record_types = [
             typepigeon.convert_value(record_type, str) for record_type in record_types
@@ -263,7 +265,11 @@ def read_atcf(
     if len(records) == 0:
         raise ValueError(f'no records found with type(s) "{record_types}"')
 
-    return DataFrame(records)
+    data = DataFrame(records)
+
+    return GeoDataFrame(
+        data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude'])
+    )
 
 
 def read_atcf_line(line: str) -> Dict[str, Any]:
