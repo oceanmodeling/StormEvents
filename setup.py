@@ -60,6 +60,7 @@ setup(
     setup_requires=['dunamai', 'setuptools>=41.2'],
     install_requires=[
         'bs4',
+        'geopandas',
         'numpy',
         'python-dateutil',
         'pandas',

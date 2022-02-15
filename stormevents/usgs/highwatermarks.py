@@ -5,7 +5,10 @@ from os import PathLike
 import re
 from typing import Any, Dict, Iterable, List
 
+import geopandas
+from geopandas import GeoDataFrame
 import pandas
+from pandas import DataFrame
 import requests
 import typepigeon
 from typepigeon import convert_value
@@ -81,36 +84,36 @@ class HighWaterMarks:
 
         >>> hwm = HighWaterMarks(182)
         >>> hwm.data
-                 latitude  longitude            eventName  ...   hwm_label files siteZone
-        hwm_id                                             ...
-        22636   32.007730 -81.238270  Irma September 2017  ...        HWM1    []      NaN
-        22757   30.510528 -81.460833  Irma September 2017  ...       HWM 1    []        0
-        22885   30.770560 -81.581390  Irma September 2017  ...  GACAM17842    []      NaN
-        22965   31.063150 -81.404540  Irma September 2017  ...         HWM    []      NaN
-        23052   30.845000 -81.560000  Irma September 2017  ...  GACAM17840    []      NaN
-        ...           ...        ...                  ...  ...         ...   ...      ...
-        25147   30.018190 -81.859657  Irma September 2017  ...       HWM01    []      NaN
-        25148   30.097214 -81.891451  Irma September 2017  ...      hwm 01    []      NaN
-        25150   30.038222 -81.880928  Irma September 2017  ...       HWM01    []      NaN
-        25158   29.720560 -81.506110  Irma September 2017  ...         HWM    []      NaN
-        25159   30.097514 -81.794375  Irma September 2017  ...       HWM 1    []      NaN
-        [221 rows x 51 columns]
+                 latitude  longitude  ... siteZone                              geometry
+        hwm_id                        ...
+        22636   32.007730 -81.238270  ...      NaN  POINT Z (-81.23827 32.00773 2.10373)
+        22757   30.510528 -81.460833  ...        0  POINT Z (-81.46083 30.51053 1.99461)
+        22885   30.770560 -81.581390  ...      NaN  POINT Z (-81.58139 30.77056 2.42987)
+        22965   31.063150 -81.404540  ...      NaN  POINT Z (-81.40454 31.06315 4.12090)
+        23052   30.845000 -81.560000  ...      NaN  POINT Z (-81.56000 30.84500 1.97328)
+        ...           ...        ...  ...      ...                                   ...
+        25147   30.018190 -81.859657  ...      NaN  POINT Z (-81.85966 30.01819 9.07390)
+        25148   30.097214 -81.891451  ...      NaN  POINT Z (-81.89145 30.09721 7.26338)
+        25150   30.038222 -81.880928  ...      NaN  POINT Z (-81.88093 30.03822 7.62305)
+        25158   29.720560 -81.506110  ...      NaN  POINT Z (-81.50611 29.72056 0.96012)
+        25159   30.097514 -81.794375  ...      NaN  POINT Z (-81.79438 30.09751 2.64262)
+        [221 rows x 52 columns]
         >>> hwm.hwm_quality = 'EXCELLENT', 'GOOD'
         >>> hwm.data
-                 latitude  longitude            eventName  ...   hwm_label files siteZone
-        hwm_id                                             ...
-        22636   32.007730 -81.238270  Irma September 2017  ...        HWM1    []      NaN
-        22885   30.770560 -81.581390  Irma September 2017  ...  GACAM17842    []      NaN
-        23130   31.034720 -81.640000  Irma September 2017  ...        HWM1    []      NaN
-        23216   32.035150 -81.045040  Irma September 2017  ...        HWM1    []      NaN
-        23236   32.083650 -81.157520  Irma September 2017  ...        HWM1    []      NaN
-        ...           ...        ...                  ...  ...         ...   ...      ...
-        25146   29.992580 -81.851518  Irma September 2017  ...      HWM 01    []      NaN
-        25148   30.097214 -81.891451  Irma September 2017  ...      hwm 01    []      NaN
-        25150   30.038222 -81.880928  Irma September 2017  ...       HWM01    []      NaN
-        25158   29.720560 -81.506110  Irma September 2017  ...         HWM    []      NaN
-        25159   30.097514 -81.794375  Irma September 2017  ...       HWM 1    []      NaN
-        [138 rows x 51 columns]
+                 latitude  longitude  ... siteZone                               geometry
+        hwm_id                        ...
+        22636   32.007730 -81.238270  ...      NaN   POINT Z (-81.23827 32.00773 2.10373)
+        22885   30.770560 -81.581390  ...      NaN   POINT Z (-81.58139 30.77056 2.42987)
+        23130   31.034720 -81.640000  ...      NaN   POINT Z (-81.64000 31.03472 2.22199)
+        23216   32.035150 -81.045040  ...      NaN   POINT Z (-81.04504 32.03515 2.42316)
+        23236   32.083650 -81.157520  ...      NaN   POINT Z (-81.15752 32.08365 3.07238)
+        ...           ...        ...  ...      ...                                    ...
+        25146   29.992580 -81.851518  ...      NaN  POINT Z (-81.85152 29.99258 10.69238)
+        25148   30.097214 -81.891451  ...      NaN   POINT Z (-81.89145 30.09721 7.26338)
+        25150   30.038222 -81.880928  ...      NaN   POINT Z (-81.88093 30.03822 7.62305)
+        25158   29.720560 -81.506110  ...      NaN   POINT Z (-81.50611 29.72056 0.96012)
+        25159   30.097514 -81.794375  ...      NaN   POINT Z (-81.79438 30.09751 2.64262)
+        [138 rows x 52 columns]
         """
 
         if event_status is None:
@@ -265,20 +268,37 @@ class HighWaterMarks:
         return query
 
     @property
-    def data(self) -> pandas.DataFrame:
+    def data(self) -> GeoDataFrame:
         """
         :returns: data frame of data for the current parameters
+
+        >>> hwm = HighWaterMarks(182)
+        >>> hwm.data
+                 latitude  longitude  ... siteZone                              geometry
+        hwm_id                        ...
+        22636   32.007730 -81.238270  ...      NaN  POINT Z (-81.23827 32.00773 2.10373)
+        22757   30.510528 -81.460833  ...        0  POINT Z (-81.46083 30.51053 1.99461)
+        22885   30.770560 -81.581390  ...      NaN  POINT Z (-81.58139 30.77056 2.42987)
+        22965   31.063150 -81.404540  ...      NaN  POINT Z (-81.40454 31.06315 4.12090)
+        23052   30.845000 -81.560000  ...      NaN  POINT Z (-81.56000 30.84500 1.97328)
+        ...           ...        ...  ...      ...                                   ...
+        25147   30.018190 -81.859657  ...      NaN  POINT Z (-81.85966 30.01819 9.07390)
+        25148   30.097214 -81.891451  ...      NaN  POINT Z (-81.89145 30.09721 7.26338)
+        25150   30.038222 -81.880928  ...      NaN  POINT Z (-81.88093 30.03822 7.62305)
+        25158   29.720560 -81.506110  ...      NaN  POINT Z (-81.50611 29.72056 0.96012)
+        25159   30.097514 -81.794375  ...      NaN  POINT Z (-81.79438 30.09751 2.64262)
+        [221 rows x 52 columns]
         """
 
         if self.__data is None or self.__previous_query != self.query:
             response = requests.get(self.URL, params=self.query)
-            data = pandas.DataFrame(response.json())
+            data = DataFrame(response.json())
             if len(data) > 0:
                 data['survey_date'] = pandas.to_datetime(data['survey_date'])
                 data['flag_date'] = pandas.to_datetime(data['flag_date'])
                 data.loc[data['markerName'].str.len() == 0, 'markerName'] = None
             else:
-                data = pandas.DataFrame(
+                data = DataFrame(
                     columns=[
                         'latitude',
                         'longitude',
@@ -337,7 +357,12 @@ class HighWaterMarks:
         else:
             data = self.__data
 
-        return data
+        return GeoDataFrame(
+            data,
+            geometry=geopandas.points_from_xy(
+                data['longitude'], data['latitude'], data['elev_ft'] * 0.3048
+            ),
+        )
 
     def __eq__(self, other: 'HighWaterMarks') -> bool:
         return self.data.equals(other.data)
@@ -402,7 +427,7 @@ class StormHighWaterMarks(HighWaterMarks):
 @lru_cache(maxsize=None)
 def usgs_highwatermark_events(
     event_type: EventType = None, year: int = None, event_status: EventStatus = None,
-) -> pandas.DataFrame:
+) -> DataFrame:
     """
     this function collects all USGS flood events of the given type and status that have high-water mark data
 
@@ -513,7 +538,7 @@ def usgs_highwatermark_events(
             event.append(event_year)
             events[event_id] = event
 
-    events = pandas.DataFrame(list(events.values()), columns=['usgs_id', 'name', 'year'],)
+    events = DataFrame(list(events.values()), columns=['usgs_id', 'name', 'year'],)
     events.set_index('usgs_id', inplace=True)
 
     if year is not None:
@@ -526,7 +551,7 @@ def usgs_highwatermark_events(
 
 
 @lru_cache(maxsize=None)
-def usgs_highwatermark_storms(year: int = None) -> pandas.DataFrame:
+def usgs_highwatermark_storms(year: int = None) -> DataFrame:
     """
     this function collects USGS high-water mark data for storm events and cross-correlates it with NHC storm data
 

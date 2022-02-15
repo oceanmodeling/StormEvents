@@ -10,12 +10,15 @@ from typing import Union
 
 import bs4
 from bs4 import BeautifulSoup
+import geopandas
+from geopandas import GeoDataFrame
 import numpy
 import pandas
 from pandas import DataFrame
 import requests
-from shapely.geometry import box, MultiPolygon, Point, Polygon
+from shapely.geometry import box, MultiPolygon, Polygon
 import typepigeon
+import xarray
 from xarray import Dataset
 
 
@@ -135,7 +138,7 @@ class COOPS_Station:
 
             self.nos_id = station.name
             self.nws_id = station['nws_id']
-            self.location = Point(station['x'], station['y'])
+            self.location = station.geometry
             self.state = station['state']
             self.name = station['name']
         else:
@@ -241,15 +244,19 @@ class COOPS_Station:
 
         data = self.__query.data
 
-        return Dataset(
-            data,
-            coords={
-                'nos_id': self.nos_id,
-                'nws_id': self.nws_id,
-                'x': self.location.x,
-                'y': self.location.y,
-            },
-        )
+        data['nos_id'] = self.nos_id
+        data.set_index(['nos_id', data.index], inplace=True)
+
+        data = data.to_xarray()
+
+        if len(data['t']) > 0:
+            data = data.assign_coords(
+                nws_id=('nos_id', [self.nws_id]),
+                x=('nos_id', [self.location.x]),
+                y=('nos_id', [self.location.y]),
+            )
+
+        return data
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} - {self.nos_id} ({self.name}) - {self.location}'
@@ -477,20 +484,20 @@ def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
     :return: data frame of stations
 
     >>> coops_stations()
-            nws_id         x          y                          name state removed
-    nos_id
-    1600012  46125  122.6250  37.750000                     QREB buoy           NaT
-    1611400  NWWH1 -159.3750  21.953125                    Nawiliwili    HI     NaT
-    1612340  OOUH1 -157.8750  21.312500                      Honolulu    HI     NaT
-    1612480  MOKH1 -157.7500  21.437500                      Mokuoloe    HI     NaT
-    1615680  KLIH1 -156.5000  20.890625       Kahului, Kahului Harbor    HI     NaT
-    ...        ...       ...        ...                           ...   ...     ...
-    9759394  MGZP4  -67.1875  18.218750                      Mayaguez    PR     NaT
-    9759938  MISP4  -67.9375  18.093750                   Mona Island           NaT
-    9761115  BARA9  -61.8125  17.593750                       Barbuda           NaT
-    9999530  FRCB6  -64.6875  32.375000  Bermuda, Ferry Reach Channel           NaT
-    9999531         -93.3125  29.765625        Calcasieu Test Station    LA     NaT
-    [363 rows x 6 columns]
+            nws_id  ...                     geometry
+    nos_id          ...
+    1600012  46125  ...   POINT (122.62500 37.75000)
+    1611400  NWWH1  ...  POINT (-159.37500 21.95312)
+    1612340  OOUH1  ...  POINT (-157.87500 21.31250)
+    1612480  MOKH1  ...  POINT (-157.75000 21.43750)
+    1615680  KLIH1  ...  POINT (-156.50000 20.89062)
+    ...        ...  ...                          ...
+    9759394  MGZP4  ...   POINT (-67.18750 18.21875)
+    9759938  MISP4  ...   POINT (-67.93750 18.09375)
+    9761115  BARA9  ...   POINT (-61.81250 17.59375)
+    9999530  FRCB6  ...   POINT (-64.68750 32.37500)
+    9999531         ...   POINT (-93.31250 29.76562)
+    [363 rows x 5 columns]
     """
 
     if station_type is None:
@@ -545,7 +552,10 @@ def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
     else:
         stations['removed'] = pandas.to_datetime(numpy.nan)
 
-    return stations[['nws_id', 'x', 'y', 'name', 'state', 'removed']]
+    return GeoDataFrame(
+        stations[['nws_id', 'name', 'state', 'removed']],
+        geometry=geopandas.points_from_xy(stations['x'], stations['y']),
+    )
 
 
 def coops_stations_within_region(
@@ -558,24 +568,28 @@ def coops_stations_within_region(
     :param station_type: one of ``current`` or ``historical``
     :return: data frame of stations within the specified region
 
-    .. code-block:: python
-
-        from shapely.geometry import Polygon
-
-        polygon = Polygon(...)
-
-        stations = coops_stations_within_region(region=polygon)
-
+    >>> from stormevents import VortexTrack
+    >>> from shapely import ops
+    >>> track = VortexTrack('florence2018', file_deck='b')
+    >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
+    >>> stations = coops_stations_within_region(region=combined_wind_swaths)
+            nws_id  ...                    geometry
+    nos_id          ...
+    8651370  DUKN7  ...  POINT (-75.75000 36.18750)
+    8652587  ORIN7  ...  POINT (-75.56250 35.78125)
+    8654467  HCGN7  ...  POINT (-75.68750 35.21875)
+    8656483  BFTN7  ...  POINT (-76.68750 34.71875)
+    8658120  WLON7  ...  POINT (-77.93750 34.21875)
+    8658163  JMPN7  ...  POINT (-77.81250 34.21875)
+    8661070  MROS1  ...  POINT (-78.93750 33.65625)
+    8662245  NITS1  ...  POINT (-79.18750 33.34375)
+    8665530  CHTS1  ...  POINT (-79.93750 32.78125)
+    8670870  FPKG1  ...  POINT (-80.87500 32.03125)
+    [10 rows x 5 columns]
     """
 
-    all_stations = coops_stations(station_type)
-    points = [Point(*row) for row in all_stations[['x', 'y']].values]
-
-    stations_within_region = all_stations.iloc[
-        [index for index, point in enumerate(points) if point.within(region)]
-    ]
-
-    return stations_within_region
+    stations = coops_stations(station_type)
+    return stations[stations.within(region)]
 
 
 def coops_stations_within_bounds(
@@ -596,7 +610,7 @@ def coops_data_within_region(
     time_zone: COOPS_TimeZone = None,
     interval: COOPS_Interval = None,
     station_type: COOPS_StationType = None,
-):
+) -> Dataset:
     """
     retrieve CO-OPS data from within the specified region of interest
 
@@ -611,20 +625,28 @@ def coops_data_within_region(
     :param station_type: either ``current`` or ``historical``
     :return: data frame of data within the specified region
 
-    .. code-block:: python
-
-        from datetime import datetime, timedelta
-
-        from shapely.geometry import MultiPolygon
-
-        polygon = MultiPolygon(...)
-
-        coops_data_within_region(region=polygon, start_date=datetime.now() - timedelta(days=2), end_date=datetime.now())
-
+    >>> from stormevents import VortexTrack
+    >>> from shapely import ops
+    >>> from datetime import timedelta
+    >>> track = VortexTrack('florence2018', file_deck='b')
+    >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
+    >>> coops_data_within_region(region=combined_wind_swaths, start_date=datetime.now() - timedelta(hours=1), end_date=datetime.now())
+    Dimensions:  (nos_id: 10, t: 10)
+    Coordinates:
+      * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8662245 8665530 8670870
+      * t        (t) datetime64[ns] 2022-02-15T13:48:00 ... 2022-02-15T14:42:00
+        nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'NITS1' 'CHTS1' 'FPKG1'
+        x        (nos_id) float64 -75.75 -75.56 -75.69 ... -79.19 -79.94 -80.88
+        y        (nos_id) float64 36.19 35.78 35.22 34.72 ... 33.34 32.78 32.03
+    Data variables:
+        v        (nos_id, t) float32 6.401 6.389 6.351 6.315 ... 2.79 2.717 2.685
+        s        (nos_id, t) float32 0.076 0.081 0.083 0.082 ... 0.005 0.016 0.006
+        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '1,0,0,0' '1,0,0,0'
+        q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
     """
 
     stations = coops_stations_within_region(region=region, station_type=station_type)
-    return pandas.concat(
+    return xarray.combine_nested(
         [
             COOPS_Station(station).get(
                 start_date=start_date,
@@ -635,6 +657,7 @@ def coops_data_within_region(
                 time_zone=time_zone,
                 interval=interval,
             )
-            for station in stations
-        ]
+            for station in stations.index
+        ],
+        concat_dim='nos_id',
     )

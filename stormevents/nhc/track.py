@@ -12,7 +12,13 @@ import pandas
 from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
-from shapely.geometry import GeometryCollection, MultiLineString, MultiPolygon, Polygon
+from shapely.geometry import (
+    GeometryCollection,
+    LineString,
+    MultiLineString,
+    MultiPolygon,
+    Polygon,
+)
 import typepigeon
 
 from stormevents.nhc import nhc_storms
@@ -436,6 +442,22 @@ class VortexTrack:
     def data(self) -> DataFrame:
         """
         :return: track data for the given parameters as a data frame
+
+        >>> track = VortexTrack('michael2018')
+        >>> track.data
+           basin storm_number  ...      name                    geometry
+        0     AL           14  ...    INVEST  POINT (-86.60000 17.80000)
+        1     AL           14  ...  FOURTEEN  POINT (-86.90000 18.10000)
+        2     AL           14  ...  FOURTEEN  POINT (-86.80000 18.40000)
+        3     AL           14  ...  FOURTEEN  POINT (-86.40000 18.80000)
+        4     AL           14  ...   MICHAEL  POINT (-85.70000 19.10000)
+        ..   ...          ...  ...       ...                         ...
+        80    AL           14  ...   MICHAEL  POINT (-13.50000 45.90000)
+        81    AL           14  ...   MICHAEL  POINT (-11.40000 44.40000)
+        82    AL           14  ...   MICHAEL  POINT (-11.40000 44.40000)
+        83    AL           14  ...   MICHAEL  POINT (-10.30000 42.80000)
+        84    AL           14  ...   MICHAEL  POINT (-10.00000 41.20000)
+        [85 rows x 22 columns]
         """
 
         return self.__unfiltered_data.loc[
@@ -571,13 +593,16 @@ class VortexTrack:
 
         linestrings = [
             self.data[self.data['record_type'] == record_type]
-            .sort_values('datetime')[['longitude', 'latitude']]
+            .sort_values('datetime')['geometry']
             .drop_duplicates()
-            .values
             for record_type in pandas.unique(self.data['record_type'])
         ]
 
-        linestrings = [linestring for linestring in linestrings if linestring.size > 2]
+        linestrings = [
+            LineString(linestring.tolist())
+            for linestring in linestrings
+            if len(linestring) > 1
+        ]
 
         if len(linestrings) > 0:
             geometry = MultiLineString(linestrings)
@@ -779,9 +804,7 @@ class VortexTrack:
             self.__previous_configuration = configuration
 
         # if location values have changed, recompute velocity
-        location_hash = pandas.util.hash_pandas_object(
-            self.__dataframe[['longitude', 'latitude']]
-        )
+        location_hash = pandas.util.hash_pandas_object(self.__dataframe['geometry'])
 
         if self.__location_hash is None or len(location_hash) != len(self.__location_hash):
             updated_locations = ~self.__dataframe.index.isnull()
