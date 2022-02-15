@@ -132,7 +132,7 @@ class VortexTrack:
         mode: ATCF_Mode = None,
         record_type: str = None,
         filename: PathLike = None,
-    ):
+    ) -> 'VortexTrack':
         """
         :param name: storm name
         :param year: storm year
@@ -563,7 +563,7 @@ class VortexTrack:
         return '\n'.join(lines)
 
     @property
-    def linestring(self) -> LineString:
+    def linestring(self) -> MultiLineString:
         """
         :return: spatial linestring of current track
         """
@@ -722,7 +722,6 @@ class VortexTrack:
                 record_types = None if self.record_type is None else [self.record_type]
                 atcf_file = configuration['filename']
             else:
-                # Only accept request `BEST` or `OFCL` (official) records by default
                 record_types = (
                     self.valid_record_types if self.record_type is None else [self.record_type]
                 )

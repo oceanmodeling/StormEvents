@@ -262,7 +262,7 @@ class StormEvent:
         if end_date is None:
             end_date = self.end_date
 
-        track = VortexTrack.from_storm_name(
+        return VortexTrack.from_storm_name(
             name=self.name,
             year=self.year,
             start_date=start_date,
@@ -272,7 +272,6 @@ class StormEvent:
             record_type=record_type,
             filename=filename,
         )
-        return track
 
     @property
     def high_water_marks(self) -> DataFrame:
