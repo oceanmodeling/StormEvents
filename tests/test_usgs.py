@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from stormevents.usgs import usgs_highwatermark_events
@@ -45,9 +47,13 @@ def test_usgs_highwatermark_storms():
     check_reference_directory(output_directory, reference_directory)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 7),
+    reason='floating point differences between python 3.7 and lower versions',
+)
 def test_HighWaterMarks():
-    reference_directory = REFERENCE_DIRECTORY / 'test_StormHighWaterMarks'
-    output_directory = OUTPUT_DIRECTORY / 'test_StormHighWaterMarks'
+    reference_directory = REFERENCE_DIRECTORY / 'test_HighWaterMarks'
+    output_directory = OUTPUT_DIRECTORY / 'test_HighWaterMarks'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
