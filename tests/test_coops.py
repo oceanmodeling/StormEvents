@@ -21,7 +21,9 @@ def test_coops_stations():
 def test_coops_stations_within_region():
     track = VortexTrack('florence2018', file_deck='b')
 
-    stations = coops_stations_within_region(region=track.wind_swaths(34))
+    stations = coops_stations_within_region(
+        region=ops.unary_union(list(track.wind_swaths(34).values()))
+    )
 
     assert len(stations) == 10
 

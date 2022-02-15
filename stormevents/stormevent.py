@@ -336,7 +336,7 @@ class StormEvent:
         else:
             track = self.track(start_date=start_date, end_date=end_date, filename=track)
 
-        region = track.wind_swaths(wind_speed)
+        region = ops.unary_union(list(track.wind_swaths(wind_speed).values()))
 
         return self.tidal_data_within_region(
             region=region,

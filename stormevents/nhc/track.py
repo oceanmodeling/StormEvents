@@ -689,7 +689,7 @@ class VortexTrack:
 
         return isotachs
 
-    def wind_swaths(self, wind_speed: int, segments: int = 91) -> MultiPolygon:
+    def wind_swaths(self, wind_speed: int, segments: int = 91) -> Dict[str, Polygon]:
         """
         extract the wind swath of the BestTrackForcing class object as a Polygon object
 
@@ -710,16 +710,11 @@ class VortexTrack:
             convex_hulls = []
             for index in range(len(isotachs) - 1):
                 convex_hulls.append(
-                    ops.unary_union([isotachs[index], isotachs[index + 1],]).convex_hull
+                    ops.unary_union([isotachs[index], isotachs[index + 1]]).convex_hull
                 )
 
             # get the union of polygons
             wind_swaths[record_type] = ops.unary_union(convex_hulls)
-
-        wind_swaths = MultiPolygon(list(wind_swaths.values()))
-
-        if not wind_swaths.is_valid:
-            wind_swaths = wind_swaths.buffer(0)
 
         return wind_swaths
 
