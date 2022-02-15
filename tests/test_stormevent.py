@@ -99,10 +99,7 @@ def test_time_interval():
 
     assert henri2021.start_date == datetime(2021, 8, 20, 18)
     assert henri2021.end_date == datetime(2021, 8, 22, 12)
-    assert (
-        repr(henri2021)
-        == "StormEvent('HENRI', 2021, start_date='2021-08-23 18:00:00', end_date='2021-08-25 18:00:00')"
-    )
+    assert repr(henri2021) == "StormEvent('HENRI', 2021, end_date='2021-08-22 12:00:00')"
 
     assert ida2021.start_date == datetime(2021, 8, 30)
     assert ida2021.end_date == datetime(2021, 9, 1)
