@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 import pandas
+from shapely import ops
 
 from stormevents import VortexTrack
 from stormevents.coops.tidalstations import (
@@ -20,7 +21,7 @@ def test_coops_stations():
 def test_coops_stations_within_region():
     track = VortexTrack('florence2018', file_deck='b')
 
-    stations = coops_stations_within_region(region=track.wind_swath(34))
+    stations = coops_stations_within_region(region=track.wind_swaths(34))
 
     assert len(stations) == 10
 

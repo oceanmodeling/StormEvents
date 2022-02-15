@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from functools import partial
 import io
 import logging
 import os
@@ -11,7 +12,7 @@ import pandas
 from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
-from shapely.geometry import GeometryCollection, MultiLineString, Polygon
+from shapely.geometry import GeometryCollection, MultiLineString, MultiPolygon, Polygon
 import typepigeon
 
 from stormevents.nhc import nhc_storms
@@ -600,87 +601,127 @@ class VortexTrack:
         )
         return numpy.sum(distances)
 
-    def isotachs(self, wind_speed: float, segments: int = 91) -> List[Polygon]:
+    def isotachs(
+        self, wind_speed: float, segments: int = 91
+    ) -> Dict[str, Dict[datetime, Polygon]]:
         """
         calculate the isotach at the given speed at every time in the dataset
 
         :param wind_speed: wind speed to extract (in knots)
         :param segments: number of discretization points per quadrant
-        :return: list of isotachs as polygons
+        :return: list of isotachs as polygons for each record type
         """
 
-        ## Collect the attributes needed from the forcing to generate swath
+        # collect the attributes needed from the forcing to generate swath
         data = self.data[self.data['isotach'] == wind_speed]
 
+        # enumerate quadrants
+        quadrant_names = [
+            'radius_for_NEQ',
+            'radius_for_NWQ',
+            'radius_for_SWQ',
+            'radius_for_SEQ',
+        ]
+
         # convert quadrant radii from nautical miles to meters
-        quadrants = ['radius_for_NEQ', 'radius_for_NWQ', 'radius_for_SWQ', 'radius_for_SEQ']
-        data[quadrants] *= 1852.0  # nautical miles to meters
+        data[quadrant_names] *= 1852.0
 
         geodetic = Geod(ellps='WGS84')
 
-        ## Generate overall swath based on the desired isotach
-        polygons = []
-        for index, row in data.iterrows():
-            # get the starting angle range for NEQ based on storm direction
-            rot_angle = 360 - row['direction']
-            start_angle = 0 + rot_angle
-            end_angle = 90 + rot_angle
+        # generate overall swath based on the desired isotach
+        isotachs = {}
+        for record_type in pandas.unique(data['record_type']):
+            record_type_data = data[data['record_type'] == record_type]
 
-            # append quadrants in counter-clockwise direction from NEQ
-            arcs = []
-            for quadrant in quadrants:
-                # enter the angle range for this quadrant
-                theta = numpy.linspace(start_angle, end_angle, segments)
-                # move angle to next quadrant
-                start_angle = start_angle + 90
-                end_angle = end_angle + 90
-                # skip if quadrant radius is zero
-                if row[quadrant] <= 1.0:
-                    continue
-                # make the coordinate list for this quadrant
-                ## entering origin
-                coords = [row[['longitude', 'latitude']].tolist()]
-                # using forward geodetic (origin,angle,dist)
-                for az12 in theta:
-                    lont, latt, backaz = geodetic.fwd(
-                        lons=row['longitude'],
-                        lats=row['latitude'],
-                        az=az12,
-                        dist=row[quadrant],
-                    )
-                    coords.append((lont, latt))
-                ## start point equals last point
-                coords.append(coords[0])
-                # enter quadrant as new polygon
-                arcs.append(Polygon(coords))
-            polygons.append(ops.unary_union(arcs))
-        return polygons
+            record_type_isotachs = {}
+            for index, row in record_type_data.iterrows():
+                # get the starting angle range for NEQ based on storm direction
+                rotation_angle = 360 - row['direction']
+                start_angle = 0 + rotation_angle
+                end_angle = 90 + rotation_angle
 
-    def wind_swath(self, isotach: int, segments: int = 91) -> Polygon:
+                # append quadrants in counter-clockwise direction from NEQ
+                quadrants = []
+                for quadrant_name in quadrant_names:
+                    # skip if quadrant radius is zero
+                    if row[quadrant_name] > 1:
+                        # enter the angle range for this quadrant
+                        theta = numpy.linspace(start_angle, end_angle, segments)
+
+                        # move angle to next quadrant
+                        start_angle = start_angle + 90
+                        end_angle = end_angle + 90
+
+                        # make the coordinate list for this quadrant using forward geodetic (origin,angle,dist)
+                        vectorized_forward_geodetic = numpy.vectorize(
+                            partial(
+                                geodetic.fwd,
+                                lons=row['longitude'],
+                                lats=row['latitude'],
+                                dist=row[quadrant_name],
+                            )
+                        )
+                        x, y, reverse_azimuth = vectorized_forward_geodetic(az=theta)
+                        vertices = numpy.stack([x, y], axis=1)
+
+                        # insert center point at beginning and end of list
+                        vertices = numpy.concatenate(
+                            [
+                                row[['longitude', 'latitude']].values[None, :],
+                                vertices,
+                                row[['longitude', 'latitude']].values[None, :],
+                            ],
+                            axis=0,
+                        )
+
+                        quadrants.append(Polygon(vertices))
+
+                if len(quadrants) > 0:
+                    isotach = ops.unary_union(quadrants)
+
+                    if isinstance(isotach, MultiPolygon):
+                        isotach = isotach.buffer(1e-10)
+
+                    record_type_isotachs[row['datetime']] = isotach
+
+            if len(record_type_isotachs) > 0:
+                isotachs[record_type] = record_type_isotachs
+
+        return isotachs
+
+    def wind_swaths(self, wind_speed: int, segments: int = 91) -> MultiPolygon:
         """
         extract the wind swath of the BestTrackForcing class object as a Polygon object
 
-        :param isotach: the wind swath to extract (34-kt, 50-kt, or 64-kt)
-        :param segments: number of discretization points per quadrant (default = 91)
+        :param wind_speed: wind speed in knots (one of ``34``, ``50``, or ``64``)
+        :param segments: number of discretization points per quadrant (default = ``91``)
         """
 
-        # parameter
-        # isotach should be one of 34, 50, 64
         valid_isotach_values = [34, 50, 64]
         assert (
-            isotach in valid_isotach_values
-        ), f'`isotach` value in `get_wind_swath` must be one of {valid_isotach_values}'
+            wind_speed in valid_isotach_values
+        ), f'isotach must be one of {valid_isotach_values}'
 
-        isotachs = self.isotachs(wind_speed=isotach, segments=segments)
+        record_type_isotachs = self.isotachs(wind_speed=wind_speed, segments=segments)
 
-        convex_hulls = []
-        for index in range(len(isotachs) - 1):
-            convex_hulls.append(
-                ops.unary_union([isotachs[index], isotachs[index + 1]]).convex_hull
-            )
+        wind_swaths = {}
+        for record_type, isotachs in record_type_isotachs.items():
+            isotachs = list(isotachs.values())
+            convex_hulls = []
+            for index in range(len(isotachs) - 1):
+                convex_hulls.append(
+                    ops.unary_union([isotachs[index], isotachs[index + 1],]).convex_hull
+                )
 
-        # get the union of polygons
-        return ops.unary_union(convex_hulls)
+            # get the union of polygons
+            wind_swaths[record_type] = ops.unary_union(convex_hulls)
+
+        wind_swaths = MultiPolygon(list(wind_swaths.values()))
+
+        if not wind_swaths.is_valid:
+            wind_swaths = wind_swaths.buffer(0)
+
+        return wind_swaths
 
     @property
     def duration(self) -> float:

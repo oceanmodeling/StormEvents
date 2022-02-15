@@ -4,6 +4,7 @@ from os import PathLike
 
 import pandas
 from pandas import DataFrame
+from shapely import ops
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 import typepigeon
@@ -335,7 +336,7 @@ class StormEvent:
         else:
             track = self.track(start_date=start_date, end_date=end_date, filename=track)
 
-        region = track.wind_swath(wind_speed)
+        region = track.wind_swaths(wind_speed)
 
         return self.tidal_data_within_region(
             region=region,

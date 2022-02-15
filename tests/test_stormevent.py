@@ -141,24 +141,22 @@ def test_high_water_marks(florence2018):
 
 
 def test_tidal_data_within_isotach(florence2018):
-    track = florence2018.track(file_deck='a', record_type='OFCL')
-
     null_data = florence2018.tidal_data_within_isotach(
         wind_speed=34, end_date=florence2018.start_date + timedelta(minutes=1),
     )
 
     tidal_data = florence2018.tidal_data_within_isotach(
         wind_speed=34,
-        start_date=datetime(2018, 9, 13, 23),
+        start_date=datetime(2018, 9, 13),
         end_date=datetime(2018, 9, 14),
-        track=track,
+        track=florence2018.track(file_deck='a'),
     )
 
     assert len(null_data.data_vars) == 0
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
 
     assert null_data['t'].sizes == {}
-    assert tidal_data.sizes == {'t': 11, 'nos_id': 9}
+    assert tidal_data.sizes == {'t': 241, 'nos_id': 9}
 
 
 def test_tidal_data_within_region(florence2018):
