@@ -43,8 +43,8 @@ def test_nhc_storms():
 
 
 def test_VortexTrack():
-    output_directory = OUTPUT_DIRECTORY / 'test_vortex'
-    reference_directory = REFERENCE_DIRECTORY / 'test_vortex'
+    output_directory = OUTPUT_DIRECTORY / 'test_VortexTrack'
+    reference_directory = REFERENCE_DIRECTORY / 'test_VortexTrack'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
@@ -61,7 +61,9 @@ def test_VortexTrack():
         'isabel2003',
     ]
 
-    tracks = [VortexTrack(storm, start_date=timedelta(days=-1)) for storm in tracks]
+    tracks = [
+        VortexTrack(storm, file_deck='a', start_date=timedelta(days=-1)) for storm in tracks
+    ]
 
     for track in tracks:
         track.write(output_directory / f'{track.name}{track.year}.fort.22', overwrite=True)
@@ -70,7 +72,7 @@ def test_VortexTrack():
 
 
 def test_VortexTrack_filters():
-    track = VortexTrack('florence2018')
+    track = VortexTrack('florence2018', file_deck='a')
 
     assert len(track) == 10234
 

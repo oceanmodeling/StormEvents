@@ -284,7 +284,6 @@ class StormEvent:
             self.__high_water_marks = StormHighWaterMarks(name=self.name, year=self.year).data
         return self.__high_water_marks
 
-    @lru_cache(maxsize=None)
     def tidal_data_within_isotach(
         self,
         wind_speed: int,
