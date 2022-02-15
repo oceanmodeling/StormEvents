@@ -11,7 +11,7 @@ import pandas
 from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import MultiLineString, Polygon
 import typepigeon
 
 from stormevents.nhc import nhc_storms
@@ -568,7 +568,14 @@ class VortexTrack:
         :return: spatial linestring of current track
         """
 
-        return LineString(self.data[['longitude', 'latitude']].values)
+        return MultiLineString(
+            [
+                self.data.loc[
+                    self.data['record_type'] == record_type, ['longitude', 'latitude'],
+                ].values
+                for record_type in pandas.unique(self.data['record_type'])
+            ]
+        )
 
     @property
     def distance(self) -> float:
