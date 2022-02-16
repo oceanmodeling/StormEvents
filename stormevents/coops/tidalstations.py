@@ -476,7 +476,7 @@ def __coops_stations_html_tables() -> bs4.element.ResultSet:
 
 
 @lru_cache(maxsize=None)
-def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
+def coops_stations(station_type: COOPS_StationType = None) -> GeoDataFrame:
     """
     retrieve a list of CO-OPS stations with associated metadata
 
@@ -560,7 +560,7 @@ def coops_stations(station_type: COOPS_StationType = None) -> DataFrame:
 
 def coops_stations_within_region(
     region: Polygon, station_type: COOPS_StationType = None,
-) -> DataFrame:
+) -> GeoDataFrame:
     """
     retrieve all stations within the specified region of interest
 
@@ -594,7 +594,7 @@ def coops_stations_within_region(
 
 def coops_stations_within_bounds(
     minx: float, miny: float, maxx: float, maxy: float, station_type: COOPS_StationType = None,
-) -> DataFrame:
+) -> GeoDataFrame:
     return coops_stations_within_region(
         region=box(minx=minx, miny=miny, maxx=maxx, maxy=maxy), station_type=station_type
     )
