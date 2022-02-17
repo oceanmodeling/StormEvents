@@ -3,7 +3,8 @@
 .. toctree::
    :hidden:
 
-   stormevent
+   installation
    nhc
    usgs
    coops
+   stormevent

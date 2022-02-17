@@ -380,7 +380,7 @@ Data variables:
 The `StormEvent` class provides an interface to retrieve data within the time interval and spatial bounds of a specific storm
 event.
 
-#### instantiate from NHC storm name and year
+You can create a new `StormEvent` object from a storm name and year,
 
 ```python
 from stormevents import StormEvent
@@ -392,7 +392,7 @@ StormEvent('FLORENCE', 2018)
 StormEvent('FLORENCE', 2018)
 ```
 
-#### instantiate from NHC storm code
+or from a storm NHC code,
 
 ```python
 from stormevents import StormEvent
@@ -404,7 +404,7 @@ StormEvent.from_nhc_code('EP172016')
 StormEvent('PAINE', 2016)
 ```
 
-#### instantiate from USGS flood event ID
+or from a USGS flood event ID.
 
 ```python
 from stormevents import StormEvent
@@ -416,20 +416,32 @@ StormEvent.from_usgs_id(310)
 StormEvent('HENRI', 2021)
 ```
 
-#### constrain time interval to an absolute range
+To constrain the time interval, you can provide an absolute time range,
 
 ```python
 from stormevents import StormEvent
 from datetime import datetime
 
-StormEvent('paine', 2016, start_date='2016-09-18', end_date=datetime(2016, 9, 19, 12))
+StormEvent('paine', 2016, start_date='2016-09-19', end_date=datetime(2016, 9, 19, 12))
+```
+
+```
+StormEvent('PAINE', 2016, start_date='2016-09-19 00:00:00', end_date='2016-09-19 12:00:00')
+```
+
+```python
+from stormevents import StormEvent
+from datetime import datetime
+
+StormEvent('paine', 2016, end_date=datetime(2016, 9, 19, 12))
 ```
 
 ```
 StormEvent('PAINE', 2016, end_date='2016-09-19 12:00:00')
 ```
 
-#### constrain time interval to relative times (compared to storm start and end times provided by the NHC)
+or, alternatively, you can provide relative time deltas, which will be interpreted compared to the absolute time interval
+provided by the NHC.
 
 ```python
 from stormevents import StormEvent
@@ -469,7 +481,13 @@ StormEvent('ida', 2021, end_date=timedelta(days=2))  # <- end 2 days after NHC s
 StormEvent('IDA', 2021, end_date='2021-08-29 18:00:00')
 ```
 
-#### track data from the National Hurricane Center (NHC)
+#### retrieve data for a storm
+
+The following methods are very similar to the data getter functions detailed above. However, these methods are tied to a
+specific storm event, and will focus on retrieving data within the spatial region and time interval of their specific storm
+event.
+
+##### track data from the National Hurricane Center (NHC)
 
 ```python
 from stormevents import StormEvent
@@ -493,7 +511,7 @@ storm.track(file_deck='b')
 VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
 ```
 
-#### high-water mark (HWM) surveys provided by the United States Geological Survey (USGS)
+##### high-water mark (HWM) surveys provided by the United States Geological Survey (USGS)
 
 ```python
 from stormevents import StormEvent
@@ -520,7 +538,7 @@ hwm_id                        ...
 [509 rows x 52 columns]
 ```
 
-#### products from the Center for Operational Oceanographic Products and Services (CO-OPS)
+##### products from the Center for Operational Oceanographic Products and Services (CO-OPS)
 
 ```python
 
