@@ -1,7 +1,7 @@
 Installation
 ============
 
-To install ``stormevents``, you need [Python >= version 3.6](https://www.python.org/downloads).
+To install ``stormevents``, you need Python greater than or equal to version 3.6 (https://www.python.org/downloads).
 
 Once you have installed Python, and presumably have ``pip`` that comes with the default installation,
 you can run the following command to install ``stormevents`` directly from PyPI:

@@ -7,7 +7,7 @@ The ``nhc_storms()`` function provides a list of NHC storms from their online ar
 
 .. autofunction:: stormevents.nhc.storms.nhc_storms
 
-`VortexTrack` class
+``VortexTrack`` class
 -------------------
 
 .. autoclass:: stormevents.nhc.track.VortexTrack
