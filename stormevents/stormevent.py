@@ -43,6 +43,18 @@ class StormEvent:
 
         >>> StormEvent('florence', 2018)
         StormEvent('FLORENCE', 2018)
+
+        >>> StormEvent('paine', 2016, start_date='2016-09-18', end_date=datetime(2016, 9, 19, 12))
+        StormEvent('PAINE', 2016, end_date='2016-09-19 12:00:00')
+
+        >>> StormEvent('florence', 2018, start_date=timedelta(days=2))
+        StormEvent('FLORENCE', 2018, start_date='2018-09-01 06:00:00')
+
+        >>> StormEvent('henri', 2021, start_date=timedelta(days=-3), end_date=timedelta(days=-2))
+        StormEvent('HENRI', 2021, start_date='2021-08-21 12:00:00', end_date='2021-08-22 12:00:00')
+
+        >>> StormEvent('ida', 2021, end_date=timedelta(days=2))
+        StormEvent('IDA', 2021, end_date='2021-08-29 18:00:00')
         """
 
         storms = nhc_storms(year=year)
@@ -256,6 +268,10 @@ class StormEvent:
         :param record_type: ATCF record type
         :param filename: file path to ``fort.22``
         :return: vortex track
+
+        >>> storm = StormEvent('florence', 2018)
+        >>> storm.track(file_deck='b')
+        VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
         """
 
         if start_date is None:
@@ -278,6 +294,23 @@ class StormEvent:
     def high_water_marks(self) -> DataFrame:
         """
         :return: USGS high-water marks (HWMs) for this storm event
+
+        >>> storm = StormEvent('florence', 2018)
+        >>> storm.high_water_marks
+                 latitude  longitude  ... siteZone                    geometry
+        hwm_id                        ...
+        33496   37.298440 -80.007750  ...      NaN  POINT (-80.00775 37.29844)
+        33502   35.342089 -78.041553  ...      NaN  POINT (-78.04155 35.34209)
+        33503   35.378963 -78.010596  ...      NaN  POINT (-78.01060 35.37896)
+        33505   35.216282 -78.935229  ...      NaN  POINT (-78.93523 35.21628)
+        33508   35.199859 -78.960296  ...      NaN  POINT (-78.96030 35.19986)
+                   ...        ...  ...      ...                         ...
+        34191   33.724722 -79.059722  ...      NaN  POINT (-79.05972 33.72472)
+        34235   34.936308 -76.811223  ...           POINT (-76.81122 34.93631)
+        34840   34.145930 -78.868567  ...      NaN  POINT (-78.86857 34.14593)
+        34871   35.424707 -77.593860  ...      NaN  POINT (-77.59386 35.42471)
+        34876   35.301135 -77.264727  ...      NaN  POINT (-77.26473 35.30114)
+        [509 rows x 52 columns]
         """
 
         configuration = {'name': self.name, 'year': self.year}
@@ -285,13 +318,13 @@ class StormEvent:
             self.__high_water_marks = StormHighWaterMarks(name=self.name, year=self.year).data
         return self.__high_water_marks
 
-    def tidal_data_within_isotach(
+    def coops_product_within_isotach(
         self,
+        product: COOPS_Product,
         wind_speed: int,
         station_type: COOPS_StationType = None,
         start_date: datetime = None,
         end_date: datetime = None,
-        product: COOPS_Product = None,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -301,11 +334,11 @@ class StormEvent:
         """
         retrieve CO-OPS tidal station data from within the specified polygon
 
+        :param product: CO-OPS product
         :param wind_speed: wind speed in knots (one of ``34``, ``50``, or ``64``)
-        :param station_type: either ``current`` or ``historical``
         :param start_date: start date
         :param end_date: end date
-        :param product: CO-OPS product
+        :param station_type: either ``current`` or ``historical``
         :param datum: tidal datum
         :param units: either ``metric`` or ``english``
         :param time_zone: time zone
@@ -314,18 +347,18 @@ class StormEvent:
         :return: CO-OPS station data
 
         >>> storm = StormEvent('florence', 2018)
-        >>> storm.tidal_data_within_isotach(wind_speed=34, start_date='2018-09-13', end_date='2018-09-13 06:00:00')
+        >>> storm.coops_product_within_isotach('water_level', wind_speed=34, start_date='2018-09-12 14:03:00', end_date='2018-09-14')
         <xarray.Dataset>
-        Dimensions:  (t: 121, nos_id: 7)
+        Dimensions:  (nos_id: 7, t: 340)
         Coordinates:
-          * t        (t) datetime64[ns] 2018-09-13T12:00:00 ... 2018-09-14
           * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8658120 8658163 8661070
+          * t        (t) datetime64[ns] 2018-09-12T14:06:00 ... 2018-09-14
             nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'WLON7' 'JMPN7' 'MROS1'
             x        (nos_id) float64 -75.75 -75.56 -75.69 -76.69 -77.94 -77.81 -78.94
             y        (nos_id) float64 36.19 35.78 35.22 34.72 34.22 34.22 33.66
         Data variables:
-            v        (nos_id, t) float32 6.562 6.631 6.682 6.766 ... 9.6 9.634 9.686
-            s        (nos_id, t) float32 0.66 0.537 0.496 0.516 ... 0.049 0.047 0.054
+            v        (nos_id, t) float32 7.181 7.199 7.144 7.156 ... 9.6 9.634 9.686
+            s        (nos_id, t) float32 0.317 0.36 0.31 0.318 ... 0.049 0.047 0.054
             f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
@@ -338,7 +371,7 @@ class StormEvent:
 
         region = ops.unary_union(list(track.wind_swaths(wind_speed).values()))
 
-        return self.tidal_data_within_region(
+        return self.coops_product_within_region(
             region=region,
             station_type=station_type,
             start_date=start_date,
@@ -350,13 +383,13 @@ class StormEvent:
             interval=interval,
         )
 
-    def tidal_data_within_region(
+    def coops_product_within_region(
         self,
+        product: COOPS_Product,
         region: Polygon,
-        station_type: COOPS_StationType = None,
         start_date: datetime = None,
         end_date: datetime = None,
-        product: COOPS_Product = None,
+        station_type: COOPS_StationType = None,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -365,11 +398,11 @@ class StormEvent:
         """
         retrieve CO-OPS tidal station data from within the specified region
 
+        :param product: CO-OPS product; one of ``water_level``, ``air_temperature``, ``water_temperature``, ``wind``, ``air_pressure``, ``air_gap``, ``conductivity``, ``visibility``, ``humidity``, ``salinity``, ``hourly_height``, ``high_low``, ``daily_mean``, ``monthly_mean``, ``one_minute_water_level``, ``predictions``, ``datums``, ``currents``, ``currents_predictions``
         :param region: a Shapely polygon denoting the region of interest
-        :param station_type: either ``current`` or ``historical``
         :param start_date: start date
         :param end_date: end date
-        :param product: CO-OPS product
+        :param station_type: either ``current`` or ``historical``
         :param datum: tidal datum
         :param units: either ``metric`` or ``english``
         :param time_zone: time zone
@@ -379,18 +412,18 @@ class StormEvent:
         >>> import shapely
         >>> storm = StormEvent('florence', 2018)
         >>> region = shapely.geometry.box(self.track().linestring.bounds)
-        >>> storm.tidal_data_within_region(region, start_date='2018-09-13', end_date='2018-09-13 06:00:00')
+        >>> storm.coops_product_within_isotach('water_level', wind_speed=34, start_date='2018-09-12 14:03:00', end_date='2018-09-14')
         <xarray.Dataset>
-        Dimensions:  (t: 61, nos_id: 65)
+        Dimensions:  (nos_id: 7, t: 340)
         Coordinates:
-          * t        (t) datetime64[ns] 2018-09-13 ... 2018-09-13T06:00:00
-          * nos_id   (nos_id) int64 8652587 8654467 8654467 ... 8652587 8652587 8652587
-            nws_id   (nos_id) <U5 'ORIN7' 'HCGN7' 'HCGN7' ... 'ORIN7' 'ORIN7' 'ORIN7'
-            x        (nos_id) float64 -75.55 -75.7 -75.7 -75.7 ... -75.55 -75.55 -75.55
-            y        (nos_id) float64 35.8 35.21 35.21 35.21 ... 35.8 35.8 35.8 35.8
+          * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8658120 8658163 8661070
+          * t        (t) datetime64[ns] 2018-09-12T14:06:00 ... 2018-09-14
+            nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'WLON7' 'JMPN7' 'MROS1'
+            x        (nos_id) float64 -75.75 -75.56 -75.69 -76.69 -77.94 -77.81 -78.94
+            y        (nos_id) float64 36.19 35.78 35.22 34.72 34.22 34.22 33.66
         Data variables:
-            v        (nos_id, t) float32 1.141 1.149 1.149 1.156 ... 1.175 1.167 1.164
-            s        (nos_id, t) float32 0.003 0.003 0.003 0.004 ... 0.004 0.003 0.007
+            v        (nos_id, t) float32 7.181 7.199 7.144 7.156 ... 9.6 9.634 9.686
+            s        (nos_id, t) float32 0.317 0.36 0.31 0.318 ... 0.049 0.047 0.054
             f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
@@ -420,9 +453,9 @@ class StormEvent:
             stations_data = []
             for station in stations.index:
                 station_data = COOPS_Station(station).get(
+                    product=product,
                     start_date=start_date,
                     end_date=end_date,
-                    product=product,
                     datum=datum,
                     units=units,
                     time_zone=time_zone,

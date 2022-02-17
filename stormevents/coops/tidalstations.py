@@ -179,9 +179,9 @@ class COOPS_Station:
 
     def get(
         self,
+        product: COOPS_Product,
         start_date: datetime,
         end_date: datetime = None,
-        product: COOPS_Product = None,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -199,28 +199,29 @@ class COOPS_Station:
         :param interval: time interval of data
         :return: data for the current station within the specified parameters
 
-        >>> COOPS_Station(8632200).get(start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
+        >>> station = COOPS_Station(8632200)
+        >>> station.get('water_level', start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
         <xarray.Dataset>
-        Dimensions:  (t: 841)
+        Dimensions:  (nos_id: 1, t: 841)
         Coordinates:
+          * nos_id   (nos_id) int64 8632200
           * t        (t) datetime64[ns] 2018-09-13 ... 2018-09-16T12:00:00
-            nos_id   int64 8632200
-            nws_id   <U5 'KPTV2'
-            x        float64 -75.99
-            y        float64 37.17
+            nws_id   (nos_id) <U5 'KPTV2'
+            x        (nos_id) float64 -76.0
+            y        (nos_id) float64 37.16
         Data variables:
-            v        (t) float32 1.67 1.694 1.73 1.751 1.778 ... 1.602 1.597 1.607 1.605
-            s        (t) float32 0.026 0.027 0.034 0.03 ... 0.018 0.018 0.019 0.021
-            f        (t) object '0,0,0,0' '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
-            q        (t) object 'v' 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v' 'v'
+            v        (nos_id, t) float32 1.67 1.694 1.73 1.751 ... 1.597 1.607 1.605
+            s        (nos_id, t) float32 0.026 0.027 0.034 0.03 ... 0.018 0.019 0.021
+            f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
+            q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
         """
 
         if self.__query is None:
             self.__query = COOPS_Query(
                 station=self,
+                product=product,
                 start_date=start_date,
                 end_date=end_date,
-                product=product,
                 datum=datum,
                 units=units,
                 time_zone=time_zone,
@@ -276,9 +277,9 @@ class COOPS_Query:
     def __init__(
         self,
         station: int,
+        product: COOPS_Product,
         start_date: datetime,
         end_date: datetime = None,
-        product: COOPS_Product = None,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -288,9 +289,9 @@ class COOPS_Query:
         instantiate a new query with the specified parameters
 
         :param station: NOS station ID
+        :param product: CO-OPS product
         :param start_date: start date
         :param end_date: end date
-        :param product: CO-OPS product
         :param datum: station datum
         :param units: one of `metric`, `english`
         :param time_zone: time zone of data
@@ -306,8 +307,6 @@ class COOPS_Query:
         station = station.nos_id
         if end_date is None:
             end_date = datetime.today()
-        if product is None:
-            product = COOPS_Product.WATER_LEVEL
         if datum is None:
             datum = COOPS_TidalDatum.STND
         if units is None:
@@ -318,9 +317,9 @@ class COOPS_Query:
             interval = COOPS_Interval.H
 
         self.station = station
+        self.product = product
         self.start_date = start_date
         self.end_date = end_date
-        self.product = product
         self.datum = datum
         self.units = units
         self.time_zone = time_zone
@@ -389,12 +388,12 @@ class COOPS_Query:
     def query(self):
         self.__error = None
 
-        start_date = self.start_date
-        if start_date is not None and not isinstance(start_date, str):
-            start_date = f'{self.start_date:%Y%m%d %H:%M}'
         product = self.product
         if isinstance(product, Enum):
             product = product.value
+        start_date = self.start_date
+        if start_date is not None and not isinstance(start_date, str):
+            start_date = f'{self.start_date:%Y%m%d %H:%M}'
         datum = self.datum
         if isinstance(datum, Enum):
             datum = datum.value
@@ -410,9 +409,9 @@ class COOPS_Query:
 
         return {
             'station': self.station,
+            'product': product,
             'begin_date': start_date,
             'end_date': f'{self.end_date:%Y%m%d %H:%M}',
-            'product': product,
             'datum': datum,
             'units': units,
             'time_zone': time_zone,
@@ -426,7 +425,8 @@ class COOPS_Query:
         """
         :return: data for the current query parameters
 
-        >>> COOPS_Query(1612480, start_date='2022-01-01', end_date='2022-01-03').data
+        >>> query = COOPS_Query(1612480, 'water_level', start_date='2022-01-01', end_date='2022-01-03')
+        >>> query.data
                                  v      s        f  q
         t
         2022-01-01 00:00:00  1.193  0.002  0,0,0,0  p
@@ -484,19 +484,19 @@ def coops_stations(station_type: COOPS_StationType = None) -> GeoDataFrame:
     :return: data frame of stations
 
     >>> coops_stations()
-            nws_id  ...                     geometry
-    nos_id          ...
-    1600012  46125  ...   POINT (122.62500 37.75000)
-    1611400  NWWH1  ...  POINT (-159.37500 21.95312)
-    1612340  OOUH1  ...  POINT (-157.87500 21.31250)
-    1612480  MOKH1  ...  POINT (-157.75000 21.43750)
-    1615680  KLIH1  ...  POINT (-156.50000 20.89062)
-    ...        ...  ...                          ...
-    9759394  MGZP4  ...   POINT (-67.18750 18.21875)
-    9759938  MISP4  ...   POINT (-67.93750 18.09375)
-    9761115  BARA9  ...   POINT (-61.81250 17.59375)
-    9999530  FRCB6  ...   POINT (-64.68750 32.37500)
-    9999531         ...   POINT (-93.31250 29.76562)
+            nws_id                          name state removed                    geometry
+    nos_id
+    1600012  46125                     QREB buoy           NaT  POINT (122.62500 37.75000)
+    1611400  NWWH1                    Nawiliwili    HI     NaT POINT (-159.37500 21.95312)
+    1612340  OOUH1                      Honolulu    HI     NaT POINT (-157.87500 21.31250)
+    1612480  MOKH1                      Mokuoloe    HI     NaT POINT (-157.75000 21.43750)
+    1615680  KLIH1       Kahului, Kahului Harbor    HI     NaT POINT (-156.50000 20.89062)
+               ...                           ...   ...     ...                         ...
+    9759394  MGZP4                      Mayaguez    PR     NaT  POINT (-67.18750 18.21875)
+    9759938  MISP4                   Mona Island           NaT  POINT (-67.93750 18.09375)
+    9761115  BARA9                       Barbuda           NaT  POINT (-61.81250 17.59375)
+    9999530  FRCB6  Bermuda, Ferry Reach Channel           NaT  POINT (-64.68750 32.37500)
+    9999531               Calcasieu Test Station    LA     NaT  POINT (-93.31250 29.76562)
     [363 rows x 5 columns]
     """
 
@@ -572,20 +572,19 @@ def coops_stations_within_region(
     >>> from shapely import ops
     >>> track = VortexTrack('florence2018', file_deck='b')
     >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
-    >>> stations = coops_stations_within_region(region=combined_wind_swaths)
-            nws_id  ...                    geometry
-    nos_id          ...
-    8651370  DUKN7  ...  POINT (-75.75000 36.18750)
-    8652587  ORIN7  ...  POINT (-75.56250 35.78125)
-    8654467  HCGN7  ...  POINT (-75.68750 35.21875)
-    8656483  BFTN7  ...  POINT (-76.68750 34.71875)
-    8658120  WLON7  ...  POINT (-77.93750 34.21875)
-    8658163  JMPN7  ...  POINT (-77.81250 34.21875)
-    8661070  MROS1  ...  POINT (-78.93750 33.65625)
-    8662245  NITS1  ...  POINT (-79.18750 33.34375)
-    8665530  CHTS1  ...  POINT (-79.93750 32.78125)
-    8670870  FPKG1  ...  POINT (-80.87500 32.03125)
-    [10 rows x 5 columns]
+    >>> coops_stations_within_region(region=combined_wind_swaths)
+            nws_id                               name state removed                    geometry
+    nos_id
+    8651370  DUKN7                               Duck    NC     NaT  POINT (-75.75000 36.18750)
+    8652587  ORIN7                Oregon Inlet Marina    NC     NaT  POINT (-75.56250 35.78125)
+    8654467  HCGN7              USCG Station Hatteras    NC     NaT  POINT (-75.68750 35.21875)
+    8656483  BFTN7          Beaufort, Duke Marine Lab    NC     NaT  POINT (-76.68750 34.71875)
+    8658120  WLON7                         Wilmington    NC     NaT  POINT (-77.93750 34.21875)
+    8658163  JMPN7                 Wrightsville Beach    NC     NaT  POINT (-77.81250 34.21875)
+    8661070  MROS1                    Springmaid Pier    SC     NaT  POINT (-78.93750 33.65625)
+    8662245  NITS1   Oyster Landing (N Inlet Estuary)    SC     NaT  POINT (-79.18750 33.34375)
+    8665530  CHTS1  Charleston, Cooper River Entrance    SC     NaT  POINT (-79.93750 32.78125)
+    8670870  FPKG1                       Fort Pulaski    GA     NaT  POINT (-80.87500 32.03125)
     """
 
     stations = coops_stations(station_type)
@@ -600,11 +599,11 @@ def coops_stations_within_bounds(
     )
 
 
-def coops_data_within_region(
+def coops_product_within_region(
+    product: COOPS_Product,
     region: Union[Polygon, MultiPolygon],
     start_date: datetime,
     end_date: datetime = None,
-    product: COOPS_Product = None,
     datum: COOPS_TidalDatum = None,
     units: COOPS_Units = None,
     time_zone: COOPS_TimeZone = None,
@@ -614,10 +613,10 @@ def coops_data_within_region(
     """
     retrieve CO-OPS data from within the specified region of interest
 
+    :param product: CO-OPS product; one of ``water_level``, ``air_temperature``, ``water_temperature``, ``wind``, ``air_pressure``, ``air_gap``, ``conductivity``, ``visibility``, ``humidity``, ``salinity``, ``hourly_height``, ``high_low``, ``daily_mean``, ``monthly_mean``, ``one_minute_water_level``, ``predictions``, ``datums``, ``currents``, ``currents_predictions``
     :param region: polygon or multipolygon denoting region of interest
     :param start_date: start date of CO-OPS query
     :param end_date: start date of CO-OPS query
-    :param product: CO-OPS product
     :param datum: tidal datum
     :param units: one of ``metric`` or ``english``
     :param time_zone: station time zone
@@ -630,18 +629,19 @@ def coops_data_within_region(
     >>> from datetime import timedelta
     >>> track = VortexTrack('florence2018', file_deck='b')
     >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
-    >>> coops_data_within_region(region=combined_wind_swaths, start_date=datetime.now() - timedelta(hours=1), end_date=datetime.now())
+    >>> coops_product_within_region('water_level', region=combined_wind_swaths, start_date=datetime.now() - timedelta(hours=1), end_date=datetime.now())
+    <xarray.Dataset>
     Dimensions:  (nos_id: 10, t: 10)
     Coordinates:
       * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8662245 8665530 8670870
-      * t        (t) datetime64[ns] 2022-02-15T13:48:00 ... 2022-02-15T14:42:00
+      * t        (t) datetime64[ns] 2022-02-17T11:42:00 ... 2022-02-17T12:36:00
         nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'NITS1' 'CHTS1' 'FPKG1'
         x        (nos_id) float64 -75.75 -75.56 -75.69 ... -79.19 -79.94 -80.88
         y        (nos_id) float64 36.19 35.78 35.22 34.72 ... 33.34 32.78 32.03
     Data variables:
-        v        (nos_id, t) float32 6.401 6.389 6.351 6.315 ... 2.79 2.717 2.685
-        s        (nos_id, t) float32 0.076 0.081 0.083 0.082 ... 0.005 0.016 0.006
-        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '1,0,0,0' '1,0,0,0'
+        v        (nos_id, t) float32 6.584 6.613 6.623 6.645 ... 3.39 3.41 3.435
+        s        (nos_id, t) float32 0.071 0.063 0.074 0.075 ... 0.005 0.005 0.005
+        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '1,0,0,0' '0,0,0,0'
         q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
     """
 
@@ -649,9 +649,9 @@ def coops_data_within_region(
     return xarray.combine_nested(
         [
             COOPS_Station(station).get(
+                product=product,
                 start_date=start_date,
                 end_date=end_date,
-                product=product,
                 datum=datum,
                 units=units,
                 time_zone=time_zone,

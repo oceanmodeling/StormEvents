@@ -14,9 +14,9 @@ def test_atcf_url():
 
 
 def test_atcf_storm_ids():
-    a_realtime = atcf_files(file_deck=ATCF_FileDeck.a, mode=ATCF_Mode.realtime)
+    a_realtime = atcf_files(file_deck=ATCF_FileDeck.ADVISORY, mode=ATCF_Mode.realtime)
     abf_realtime = atcf_files(mode=ATCF_Mode.realtime)
-    a_2014_2015 = atcf_files(file_deck=ATCF_FileDeck.a, year=range(2014, 2015))
+    a_2014_2015 = atcf_files(file_deck=ATCF_FileDeck.ADVISORY, year=range(2014, 2015))
     abf_2014_2015 = atcf_files(year=range(2014, 2015))
 
     assert len(a_realtime) == 67

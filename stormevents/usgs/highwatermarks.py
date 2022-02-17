@@ -82,37 +82,22 @@ class HighWaterMarks:
         :param survey_completed: whether HWM survey should be complete
         :param still_water: HWM still water filter
 
-        >>> hwm = HighWaterMarks(182)
-        >>> hwm.data
-                 latitude  longitude  ... siteZone                              geometry
+        >>> survey = HighWaterMarks(182)
+        >>> survey.hwm_quality = 'EXCELLENT', 'GOOD'
+        >>> survey.data
+                 latitude  longitude  ... siteZone                    geometry
         hwm_id                        ...
-        22636   32.007730 -81.238270  ...      NaN  POINT Z (-81.23827 32.00773 2.10373)
-        22757   30.510528 -81.460833  ...        0  POINT Z (-81.46083 30.51053 1.99461)
-        22885   30.770560 -81.581390  ...      NaN  POINT Z (-81.58139 30.77056 2.42987)
-        22965   31.063150 -81.404540  ...      NaN  POINT Z (-81.40454 31.06315 4.12090)
-        23052   30.845000 -81.560000  ...      NaN  POINT Z (-81.56000 30.84500 1.97328)
-        ...           ...        ...  ...      ...                                   ...
-        25147   30.018190 -81.859657  ...      NaN  POINT Z (-81.85966 30.01819 9.07390)
-        25148   30.097214 -81.891451  ...      NaN  POINT Z (-81.89145 30.09721 7.26338)
-        25150   30.038222 -81.880928  ...      NaN  POINT Z (-81.88093 30.03822 7.62305)
-        25158   29.720560 -81.506110  ...      NaN  POINT Z (-81.50611 29.72056 0.96012)
-        25159   30.097514 -81.794375  ...      NaN  POINT Z (-81.79438 30.09751 2.64262)
-        [221 rows x 52 columns]
-        >>> hwm.hwm_quality = 'EXCELLENT', 'GOOD'
-        >>> hwm.data
-                 latitude  longitude  ... siteZone                               geometry
-        hwm_id                        ...
-        22636   32.007730 -81.238270  ...      NaN   POINT Z (-81.23827 32.00773 2.10373)
-        22885   30.770560 -81.581390  ...      NaN   POINT Z (-81.58139 30.77056 2.42987)
-        23130   31.034720 -81.640000  ...      NaN   POINT Z (-81.64000 31.03472 2.22199)
-        23216   32.035150 -81.045040  ...      NaN   POINT Z (-81.04504 32.03515 2.42316)
-        23236   32.083650 -81.157520  ...      NaN   POINT Z (-81.15752 32.08365 3.07238)
-        ...           ...        ...  ...      ...                                    ...
-        25146   29.992580 -81.851518  ...      NaN  POINT Z (-81.85152 29.99258 10.69238)
-        25148   30.097214 -81.891451  ...      NaN   POINT Z (-81.89145 30.09721 7.26338)
-        25150   30.038222 -81.880928  ...      NaN   POINT Z (-81.88093 30.03822 7.62305)
-        25158   29.720560 -81.506110  ...      NaN   POINT Z (-81.50611 29.72056 0.96012)
-        25159   30.097514 -81.794375  ...      NaN   POINT Z (-81.79438 30.09751 2.64262)
+        22636   32.007730 -81.238270  ...      NaN  POINT (-81.23827 32.00773)
+        22885   30.770560 -81.581390  ...      NaN  POINT (-81.58139 30.77056)
+        23130   31.034720 -81.640000  ...      NaN  POINT (-81.64000 31.03472)
+        23216   32.035150 -81.045040  ...      NaN  POINT (-81.04504 32.03515)
+        23236   32.083650 -81.157520  ...      NaN  POINT (-81.15752 32.08365)
+                   ...        ...  ...      ...                         ...
+        25146   29.992580 -81.851518  ...      NaN  POINT (-81.85152 29.99258)
+        25148   30.097214 -81.891451  ...      NaN  POINT (-81.89145 30.09721)
+        25150   30.038222 -81.880928  ...      NaN  POINT (-81.88093 30.03822)
+        25158   29.720560 -81.506110  ...      NaN  POINT (-81.50611 29.72056)
+        25159   30.097514 -81.794375  ...      NaN  POINT (-81.79438 30.09751)
         [138 rows x 52 columns]
         """
 
@@ -272,21 +257,22 @@ class HighWaterMarks:
         """
         :returns: data frame of data for the current parameters
 
-        >>> hwm = HighWaterMarks(182)
-        >>> hwm.data
-                 latitude  longitude  ... siteZone                              geometry
+        >>> survey = HighWaterMarks(182)
+        >>> survey.data
+                         latitude  longitude  ... siteZone                    geometry
         hwm_id                        ...
-        22636   32.007730 -81.238270  ...      NaN  POINT Z (-81.23827 32.00773 2.10373)
-        22757   30.510528 -81.460833  ...        0  POINT Z (-81.46083 30.51053 1.99461)
-        22885   30.770560 -81.581390  ...      NaN  POINT Z (-81.58139 30.77056 2.42987)
-        22965   31.063150 -81.404540  ...      NaN  POINT Z (-81.40454 31.06315 4.12090)
-        23052   30.845000 -81.560000  ...      NaN  POINT Z (-81.56000 30.84500 1.97328)
-        ...           ...        ...  ...      ...                                   ...
-        25147   30.018190 -81.859657  ...      NaN  POINT Z (-81.85966 30.01819 9.07390)
-        25148   30.097214 -81.891451  ...      NaN  POINT Z (-81.89145 30.09721 7.26338)
-        25150   30.038222 -81.880928  ...      NaN  POINT Z (-81.88093 30.03822 7.62305)
-        25158   29.720560 -81.506110  ...      NaN  POINT Z (-81.50611 29.72056 0.96012)
-        25159   30.097514 -81.794375  ...      NaN  POINT Z (-81.79438 30.09751 2.64262)
+        22636   32.007730 -81.238270  ...      NaN  POINT (-81.23827 32.00773)
+        22757   30.510528 -81.460833  ...        0  POINT (-81.46083 30.51053)
+        22885   30.770560 -81.581390  ...      NaN  POINT (-81.58139 30.77056)
+        22965   31.063150 -81.404540  ...      NaN  POINT (-81.40454 31.06315)
+        23052   30.845000 -81.560000  ...      NaN  POINT (-81.56000 30.84500)
+                   ...        ...  ...      ...                         ...
+        25147   30.018190 -81.859657  ...      NaN  POINT (-81.85966 30.01819)
+        25148   30.097214 -81.891451  ...      NaN  POINT (-81.89145 30.09721)
+        25150   30.038222 -81.880928  ...      NaN  POINT (-81.88093 30.03822)
+        25158   29.720560 -81.506110  ...      NaN  POINT (-81.50611 29.72056)
+        25159   30.097514 -81.794375  ...      NaN  POINT (-81.79438 30.09751)
+
         [221 rows x 52 columns]
         """
 
@@ -358,14 +344,14 @@ class HighWaterMarks:
             data = self.__data
 
         return GeoDataFrame(
-            data,
-            geometry=geopandas.points_from_xy(
-                data['longitude'], data['latitude'], data['elev_ft'] * 0.3048
-            ),
+            data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude']),
         )
 
     def __eq__(self, other: 'HighWaterMarks') -> bool:
         return self.data.equals(other.data)
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({", ".join(repr(value) for value in (self.event_id, self.event_status, self.us_states, self.us_counties, self.hwm_type, self.hwm_quality, self.hwm_environment, self.survey_completed, self.still_water))})'
 
 
 class StormHighWaterMarks(HighWaterMarks):

@@ -87,9 +87,9 @@ class ATCF_FileDeck(Enum):
     The contents of each type of data file is described at http://hurricanes.ral.ucar.edu/realtime/
     """
 
-    a = 'a'
-    b = 'b'  # "best track"
-    f = 'f'  # https://www.nrlmry.navy.mil/atcf_web/docs/database/new/newfdeck.txt
+    ADVISORY = 'a'
+    BEST = 'b'  # "best track"
+    FIXED = 'f'  # https://www.nrlmry.navy.mil/atcf_web/docs/database/new/newfdeck.txt
 
 
 class ATCF_Mode(Enum):
@@ -158,7 +158,7 @@ def atcf_url(
         except ValueError:
             file_deck = None
     if file_deck is None:
-        file_deck = ATCF_FileDeck.a
+        file_deck = ATCF_FileDeck.ADVISORY
 
     if not isinstance(mode, ATCF_Mode):
         try:
@@ -172,13 +172,13 @@ def atcf_url(
         nhc_dir = f'archive/{year}'
         suffix = '.dat.gz'
     else:
-        if file_deck == ATCF_FileDeck.a:
+        if file_deck == ATCF_FileDeck.ADVISORY:
             nhc_dir = 'aid_public'
             suffix = '.dat.gz'
-        elif file_deck == ATCF_FileDeck.b:
+        elif file_deck == ATCF_FileDeck.BEST:
             nhc_dir = 'btk'
             suffix = '.dat'
-        elif file_deck == ATCF_FileDeck.f:
+        elif file_deck == ATCF_FileDeck.FIXED:
             nhc_dir = 'fix'
             suffix = '.dat'
         else:

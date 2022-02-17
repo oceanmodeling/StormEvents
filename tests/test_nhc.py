@@ -124,12 +124,12 @@ def test_from_atcf():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexTrack.from_atcf_file(atcf=input_directory / 'florence2018_atcf.trk',)
+    vortex = VortexTrack.from_atcf_file(atcf=input_directory / 'atcf.trk',)
 
     assert vortex.nhc_code == 'BT02008'
     assert vortex.name == 'WRT00001'
 
-    vortex.write(output_directory / 'florence2018_fort.22', overwrite=True)
+    vortex.write(output_directory / 'fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 

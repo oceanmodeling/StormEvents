@@ -1,15 +1,13 @@
 NHC storm tracks
 ================
 
-The [National Hurricane Center (NHC)](https://www.nhc.noaa.gov)
-provides spatial storm tracks for tracked hurricanes, from 1851 to the present.
+The [National Hurricane Center (NHC)](https://www.nhc.noaa.gov) tracks and tropical cyclones dating back to 1851.
 
-list storm events defined by the NHC since 1851
------------------------------------------------
+The ``nhc_storms()`` function provides a list of NHC storms from their online archive:
 
 .. autofunction:: stormevents.nhc.storms.nhc_storms
 
-retrieve spatial storm tracks provided by the NHC
--------------------------------------------------
+`VortexTrack` class
+-------------------
 
 .. autoclass:: stormevents.nhc.track.VortexTrack

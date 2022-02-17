@@ -4,7 +4,7 @@ from shapely import ops
 
 from stormevents import VortexTrack
 from stormevents.coops.tidalstations import (
-    coops_data_within_region,
+    coops_product_within_region,
     COOPS_Station,
     coops_stations,
     coops_stations_within_region,
@@ -31,7 +31,7 @@ def test_coops_data_within_region():
     track = VortexTrack('florence2018', file_deck='b')
     combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
 
-    data = coops_data_within_region(
+    data = coops_product_within_region(
         region=combined_wind_swaths,
         start_date=datetime.now() - timedelta(hours=1),
         end_date=datetime.now(),

@@ -1,24 +1,57 @@
 CO-OPS tidal station data
 =========================
 
-The [Center for Operational Oceanographic Products and Services (CO-OPS)]https://tidesandcurrents.noaa.gov)
-maintains and operates a large amount of tidal stations that measure water levels across the coastal United States.
-CO-OPS provides several [data products](https://tidesandcurrents.noaa.gov/products.html)
+The [Center for Operational Oceanographic Products and Services (CO-OPS)](https://tidesandcurrents.noaa.gov)
+maintains and operates a large array of tidal buoys and oceanic weather stations that measure water and atmospheric variables
+across the coastal United States. CO-OPS provides several [data products](https://tidesandcurrents.noaa.gov/products.html)
 including hourly water levels, tidal datums and predictions, and trends in sea level over time.
 
-list CO-OPS tidal stations
---------------------------
+A list of CO-OPS stations can be retrieved with the ``coops_stations()`` function.
 
 .. autofunction:: stormevents.coops.tidalstations.coops_stations
+
+Additionally, you can use a Shapely ``Polygon`` or ``MultiPolygon`` to constrain the stations query to a specific region:
+
 .. autofunction:: stormevents.coops.tidalstations.coops_stations_within_region
+
+CO-OPS station class
+--------------------
+
 .. autoclass:: stormevents.coops.tidalstations.COOPS_Station
 
-list CO-OPS tidal stations within a region
-------------------------------------------
+retrieve CO-OPS data product from within a region and time interval
+-------------------------------------------------------------------
+
+To retrieve data, you must provide three things:
+
+1. the data product of interest; one of
+    - ``water_level`` - Preliminary or verified water levels, depending on availability.
+    - ``air_temperature`` - Air temperature as measured at the station.
+    - ``water_temperature`` - Water temperature as measured at the station.
+    - ``wind`` - Wind speed, direction, and gusts as measured at the station.
+    - ``air_pressure`` - Barometric pressure as measured at the station.
+    - ``air_gap`` - Air Gap (distance between a bridge and the water's surface) at the station.
+    - ``conductivity`` - The water's conductivity as measured at the station.
+    - ``visibility`` - Visibility from the station's visibility sensor. A measure of atmospheric clarity.
+    - ``humidity`` - Relative humidity as measured at the station.
+    - ``salinity`` - Salinity and specific gravity data for the station.
+    - ``hourly_height`` - Verified hourly height water level data for the station.
+    - ``high_low`` - Verified high/low water level data for the station.
+    - ``daily_mean`` - Verified daily mean water level data for the station.
+    - ``monthly_mean`` - Verified monthly mean water level data for the station.
+    - ``one_minute_water_level``  One minute water level data for the station.
+    - ``predictions`` - 6 minute predictions water level data for the station.*
+    - ``datums`` - datums data for the stations.
+    - ``currents`` - Currents data for currents stations.
+    - ``currents_predictions`` - Currents predictions data for currents predictions stations.
+2. a region within which to retrieve the data product
+3. a time interval within which to retrieve the data product
 
 .. autofunction:: stormevents.coops.tidalstations.coops_data_within_region
 
-construct an individual data query
-""""""""""""""""""""""""""""""""""
+CO-OPS query class
+""""""""""""""""""
+
+The ``COOPS_Query`` class lets you send an individual query to the CO-OPS API by specifying a station, data product, and time interval.
 
 .. autoclass:: stormevents.coops.tidalstations.COOPS_Query

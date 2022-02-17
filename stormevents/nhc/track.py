@@ -149,6 +149,9 @@ class VortexTrack:
         :param mode: ATCF mode; either ``historical`` or ``realtime``
         :param record_type: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
         :param filename: file path to ``fort.22``
+
+        >>> VortexTrack.from_storm_name('irma', 2017)
+        VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
         """
 
         year = int(year)
@@ -172,6 +175,9 @@ class VortexTrack:
         :param fort22: file path to ``fort.22``
         :param start_date: start date of track
         :param end_date: end date of track
+
+        >>> VortexTrack.from_fort22('tests/data/input/test_from_fort22/irma2017_fort.22')
+        VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-19 00:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_from_fort22/irma2017_fort.22'))
         """
 
         filename = None
@@ -196,6 +202,9 @@ class VortexTrack:
         :param atcf: file path to ATCF data
         :param start_date: start date of track
         :param end_date: end date of track
+
+        >>> VortexTrack.from_atcf_file('tests/data/input/test_from_atcf/atcf.trk')
+        VortexTrack('BT02008', Timestamp('2008-10-16 17:06:00'), Timestamp('2008-10-20 20:06:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_from_atcf/florence2018_atcf.trk'))
         """
 
         filename = None
@@ -353,7 +362,7 @@ class VortexTrack:
     @file_deck.setter
     def file_deck(self, file_deck: ATCF_FileDeck):
         if file_deck is None:
-            file_deck = ATCF_FileDeck.b
+            file_deck = ATCF_FileDeck.BEST
         elif not isinstance(file_deck, ATCF_FileDeck):
             file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
         self.__file_deck = file_deck
@@ -389,7 +398,7 @@ class VortexTrack:
         :return: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
         """
 
-        if self.file_deck == ATCF_FileDeck.b:
+        if self.file_deck == ATCF_FileDeck.BEST:
             self.__record_type = ATCF_RecordType.best.value
 
         return self.__record_type
@@ -409,15 +418,15 @@ class VortexTrack:
 
     @property
     def valid_record_types(self) -> List[ATCF_RecordType]:
-        if self.file_deck == ATCF_FileDeck.a:
+        if self.file_deck == ATCF_FileDeck.ADVISORY:
             # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
             # there are more but they may not have enough columns
             valid_record_types = [
                 entry.value for entry in ATCF_RecordType if entry != ATCF_RecordType.best
             ]
-        elif self.file_deck == ATCF_FileDeck.b:
+        elif self.file_deck == ATCF_FileDeck.BEST:
             valid_record_types = [ATCF_RecordType.best.value]
-        elif self.file_deck == ATCF_FileDeck.f:
+        elif self.file_deck == ATCF_FileDeck.FIXED:
             valid_record_types = [entry.value for entry in ATCF_RecordType]
         else:
             raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
@@ -443,21 +452,21 @@ class VortexTrack:
         """
         :return: track data for the given parameters as a data frame
 
-        >>> track = VortexTrack('michael2018')
+        >>> track = VortexTrack('AL112017', file_deck='a')
         >>> track.data
-           basin storm_number  ...      name                    geometry
-        0     AL           14  ...    INVEST  POINT (-86.60000 17.80000)
-        1     AL           14  ...  FOURTEEN  POINT (-86.90000 18.10000)
-        2     AL           14  ...  FOURTEEN  POINT (-86.80000 18.40000)
-        3     AL           14  ...  FOURTEEN  POINT (-86.40000 18.80000)
-        4     AL           14  ...   MICHAEL  POINT (-85.70000 19.10000)
-        ..   ...          ...  ...       ...                         ...
-        80    AL           14  ...   MICHAEL  POINT (-13.50000 45.90000)
-        81    AL           14  ...   MICHAEL  POINT (-11.40000 44.40000)
-        82    AL           14  ...   MICHAEL  POINT (-11.40000 44.40000)
-        83    AL           14  ...   MICHAEL  POINT (-10.30000 42.80000)
-        84    AL           14  ...   MICHAEL  POINT (-10.00000 41.20000)
-        [85 rows x 22 columns]
+            basin storm_number  ...    name                    geometry
+        0      AL           11  ...  INVEST  POINT (-26.90000 16.10000)
+        1      AL           11  ...  INVEST  POINT (-28.30000 16.20000)
+        2      AL           11  ...    IRMA  POINT (-29.70000 16.30000)
+        3      AL           11  ...    IRMA  POINT (-30.80000 16.30000)
+        4      AL           11  ...    IRMA  POINT (-30.80000 16.30000)
+        ..    ...          ...  ...     ...                         ...
+        168    AL           11  ...    IRMA  POINT (-86.90000 33.80000)
+        169    AL           11  ...    IRMA  POINT (-88.10000 34.80000)
+        170    AL           11  ...    IRMA  POINT (-88.90000 35.60000)
+        171    AL           11  ...    IRMA  POINT (-89.50000 36.20000)
+        172    AL           11  ...    IRMA  POINT (-90.10000 36.80000)
+        [173 rows x 22 columns]
         """
 
         return self.__unfiltered_data.loc[
