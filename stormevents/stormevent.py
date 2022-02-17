@@ -411,7 +411,7 @@ class StormEvent:
 
         >>> import shapely
         >>> storm = StormEvent('florence', 2018)
-        >>> region = shapely.geometry.box(self.track().linestring.bounds)
+        >>> region = shapely.geometry.box(*self.track().linestring.bounds)
         >>> storm.coops_product_within_isotach('water_level', wind_speed=34, start_date='2018-09-12 14:03:00', end_date='2018-09-14')
         <xarray.Dataset>
         Dimensions:  (nos_id: 7, t: 340)
