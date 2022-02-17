@@ -1,9 +1,9 @@
 CO-OPS tidal station data
 =========================
 
-The [Center for Operational Oceanographic Products and Services (CO-OPS)](https://tidesandcurrents.noaa.gov)
+The `Center for Operational Oceanographic Products and Services (CO-OPS) <https://tidesandcurrents.noaa.gov>`_
 maintains and operates a large array of tidal buoys and oceanic weather stations that measure water and atmospheric variables
-across the coastal United States. CO-OPS provides several [data products](https://tidesandcurrents.noaa.gov/products.html)
+across the coastal United States. CO-OPS provides several `data products <https://tidesandcurrents.noaa.gov/products.html>`_
 including hourly water levels, tidal datums and predictions, and trends in sea level over time.
 
 A list of CO-OPS stations can be retrieved with the ``coops_stations()`` function.
@@ -47,7 +47,7 @@ To retrieve data, you must provide three things:
 2. a region within which to retrieve the data product
 3. a time interval within which to retrieve the data product
 
-.. autofunction:: stormevents.coops.tidalstations.coops_data_within_region
+.. autofunction:: stormevents.coops.tidalstations.coops_product_within_region
 
 CO-OPS query class
 """"""""""""""""""
