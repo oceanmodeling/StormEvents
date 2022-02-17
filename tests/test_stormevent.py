@@ -137,12 +137,13 @@ def test_high_water_marks(florence2018):
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_tidal_data_within_isotach(florence2018):
+def test_coops_product_within_isotach(florence2018):
     null_data = florence2018.coops_product_within_isotach(
-        wind_speed=34, end_date=florence2018.start_date + timedelta(minutes=1),
+        'water_level', wind_speed=34, end_date=florence2018.start_date + timedelta(minutes=1),
     )
 
     tidal_data = florence2018.coops_product_within_isotach(
+        'water_level',
         wind_speed=34,
         start_date=datetime(2018, 9, 13),
         end_date=datetime(2018, 9, 14),
@@ -156,10 +157,10 @@ def test_tidal_data_within_isotach(florence2018):
     assert tidal_data.sizes == {'t': 241, 'nos_id': 9}
 
 
-def test_tidal_data_within_region(florence2018):
+def test_coops_product_within_region(florence2018):
     null_track = florence2018.track(end_date=florence2018.start_date + timedelta(hours=12))
     null_data = florence2018.coops_product_within_region(
-        region=box(*null_track.linestring.bounds), end_date=null_track.end_date,
+        'water_level', region=box(*null_track.linestring.bounds), end_date=null_track.end_date,
     )
 
     track = florence2018.track(
@@ -169,6 +170,7 @@ def test_tidal_data_within_region(florence2018):
         record_type='OFCL',
     )
     tidal_data = florence2018.coops_product_within_region(
+        'water_level',
         region=box(*track.linestring.bounds),
         start_date=track.start_date,
         end_date=track.end_date,

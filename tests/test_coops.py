@@ -32,6 +32,7 @@ def test_coops_data_within_region():
     combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
 
     data = coops_product_within_region(
+        'water_level',
         region=combined_wind_swaths,
         start_date=datetime.now() - timedelta(hours=1),
         end_date=datetime.now(),
@@ -54,13 +55,13 @@ def test_COOPS_Station():
     station_2 = COOPS_Station('OOUH1')
     station_3 = COOPS_Station('Calcasieu Test Station')
 
-    station_1_data = station_1.get(start_date, end_date)
+    station_1_data = station_1.get('water_level', start_date, end_date)
     station_1_constituents = station_1.constituents
 
-    station_2_data = station_2.get(start_date, end_date)
+    station_2_data = station_2.get('water_level', start_date, end_date)
     station_2_constituents = station_2.constituents
 
-    station_3_data = station_3.get(start_date, end_date)
+    station_3_data = station_3.get('water_level', start_date, end_date)
     station_3_constituents = station_3.constituents
 
     assert station_1.nos_id == 1612480
