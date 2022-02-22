@@ -259,7 +259,7 @@ def read_atcf(
         if record_types is None or line.split(',')[4].strip() in record_types:
             try:
                 records.append(read_atcf_line(line))
-            except ValueError:
+            except (ValueError, IndexError):
                 pass
 
     if len(records) == 0:
