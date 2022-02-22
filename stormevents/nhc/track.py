@@ -272,38 +272,38 @@ class VortexTrack:
 
         if self.__nhc_code is None and not self.__invalid_storm_name:
             if self.__dataframe is not None:
-                storm_id = (
+                nhc_code = (
                     f'{self.__dataframe["basin"].iloc[-1]}'
                     f'{self.__dataframe["storm_number"].iloc[-1]}'
                     f'{self.__dataframe["datetime"].iloc[-1].year}'
                 )
                 try:
-                    self.nhc_code = storm_id
+                    self.nhc_code = nhc_code
                 except ValueError:
                     try:
-                        storm_id = get_atcf_entry(
+                        nhc_code = get_atcf_entry(
                             storm_name=self.__dataframe['name'].tolist()[-1],
                             year=self.__dataframe['datetime'].tolist()[-1].year,
                         ).name
-                        self.nhc_code = storm_id
+                        self.nhc_code = nhc_code
                     except ValueError:
                         self.__invalid_storm_name = True
         return self.__nhc_code
 
     @nhc_code.setter
-    def nhc_code(self, storm_id: str):
-        if storm_id is not None:
+    def nhc_code(self, nhc_code: str):
+        if nhc_code is not None:
             # check if name+year was given instead of basin+number+year
-            digits = sum([1 for character in storm_id if character.isdigit()])
+            digits = sum([1 for character in nhc_code if character.isdigit()])
 
             if digits == 4:
-                atcf_id = get_atcf_entry(
-                    storm_name=storm_id[:-4], year=int(storm_id[-4:])
+                atcf_nhc_code = get_atcf_entry(
+                    storm_name=nhc_code[:-4], year=int(nhc_code[-4:])
                 ).name
-                if atcf_id is None:
-                    raise ValueError(f'No storm with id: {storm_id}')
-                storm_id = atcf_id
-        self.__nhc_code = storm_id
+                if atcf_nhc_code is None:
+                    raise ValueError(f'No storm with id: {nhc_code}')
+                nhc_code = atcf_nhc_code
+        self.__nhc_code = nhc_code
 
     @property
     def start_date(self) -> datetime:

@@ -13,7 +13,7 @@ def test_atcf_url():
     assert url_3 == 'ftp://ftp.nhc.noaa.gov/atcf/archive/2018/'
 
 
-def test_atcf_storm_ids():
+def test_atcf_nhc_codes():
     a_realtime = atcf_files(file_deck=ATCF_FileDeck.ADVISORY, mode=ATCF_Mode.realtime)
     abf_realtime = atcf_files(mode=ATCF_Mode.realtime)
     a_2014_2015 = atcf_files(file_deck=ATCF_FileDeck.ADVISORY, year=range(2014, 2015))
