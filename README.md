@@ -43,19 +43,19 @@ nhc_storms()
 ```
 
 ```
-                name class  ...          start_date            end_date
-nhc_code                    ...                                        
-AL021851     UNNAMED    HU  ... 1851-07-05 12:00:00 1851-07-05 12:00:00
-AL031851     UNNAMED    TS  ... 1851-07-10 12:00:00 1851-07-10 12:00:00
-AL041851     UNNAMED    HU  ... 1851-08-16 00:00:00 1851-08-27 18:00:00
-AL051851     UNNAMED    TS  ... 1851-09-13 00:00:00 1851-09-16 18:00:00
-AL061851     UNNAMED    TS  ... 1851-10-16 00:00:00 1851-10-19 18:00:00
-     ...         ...   ...  ...                 ...                 ...
-EP922021      INVEST    DB  ... 2021-06-05 06:00:00                 NaT
-AL952021      INVEST    DB  ... 2021-10-28 12:00:00                 NaT
-AL962021      INVEST    EX  ... 2021-11-07 12:00:00                 NaT
-EP712022  GENESIS001    DB  ... 2022-01-20 12:00:00                 NaT
-EP902022      INVEST    LO  ... 2022-01-20 12:00:00                 NaT
+                name class  year basin  number    source          start_date            end_date
+nhc_code                                                                                        
+AL021851     UNNAMED    HU  1851    AL       2   ARCHIVE 1851-07-05 12:00:00 1851-07-05 12:00:00
+AL031851     UNNAMED    TS  1851    AL       3   ARCHIVE 1851-07-10 12:00:00 1851-07-10 12:00:00
+AL041851     UNNAMED    HU  1851    AL       4   ARCHIVE 1851-08-16 00:00:00 1851-08-27 18:00:00
+AL051851     UNNAMED    TS  1851    AL       5   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
+AL061851     UNNAMED    TS  1851    AL       6   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
+...              ...   ...   ...   ...     ...       ...                 ...                 ...
+EP922021      INVEST    DB  2021    EP      92  METWATCH 2021-06-05 06:00:00                 NaT
+AL952021      INVEST    DB  2021    AL      95  METWATCH 2021-10-28 12:00:00                 NaT
+AL962021      INVEST    EX  2021    AL      96  METWATCH 2021-11-07 12:00:00                 NaT
+EP712022  GENESIS001    DB  2022    EP      71   GENESIS 2022-01-20 12:00:00                 NaT
+EP902022      INVEST    LO  2022    EP      90  METWATCH 2022-01-20 12:00:00                 NaT
 
 [2729 rows x 8 columns]
 ```
@@ -70,18 +70,18 @@ track.data
 ```
 
 ```
-    basin storm_number  ...    name                    geometry
-0      AL           11  ...  INVEST  POINT (-26.90000 16.10000)
-1      AL           11  ...  INVEST  POINT (-28.30000 16.20000)
-2      AL           11  ...    IRMA  POINT (-29.70000 16.30000)
-3      AL           11  ...    IRMA  POINT (-30.80000 16.30000)
-4      AL           11  ...    IRMA  POINT (-30.80000 16.30000)
-..    ...          ...  ...     ...                         ...
-168    AL           11  ...    IRMA  POINT (-86.90000 33.80000)
-169    AL           11  ...    IRMA  POINT (-88.10000 34.80000)
-170    AL           11  ...    IRMA  POINT (-88.90000 35.60000)
-171    AL           11  ...    IRMA  POINT (-89.50000 36.20000)
-172    AL           11  ...    IRMA  POINT (-90.10000 36.80000)
+    basin storm_number record_type            datetime  ...   direction     speed    name                    geometry
+0      AL           11        BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
+1      AL           11        BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
+2      AL           11        BEST 2017-08-30 12:00:00  ...  274.424523  6.947623    IRMA  POINT (-29.70000 16.30000)
+3      AL           11        BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
+4      AL           11        BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
+..    ...          ...         ...                 ...  ...         ...       ...     ...                         ...
+168    AL           11        BEST 2017-09-12 12:00:00  ...  309.875306  7.262151    IRMA  POINT (-86.90000 33.80000)
+169    AL           11        BEST 2017-09-12 18:00:00  ...  315.455084  7.247674    IRMA  POINT (-88.10000 34.80000)
+170    AL           11        BEST 2017-09-13 00:00:00  ...  320.849994  5.315966    IRMA  POINT (-88.90000 35.60000)
+171    AL           11        BEST 2017-09-13 06:00:00  ...  321.042910  3.973414    IRMA  POINT (-89.50000 36.20000)
+172    AL           11        BEST 2017-09-13 12:00:00  ...  321.262133  3.961652    IRMA  POINT (-90.10000 36.80000)
 
 [173 rows x 22 columns]
 ```
@@ -113,20 +113,20 @@ track.data
 ```
 
 ```
-    basin storm_number  ...    name                    geometry
-0      AL           11  ...  INVEST  POINT (-26.90000 16.10000)
-1      AL           11  ...  INVEST  POINT (-28.30000 16.20000)
-2      AL           11  ...    IRMA  POINT (-29.70000 16.30000)
-3      AL           11  ...    IRMA  POINT (-30.80000 16.30000)
-4      AL           11  ...    IRMA  POINT (-30.80000 16.30000)
-..    ...          ...  ...     ...                         ...
-168    AL           11  ...    IRMA  POINT (-86.90000 33.80000)
-169    AL           11  ...    IRMA  POINT (-88.10000 34.80000)
-170    AL           11  ...    IRMA  POINT (-88.90000 35.60000)
-171    AL           11  ...    IRMA  POINT (-89.50000 36.20000)
-172    AL           11  ...    IRMA  POINT (-90.10000 36.80000)
+      basin storm_number record_type            datetime  ...   direction      speed    name                    geometry
+0        AL           11        CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
+1        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)
+2        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-13.30000 11.50000)
+3        AL           11        CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-18.40000 11.90000)
+4        AL           11        CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-16.00000 11.50000)
+...     ...          ...         ...                 ...  ...         ...        ...     ...                         ...
+10739    AL           11        HMON 2017-09-16 09:00:00  ...   52.414833  11.903071          POINT (-84.30000 43.00000)
+10740    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 41.00000)
+10741    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-82.00000 39.50000)
+10742    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 44.00000)
+10743    AL           11        HMON 2017-09-16 15:00:00  ...  122.402907  22.540200          POINT (-81.90000 39.80000)
 
-[173 rows x 22 columns]
+[10744 rows x 22 columns
 ```
 
 ##### read storm track from file
@@ -215,19 +215,19 @@ survey.data
 ```
 
 ```
-         latitude  longitude  ... siteZone                    geometry
-hwm_id                        ...                                     
-22636   32.007730 -81.238270  ...      NaN  POINT (-81.23827 32.00773)
-22757   30.510528 -81.460833  ...        0  POINT (-81.46083 30.51053)
-22885   30.770560 -81.581390  ...      NaN  POINT (-81.58139 30.77056)
-22965   31.063150 -81.404540  ...      NaN  POINT (-81.40454 31.06315)
-23052   30.845000 -81.560000  ...      NaN  POINT (-81.56000 30.84500)
-           ...        ...  ...      ...                         ...
-25147   30.018190 -81.859657  ...      NaN  POINT (-81.85966 30.01819)
-25148   30.097214 -81.891451  ...      NaN  POINT (-81.89145 30.09721)
-25150   30.038222 -81.880928  ...      NaN  POINT (-81.88093 30.03822)
-25158   29.720560 -81.506110  ...      NaN  POINT (-81.50611 29.72056)
-25159   30.097514 -81.794375  ...      NaN  POINT (-81.79438 30.09751)
+         latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
+hwm_id                                                         ...                                                       
+22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
+22757   30.510528 -81.460833  Irma September 2017      Debris  ...       HWM 1    []        0  POINT (-81.46083 30.51053)
+22885   30.770560 -81.581390  Irma September 2017   Seed line  ...  GACAM17842    []      NaN  POINT (-81.58139 30.77056)
+22965   31.063150 -81.404540  Irma September 2017      Debris  ...         HWM    []      NaN  POINT (-81.40454 31.06315)
+23052   30.845000 -81.560000  Irma September 2017      Debris  ...  GACAM17840    []      NaN  POINT (-81.56000 30.84500)
+...           ...        ...                  ...         ...  ...         ...   ...      ...                         ...
+25147   30.018190 -81.859657  Irma September 2017         Mud  ...       HWM01    []      NaN  POINT (-81.85966 30.01819)
+25148   30.097214 -81.891451  Irma September 2017   Seed line  ...      hwm 01    []      NaN  POINT (-81.89145 30.09721)
+25150   30.038222 -81.880928  Irma September 2017   Seed line  ...       HWM01    []      NaN  POINT (-81.88093 30.03822)
+25158   29.720560 -81.506110  Irma September 2017   Seed line  ...         HWM    []      NaN  POINT (-81.50611 29.72056)
+25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
 
 [221 rows x 52 columns]
 ```
@@ -241,19 +241,19 @@ survey.data
 ```
 
 ```
-         latitude  longitude  ... siteZone                    geometry
-hwm_id                        ...                                     
-22636   32.007730 -81.238270  ...      NaN  POINT (-81.23827 32.00773)
-22885   30.770560 -81.581390  ...      NaN  POINT (-81.58139 30.77056)
-23130   31.034720 -81.640000  ...      NaN  POINT (-81.64000 31.03472)
-23216   32.035150 -81.045040  ...      NaN  POINT (-81.04504 32.03515)
-23236   32.083650 -81.157520  ...      NaN  POINT (-81.15752 32.08365)
-  ...         ...        ...  ...      ...                         ...
-25146   29.992580 -81.851518  ...      NaN  POINT (-81.85152 29.99258)
-25148   30.097214 -81.891451  ...      NaN  POINT (-81.89145 30.09721)
-25150   30.038222 -81.880928  ...      NaN  POINT (-81.88093 30.03822)
-25158   29.720560 -81.506110  ...      NaN  POINT (-81.50611 29.72056)
-25159   30.097514 -81.794375  ...      NaN  POINT (-81.79438 30.09751)
+         latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
+hwm_id                                                         ...                                                       
+22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
+22885   30.770560 -81.581390  Irma September 2017   Seed line  ...  GACAM17842    []      NaN  POINT (-81.58139 30.77056)
+23130   31.034720 -81.640000  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.64000 31.03472)
+23216   32.035150 -81.045040  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.04504 32.03515)
+23236   32.083650 -81.157520  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.15752 32.08365)
+...           ...        ...                  ...         ...  ...         ...   ...      ...                         ...
+25146   29.992580 -81.851518  Irma September 2017   Seed line  ...      HWM 01    []      NaN  POINT (-81.85152 29.99258)
+25148   30.097214 -81.891451  Irma September 2017   Seed line  ...      hwm 01    []      NaN  POINT (-81.89145 30.09721)
+25150   30.038222 -81.880928  Irma September 2017   Seed line  ...       HWM01    []      NaN  POINT (-81.88093 30.03822)
+25158   29.720560 -81.506110  Irma September 2017   Seed line  ...         HWM    []      NaN  POINT (-81.50611 29.72056)
+25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
 
 [138 rows x 52 columns]
 ```
@@ -275,13 +275,13 @@ coops_stations()
 
 ```
         nws_id                          name state removed                     geometry
-nos_id                                                    
+nos_id                                                                                 
 1600012  46125                     QREB buoy           NaT   POINT (122.62500 37.75000)
 1611400  NWWH1                    Nawiliwili    HI     NaT  POINT (-159.37500 21.95312)
 1612340  OOUH1                      Honolulu    HI     NaT  POINT (-157.87500 21.31250)
 1612480  MOKH1                      Mokuoloe    HI     NaT  POINT (-157.75000 21.43750)
 1615680  KLIH1       Kahului, Kahului Harbor    HI     NaT  POINT (-156.50000 20.89062)
-    ...    ...                           ...   ...     ...                          ...
+...        ...                           ...   ...     ...                          ...
 9759394  MGZP4                      Mayaguez    PR     NaT   POINT (-67.18750 18.21875)
 9759938  MISP4                   Mona Island           NaT   POINT (-67.93750 18.09375)
 9761115  BARA9                       Barbuda           NaT   POINT (-61.81250 17.59375)
@@ -304,7 +304,7 @@ coops_stations_within_region(region=region)
 
 ```
         nws_id                               name state removed                    geometry
-nos_id                                                         
+nos_id                                                                                     
 8651370  DUKN7                               Duck    NC     NaT  POINT (-75.75000 36.18750)
 8652587  ORIN7                Oregon Inlet Marina    NC     NaT  POINT (-75.56250 35.78125)
 8654467  HCGN7              USCG Station Hatteras    NC     NaT  POINT (-75.68750 35.21875)
@@ -364,14 +364,14 @@ coops_product_within_region(
 Dimensions:  (nos_id: 10, t: 10)
 Coordinates:
   * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8662245 8665530 8670870
-  * t        (t) datetime64[ns] 2022-02-17T11:42:00 ... 2022-02-17T12:36:00
+  * t        (t) datetime64[ns] 2022-02-23T08:06:00 ... 2022-02-23T09:00:00
     nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'NITS1' 'CHTS1' 'FPKG1'
     x        (nos_id) float64 -75.75 -75.56 -75.69 ... -79.19 -79.94 -80.88
     y        (nos_id) float64 36.19 35.78 35.22 34.72 ... 33.34 32.78 32.03
 Data variables:
-    v        (nos_id, t) float32 6.584 6.613 6.623 6.645 ... 3.39 3.41 3.435
-    s        (nos_id, t) float32 0.071 0.063 0.074 0.075 ... 0.005 0.005 0.005
-    f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '1,0,0,0' '0,0,0,0'
+    v        (nos_id, t) float32 6.097 6.096 6.059 6.005 ... 2.39 2.324 2.336
+    s        (nos_id, t) float32 0.07 0.052 0.054 0.063 ... 0.014 0.02 0.009
+    f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '0,0,0,0' '1,0,0,0'
     q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
 ```
 

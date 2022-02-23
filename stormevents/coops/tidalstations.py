@@ -484,19 +484,19 @@ def coops_stations(station_type: COOPS_StationType = None) -> GeoDataFrame:
     :return: data frame of stations
 
     >>> coops_stations()
-            nws_id                          name state removed                    geometry
+            nws_id                          name state removed                     geometry
     nos_id
-    1600012  46125                     QREB buoy           NaT  POINT (122.62500 37.75000)
-    1611400  NWWH1                    Nawiliwili    HI     NaT POINT (-159.37500 21.95312)
-    1612340  OOUH1                      Honolulu    HI     NaT POINT (-157.87500 21.31250)
-    1612480  MOKH1                      Mokuoloe    HI     NaT POINT (-157.75000 21.43750)
-    1615680  KLIH1       Kahului, Kahului Harbor    HI     NaT POINT (-156.50000 20.89062)
-               ...                           ...   ...     ...                         ...
-    9759394  MGZP4                      Mayaguez    PR     NaT  POINT (-67.18750 18.21875)
-    9759938  MISP4                   Mona Island           NaT  POINT (-67.93750 18.09375)
-    9761115  BARA9                       Barbuda           NaT  POINT (-61.81250 17.59375)
-    9999530  FRCB6  Bermuda, Ferry Reach Channel           NaT  POINT (-64.68750 32.37500)
-    9999531               Calcasieu Test Station    LA     NaT  POINT (-93.31250 29.76562)
+    1600012  46125                     QREB buoy           NaT   POINT (122.62500 37.75000)
+    1611400  NWWH1                    Nawiliwili    HI     NaT  POINT (-159.37500 21.95312)
+    1612340  OOUH1                      Honolulu    HI     NaT  POINT (-157.87500 21.31250)
+    1612480  MOKH1                      Mokuoloe    HI     NaT  POINT (-157.75000 21.43750)
+    1615680  KLIH1       Kahului, Kahului Harbor    HI     NaT  POINT (-156.50000 20.89062)
+    ...        ...                           ...   ...     ...                          ...
+    9759394  MGZP4                      Mayaguez    PR     NaT   POINT (-67.18750 18.21875)
+    9759938  MISP4                   Mona Island           NaT   POINT (-67.93750 18.09375)
+    9761115  BARA9                       Barbuda           NaT   POINT (-61.81250 17.59375)
+    9999530  FRCB6  Bermuda, Ferry Reach Channel           NaT   POINT (-64.68750 32.37500)
+    9999531               Calcasieu Test Station    LA     NaT   POINT (-93.31250 29.76562)
     [363 rows x 5 columns]
     """
 
@@ -622,11 +622,11 @@ def coops_product_within_region(
     :param time_zone: station time zone
     :param interval: data time interval
     :param station_type: either ``current`` or ``historical``
-    :return: data frame of data within the specified region
+    :return: array of data within the specified region
 
     >>> from stormevents import VortexTrack
     >>> from shapely import ops
-    >>> from datetime import timedelta
+    >>> from datetime import datetime, timedelta
     >>> track = VortexTrack('florence2018', file_deck='b')
     >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
     >>> coops_product_within_region('water_level', region=combined_wind_swaths, start_date=datetime.now() - timedelta(hours=1), end_date=datetime.now())
@@ -634,30 +634,28 @@ def coops_product_within_region(
     Dimensions:  (nos_id: 10, t: 10)
     Coordinates:
       * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8662245 8665530 8670870
-      * t        (t) datetime64[ns] 2022-02-17T11:42:00 ... 2022-02-17T12:36:00
+      * t        (t) datetime64[ns] 2022-02-23T08:06:00 ... 2022-02-23T09:00:00
         nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'NITS1' 'CHTS1' 'FPKG1'
         x        (nos_id) float64 -75.75 -75.56 -75.69 ... -79.19 -79.94 -80.88
         y        (nos_id) float64 36.19 35.78 35.22 34.72 ... 33.34 32.78 32.03
     Data variables:
-        v        (nos_id, t) float32 6.584 6.613 6.623 6.645 ... 3.39 3.41 3.435
-        s        (nos_id, t) float32 0.071 0.063 0.074 0.075 ... 0.005 0.005 0.005
-        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '1,0,0,0' '0,0,0,0'
+        v        (nos_id, t) float32 6.097 6.096 6.059 6.005 ... 2.39 2.324 2.336
+        s        (nos_id, t) float32 0.07 0.052 0.054 0.063 ... 0.014 0.02 0.009
+        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '0,0,0,0' '1,0,0,0'
         q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
     """
 
     stations = coops_stations_within_region(region=region, station_type=station_type)
-    return xarray.combine_nested(
-        [
-            COOPS_Station(station).get(
-                product=product,
-                start_date=start_date,
-                end_date=end_date,
-                datum=datum,
-                units=units,
-                time_zone=time_zone,
-                interval=interval,
-            )
-            for station in stations.index
-        ],
-        concat_dim='nos_id',
-    )
+    station_data = [
+        COOPS_Station(station).get(
+            product=product,
+            start_date=start_date,
+            end_date=end_date,
+            datum=datum,
+            units=units,
+            time_zone=time_zone,
+            interval=interval,
+        )
+        for station in stations.index
+    ]
+    return xarray.combine_nested(station_data, concat_dim='nos_id')

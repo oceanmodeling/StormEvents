@@ -38,32 +38,6 @@ from stormevents.utilities import subset_time_interval
 class VortexTrack:
     """
     interface to an ATCF vortex track (i.e. HURDAT, best track, HWRF, etc.)
-
-    .. code-block:: python
-
-        # retrieve vortex data from the Internet from its ID
-        vortex = VortexTrack('AL112017')
-
-    .. code-block:: python
-
-        # you can also use the storm name and year in the lookup
-        vortex = VortexTrack('irma2017')
-
-    .. code-block:: python
-
-        # read vortex data from an existing ATCF track file (`*.trk`)
-        vortex = VortexTrack.from_atcf_file('atcf.trk')
-
-    .. code-block:: python
-
-        # read vortex data from an existing file in the ADCIRC `fort.22` format
-        vortex = VortexTrack.from_fort22('fort.22')
-
-    .. code-block:: python
-
-        # write to a file in the ADCIRC `fort.22` format
-        vortex.write('fort.22')
-
     """
 
     def __init__(
@@ -84,9 +58,22 @@ class VortexTrack:
         :param mode: ATCF mode; either `historical` or `realtime`
         :param record_type: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
         :param filename: file path to `fort.22`
+
+        >>> VortexTrack('AL112017')
+        VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+
+        >>> VortexTrack('AL112017', start_date='2017-09-04')
+        VortexTrack('AL112017', datetime.datetime(2017, 9, 4, 0, 0), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+
+        >>> from datetime import timedelta
+        >>> VortexTrack('AL112017', start_date=timedelta(days=2), end_date=timedelta(days=-1))
+        VortexTrack('AL112017', Timestamp('2017-09-01 00:00:00'), Timestamp('2017-09-12 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+
+        >>> VortexTrack('AL112017', file_deck='a')
+        VortexTrack('AL112017', Timestamp('2017-08-27 06:00:00'), Timestamp('2017-09-16 15:00:00'), <ATCF_FileDeck.ADVISORY: 'a'>, <ATCF_Mode.historical: 'ARCHIVE'>, None, None)
         """
 
-        self.__dataframe = None
+        self.__unfiltered_data = None
         self.__filename = None
 
         self.__remote_atcf = None
@@ -107,12 +94,12 @@ class VortexTrack:
         self.record_type = record_type
 
         if isinstance(storm, DataFrame):
-            self.__unfiltered_data = storm
+            self.unfiltered_data = storm
         elif isinstance(storm, io.BytesIO):
             self.__remote_atcf = storm
         elif isinstance(storm, (str, PathLike, pathlib.Path)):
             if os.path.exists(storm):
-                self.__remote_atcf = io.open(storm, 'rb')
+                self.__filename = storm
             else:
                 try:
                     self.nhc_code = storm
@@ -225,6 +212,10 @@ class VortexTrack:
     def name(self) -> str:
         """
         :return: NHC storm name
+
+        >>> track = VortexTrack('AL112017')
+        >>> track.name
+        'IRMA'
         """
 
         if self.__name is None:
@@ -244,6 +235,10 @@ class VortexTrack:
     def basin(self) -> str:
         """
         :return: basin of track
+
+        >>> track = VortexTrack('AL112017')
+        >>> track.basin
+        'AL'
         """
 
         return self.data['basin'].iloc[0]
@@ -252,6 +247,10 @@ class VortexTrack:
     def storm_number(self) -> str:
         """
         :return: ordinal number of storm within the basin and year
+
+        >>> track = VortexTrack('AL112017')
+        >>> track.storm_number
+        11
         """
 
         return self.data['storm_number'].iloc[0]
@@ -260,6 +259,10 @@ class VortexTrack:
     def year(self) -> int:
         """
         :return: year of storm
+
+        >>> track = VortexTrack('AL112017')
+        >>> track.year
+        2017
         """
 
         return self.data['datetime'].iloc[0].year
@@ -268,22 +271,26 @@ class VortexTrack:
     def nhc_code(self) -> str:
         """
         :return: storm NHC code (i.e. ``AL062018``)
+
+        >>> track = VortexTrack('AL112017')
+        >>> track.nhc_code
+        'AL112017'
         """
 
         if self.__nhc_code is None and not self.__invalid_storm_name:
-            if self.__dataframe is not None:
+            if self.__unfiltered_data is not None:
                 nhc_code = (
-                    f'{self.__dataframe["basin"].iloc[-1]}'
-                    f'{self.__dataframe["storm_number"].iloc[-1]}'
-                    f'{self.__dataframe["datetime"].iloc[-1].year}'
+                    f'{self.__unfiltered_data["basin"].iloc[-1]}'
+                    f'{self.__unfiltered_data["storm_number"].iloc[-1]}'
+                    f'{self.__unfiltered_data["datetime"].iloc[-1].year}'
                 )
                 try:
                     self.nhc_code = nhc_code
                 except ValueError:
                     try:
                         nhc_code = get_atcf_entry(
-                            storm_name=self.__dataframe['name'].tolist()[-1],
-                            year=self.__dataframe['datetime'].tolist()[-1].year,
+                            storm_name=self.__unfiltered_data['name'].tolist()[-1],
+                            year=self.__unfiltered_data['datetime'].tolist()[-1].year,
                         ).name
                         self.nhc_code = nhc_code
                     except ValueError:
@@ -306,48 +313,80 @@ class VortexTrack:
         self.__nhc_code = nhc_code
 
     @property
-    def start_date(self) -> datetime:
+    def start_date(self) -> pandas.Timestamp:
         """
-        :return: filter start time
+        :return: start time of current track
+
+        >>> track = VortexTrack('AL112017')
+        >>> track.start_date
+        Timestamp('2017-08-30 00:00:00')
+        >>> track.start_date = '2017-09-04'
+        >>> track.start_date
+        Timestamp('2017-09-04 00:00:00')
+        >>> from datetime import timedelta
+        >>> track.start_date = timedelta(days=1)
+        >>> track.start_date
+        Timestamp('2017-08-31 00:00:00')
+        >>> track.start_date = timedelta(days=-2)
+        >>> track.start_date
+        Timestamp('2017-09-11 12:00:00')
         """
 
         return self.__start_date
 
     @start_date.setter
     def start_date(self, start_date: datetime):
-        data_start = self.__unfiltered_data['datetime'].iloc[0]
+        data_start = self.unfiltered_data['datetime'].iloc[0]
 
         if start_date is None:
             start_date = data_start
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_end = self.__unfiltered_data['datetime'].iloc[-1]
+            data_end = self.unfiltered_data['datetime'].iloc[-1]
             start_date, _ = subset_time_interval(
                 start=data_start, end=data_end, subset_start=start_date,
             )
+            if not isinstance(start_date, pandas.Timestamp):
+                start_date = pandas.to_datetime(start_date)
 
         self.__start_date = start_date
 
     @property
-    def end_date(self) -> datetime:
+    def end_date(self) -> pandas.Timestamp:
         """
-        :return: filter end time
+        :return: end time of current track
+
+        >>> track = VortexTrack('AL112017')
+        >>> track.end_date
+        Timestamp('2017-09-13 12:00:00')
+        >>> track.end_date = '2017-09-10'
+        >>> track.end_date
+        Timestamp('2017-09-10 00:00:00')
+        >>> from datetime import timedelta
+        >>> track.end_date = timedelta(days=-1)
+        >>> track.end_date
+        Timestamp('2017-09-12 12:00:00')
+        >>> track.end_date = timedelta(days=2)
+        >>> track.end_date
+        Timestamp('2017-09-01 00:00:00')
         """
 
         return self.__end_date
 
     @end_date.setter
     def end_date(self, end_date: datetime):
-        data_end = self.__unfiltered_data['datetime'].iloc[-1]
+        data_end = self.unfiltered_data['datetime'].iloc[-1]
 
         if end_date is None:
             end_date = data_end
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_start = self.__unfiltered_data['datetime'].iloc[0]
+            data_start = self.unfiltered_data['datetime'].iloc[0]
             _, end_date = subset_time_interval(
                 start=data_start, end=data_end, subset_end=end_date,
             )
+            if not isinstance(end_date, pandas.Timestamp):
+                end_date = pandas.to_datetime(end_date)
 
         self.__end_date = end_date
 
@@ -452,26 +491,42 @@ class VortexTrack:
         """
         :return: track data for the given parameters as a data frame
 
+        >>> track = VortexTrack('AL112017')
+        >>> track.data
+            basin storm_number record_type            datetime  ...   direction     speed    name                    geometry
+        0      AL           11        BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
+        1      AL           11        BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
+        2      AL           11        BEST 2017-08-30 12:00:00  ...  274.424523  6.947623    IRMA  POINT (-29.70000 16.30000)
+        3      AL           11        BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
+        4      AL           11        BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
+        ..    ...          ...         ...                 ...  ...         ...       ...     ...                         ...
+        168    AL           11        BEST 2017-09-12 12:00:00  ...  309.875306  7.262151    IRMA  POINT (-86.90000 33.80000)
+        169    AL           11        BEST 2017-09-12 18:00:00  ...  315.455084  7.247674    IRMA  POINT (-88.10000 34.80000)
+        170    AL           11        BEST 2017-09-13 00:00:00  ...  320.849994  5.315966    IRMA  POINT (-88.90000 35.60000)
+        171    AL           11        BEST 2017-09-13 06:00:00  ...  321.042910  3.973414    IRMA  POINT (-89.50000 36.20000)
+        172    AL           11        BEST 2017-09-13 12:00:00  ...  321.262133  3.961652    IRMA  POINT (-90.10000 36.80000)
+        [173 rows x 22 columns]
+
         >>> track = VortexTrack('AL112017', file_deck='a')
         >>> track.data
-            basin storm_number  ...    name                    geometry
-        0      AL           11  ...  INVEST  POINT (-26.90000 16.10000)
-        1      AL           11  ...  INVEST  POINT (-28.30000 16.20000)
-        2      AL           11  ...    IRMA  POINT (-29.70000 16.30000)
-        3      AL           11  ...    IRMA  POINT (-30.80000 16.30000)
-        4      AL           11  ...    IRMA  POINT (-30.80000 16.30000)
-        ..    ...          ...  ...     ...                         ...
-        168    AL           11  ...    IRMA  POINT (-86.90000 33.80000)
-        169    AL           11  ...    IRMA  POINT (-88.10000 34.80000)
-        170    AL           11  ...    IRMA  POINT (-88.90000 35.60000)
-        171    AL           11  ...    IRMA  POINT (-89.50000 36.20000)
-        172    AL           11  ...    IRMA  POINT (-90.10000 36.80000)
-        [173 rows x 22 columns]
+              basin storm_number record_type            datetime  ...   direction      speed    name                    geometry
+        0        AL           11        CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
+        1        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)
+        2        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-13.30000 11.50000)
+        3        AL           11        CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-18.40000 11.90000)
+        4        AL           11        CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-16.00000 11.50000)
+        ...     ...          ...         ...                 ...  ...         ...        ...     ...                         ...
+        10739    AL           11        HMON 2017-09-16 09:00:00  ...   52.414833  11.903071          POINT (-84.30000 43.00000)
+        10740    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 41.00000)
+        10741    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-82.00000 39.50000)
+        10742    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 44.00000)
+        10743    AL           11        HMON 2017-09-16 15:00:00  ...  122.402907  22.540200          POINT (-81.90000 39.80000)
+        [10744 rows x 22 columns
         """
 
-        return self.__unfiltered_data.loc[
-            (self.__unfiltered_data['datetime'] >= self.start_date)
-            & (self.__unfiltered_data['datetime'] <= self.end_date)
+        return self.unfiltered_data.loc[
+            (self.unfiltered_data['datetime'] >= self.start_date)
+            & (self.unfiltered_data['datetime'] <= self.end_date)
         ]
 
     def write(self, path: PathLike, overwrite: bool = False):
@@ -485,12 +540,19 @@ class VortexTrack:
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)
         if overwrite or not path.exists():
+            if path.suffix == '.22':
+                content = self.fort_22
+            else:
+                raise NotImplementedError(
+                    'writing to files other than `*.22` not yet implemented'
+                )
             with open(path, 'w') as f:
-                f.write(str(self))
+                f.write(content)
         else:
             logging.warning(f'skipping existing file "{path}"')
 
-    def __str__(self):
+    @property
+    def fort_22(self) -> str:
         record_numbers = self.__record_numbers
         lines = []
 
@@ -753,9 +815,9 @@ class VortexTrack:
         return wind_swaths
 
     @property
-    def duration(self) -> float:
+    def duration(self) -> pandas.Timedelta:
         """
-        :return: total sum of time intervals within the storm track
+        :return: duration of current track
         """
 
         return self.data['datetime'].diff().sum()
@@ -783,7 +845,7 @@ class VortexTrack:
         return self.__remote_atcf
 
     @property
-    def __unfiltered_data(self) -> DataFrame:
+    def unfiltered_data(self) -> DataFrame:
         """
         :return: data frame containing all track data for the specified storm and file deck
         """
@@ -792,8 +854,8 @@ class VortexTrack:
 
         # only download new file if the configuration has changed since the last download
         if (
-            self.__dataframe is None
-            or len(self.__dataframe) == 0
+            self.__unfiltered_data is None
+            or len(self.__unfiltered_data) == 0
             or configuration != self.__previous_configuration
         ):
             if configuration['filename'] is not None:
@@ -809,29 +871,29 @@ class VortexTrack:
             dataframe.sort_values(['datetime', 'record_type'], inplace=True)
             dataframe.reset_index(inplace=True, drop=True)
 
-            self.__dataframe = dataframe
+            self.__unfiltered_data = dataframe
             self.__previous_configuration = configuration
 
         # if location values have changed, recompute velocity
-        location_hash = pandas.util.hash_pandas_object(self.__dataframe['geometry'])
+        location_hash = pandas.util.hash_pandas_object(self.__unfiltered_data['geometry'])
 
         if self.__location_hash is None or len(location_hash) != len(self.__location_hash):
-            updated_locations = ~self.__dataframe.index.isnull()
+            updated_locations = ~self.__unfiltered_data.index.isnull()
         else:
             updated_locations = location_hash != self.__location_hash
-        updated_locations |= pandas.isna(self.__dataframe['speed'])
+        updated_locations |= pandas.isna(self.__unfiltered_data['speed'])
 
         if updated_locations.any():
-            self.__dataframe.loc[updated_locations] = self.__compute_velocity(
-                self.__dataframe[updated_locations]
+            self.__unfiltered_data.loc[updated_locations] = self.__compute_velocity(
+                self.__unfiltered_data[updated_locations]
             )
             self.__location_hash = location_hash
 
-        return self.__dataframe
+        return self.__unfiltered_data
 
-    @__unfiltered_data.setter
-    def __unfiltered_data(self, dataframe: DataFrame):
-        self.__dataframe = dataframe
+    @unfiltered_data.setter
+    def unfiltered_data(self, dataframe: DataFrame):
+        self.__unfiltered_data = dataframe
 
     @property
     def __configuration(self) -> Dict[str, Any]:
@@ -893,7 +955,7 @@ class VortexTrack:
 
     @property
     def __file_end_date(self):
-        unique_dates = numpy.unique(self.__unfiltered_data['datetime'])
+        unique_dates = numpy.unique(self.unfiltered_data['datetime'])
         for date in unique_dates:
             if date >= numpy.datetime64(self.end_date):
                 return date
@@ -903,7 +965,7 @@ class VortexTrack:
 
     def __copy__(self) -> 'VortexTrack':
         return self.__class__(
-            storm=self.__unfiltered_data.copy(),
+            storm=self.unfiltered_data.copy(),
             start_date=self.start_date,
             end_date=self.end_date,
             file_deck=self.file_deck,
@@ -913,6 +975,9 @@ class VortexTrack:
 
     def __eq__(self, other: 'VortexTrack') -> bool:
         return self.data.equals(other.data)
+
+    def __str__(self) -> str:
+        return f'{self.nhc_code} ({" + ".join(pandas.unique(self.data["record_type"]).tolist())}) track with {len(self)} entries, spanning {self.distance:.2f} meters over {self.duration}'
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.mode, self.record_type, self.filename])})'

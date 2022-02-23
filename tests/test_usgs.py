@@ -73,10 +73,26 @@ def test_HighWaterMarks():
 
 
 def test_HighWaterMarks_data():
-    hwm = HighWaterMarks(182)
+    hwm_1 = HighWaterMarks(182)
+    hwm_2 = HighWaterMarks(23, hwm_quality='EXCELLENT')
+    hwm_3 = HighWaterMarks('nonexistent')
 
-    assert len(hwm.data) == 221
+    assert len(hwm_1.data) == 221
+    assert len(hwm_2.data) == 83
 
-    hwm.hwm_quality = 'EXCELLENT', 'GOOD'
+    with pytest.raises(ValueError):
+        hwm_3.data
 
-    assert len(hwm.data) == 138
+    hwm_1.hwm_quality = 'EXCELLENT', 'GOOD'
+    hwm_2.hwm_quality = 'EXCELLENT', 'GOOD'
+    hwm_3.hwm_quality = 'EXCELLENT', 'GOOD'
+
+    assert len(hwm_1.data) == 138
+    assert len(hwm_2.data) == 519
+
+    with pytest.raises(ValueError):
+        hwm_3.data
+
+    hwm_3.event_id = 189
+
+    assert len(hwm_3.data) == 10

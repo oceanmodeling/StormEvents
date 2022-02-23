@@ -143,20 +143,20 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     :return: table of storms
 
     >>> nhc_storms()
-                 name class  year  ...    source          start_date            end_date
-    nhc_code                       ...
-    AL021851  UNNAMED    HU  1851  ...   ARCHIVE 1851-07-05 12:00:00 1851-07-05 12:00:00
-    AL031851  UNNAMED    TS  1851  ...   ARCHIVE 1851-07-10 12:00:00 1851-07-10 12:00:00
-    AL041851  UNNAMED    HU  1851  ...   ARCHIVE 1851-08-16 00:00:00 1851-08-27 18:00:00
-    AL051851  UNNAMED    TS  1851  ...   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
-    AL061851  UNNAMED    TS  1851  ...   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
-         ...      ...   ...   ...  ...       ...                 ...                 ...
-    CP902021   INVEST    LO  2021  ...  METWATCH 2021-07-24 12:00:00                 NaT
-    CP912021   INVEST    DB  2021  ...  METWATCH 2021-08-07 18:00:00                 NaT
-    EP922021   INVEST    DB  2021  ...  METWATCH 2021-06-05 06:00:00                 NaT
-    AL952021   INVEST    DB  2021  ...  METWATCH 2021-10-28 12:00:00                 NaT
-    AL962021   INVEST    EX  2021  ...  METWATCH 2021-11-07 12:00:00                 NaT
-    [2730 rows x 8 columns]
+                    name class  year basin  number    source          start_date            end_date
+    nhc_code
+    AL021851     UNNAMED    HU  1851    AL       2   ARCHIVE 1851-07-05 12:00:00 1851-07-05 12:00:00
+    AL031851     UNNAMED    TS  1851    AL       3   ARCHIVE 1851-07-10 12:00:00 1851-07-10 12:00:00
+    AL041851     UNNAMED    HU  1851    AL       4   ARCHIVE 1851-08-16 00:00:00 1851-08-27 18:00:00
+    AL051851     UNNAMED    TS  1851    AL       5   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
+    AL061851     UNNAMED    TS  1851    AL       6   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
+    ...              ...   ...   ...   ...     ...       ...                 ...                 ...
+    EP922021      INVEST    DB  2021    EP      92  METWATCH 2021-06-05 06:00:00                 NaT
+    AL952021      INVEST    DB  2021    AL      95  METWATCH 2021-10-28 12:00:00                 NaT
+    AL962021      INVEST    EX  2021    AL      96  METWATCH 2021-11-07 12:00:00                 NaT
+    EP712022  GENESIS001    DB  2022    EP      71   GENESIS 2022-01-20 12:00:00                 NaT
+    EP902022      INVEST    LO  2022    EP      90  METWATCH 2022-01-20 12:00:00                 NaT
+    [2729 rows x 8 columns]
     """
 
     url = 'https://ftp.nhc.noaa.gov/atcf/index/storm_list.txt'

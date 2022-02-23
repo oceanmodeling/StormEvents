@@ -83,21 +83,36 @@ class HighWaterMarks:
         :param still_water: HWM still water filter
 
         >>> survey = HighWaterMarks(182)
+        >>> survey.data
+                 latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
+        hwm_id                                                         ...
+        22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
+        22757   30.510528 -81.460833  Irma September 2017      Debris  ...       HWM 1    []        0  POINT (-81.46083 30.51053)
+        22885   30.770560 -81.581390  Irma September 2017   Seed line  ...  GACAM17842    []      NaN  POINT (-81.58139 30.77056)
+        22965   31.063150 -81.404540  Irma September 2017      Debris  ...         HWM    []      NaN  POINT (-81.40454 31.06315)
+        23052   30.845000 -81.560000  Irma September 2017      Debris  ...  GACAM17840    []      NaN  POINT (-81.56000 30.84500)
+        ...           ...        ...                  ...         ...  ...         ...   ...      ...                         ...
+        25147   30.018190 -81.859657  Irma September 2017         Mud  ...       HWM01    []      NaN  POINT (-81.85966 30.01819)
+        25148   30.097214 -81.891451  Irma September 2017   Seed line  ...      hwm 01    []      NaN  POINT (-81.89145 30.09721)
+        25150   30.038222 -81.880928  Irma September 2017   Seed line  ...       HWM01    []      NaN  POINT (-81.88093 30.03822)
+        25158   29.720560 -81.506110  Irma September 2017   Seed line  ...         HWM    []      NaN  POINT (-81.50611 29.72056)
+        25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
+        [221 rows x 52 columns]
         >>> survey.hwm_quality = 'EXCELLENT', 'GOOD'
         >>> survey.data
-                 latitude  longitude  ... siteZone                    geometry
-        hwm_id                        ...
-        22636   32.007730 -81.238270  ...      NaN  POINT (-81.23827 32.00773)
-        22885   30.770560 -81.581390  ...      NaN  POINT (-81.58139 30.77056)
-        23130   31.034720 -81.640000  ...      NaN  POINT (-81.64000 31.03472)
-        23216   32.035150 -81.045040  ...      NaN  POINT (-81.04504 32.03515)
-        23236   32.083650 -81.157520  ...      NaN  POINT (-81.15752 32.08365)
-                   ...        ...  ...      ...                         ...
-        25146   29.992580 -81.851518  ...      NaN  POINT (-81.85152 29.99258)
-        25148   30.097214 -81.891451  ...      NaN  POINT (-81.89145 30.09721)
-        25150   30.038222 -81.880928  ...      NaN  POINT (-81.88093 30.03822)
-        25158   29.720560 -81.506110  ...      NaN  POINT (-81.50611 29.72056)
-        25159   30.097514 -81.794375  ...      NaN  POINT (-81.79438 30.09751)
+                 latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
+        hwm_id                                                         ...
+        22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
+        22885   30.770560 -81.581390  Irma September 2017   Seed line  ...  GACAM17842    []      NaN  POINT (-81.58139 30.77056)
+        23130   31.034720 -81.640000  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.64000 31.03472)
+        23216   32.035150 -81.045040  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.04504 32.03515)
+        23236   32.083650 -81.157520  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.15752 32.08365)
+        ...           ...        ...                  ...         ...  ...         ...   ...      ...                         ...
+        25146   29.992580 -81.851518  Irma September 2017   Seed line  ...      HWM 01    []      NaN  POINT (-81.85152 29.99258)
+        25148   30.097214 -81.891451  Irma September 2017   Seed line  ...      hwm 01    []      NaN  POINT (-81.89145 30.09721)
+        25150   30.038222 -81.880928  Irma September 2017   Seed line  ...       HWM01    []      NaN  POINT (-81.88093 30.03822)
+        25158   29.720560 -81.506110  Irma September 2017   Seed line  ...         HWM    []      NaN  POINT (-81.50611 29.72056)
+        25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
         [138 rows x 52 columns]
         """
 
@@ -119,6 +134,7 @@ class HighWaterMarks:
 
         self.__previous_query = self.query
         self.__data = None
+        self.__error = None
 
     @classmethod
     def from_name(
@@ -257,31 +273,37 @@ class HighWaterMarks:
         """
         :returns: data frame of data for the current parameters
 
-        >>> survey = HighWaterMarks(182)
+        >>> survey = HighWaterMarks(23)
         >>> survey.data
-                         latitude  longitude  ... siteZone                    geometry
-        hwm_id                        ...
-        22636   32.007730 -81.238270  ...      NaN  POINT (-81.23827 32.00773)
-        22757   30.510528 -81.460833  ...        0  POINT (-81.46083 30.51053)
-        22885   30.770560 -81.581390  ...      NaN  POINT (-81.58139 30.77056)
-        22965   31.063150 -81.404540  ...      NaN  POINT (-81.40454 31.06315)
-        23052   30.845000 -81.560000  ...      NaN  POINT (-81.56000 30.84500)
-                   ...        ...  ...      ...                         ...
-        25147   30.018190 -81.859657  ...      NaN  POINT (-81.85966 30.01819)
-        25148   30.097214 -81.891451  ...      NaN  POINT (-81.89145 30.09721)
-        25150   30.038222 -81.880928  ...      NaN  POINT (-81.88093 30.03822)
-        25158   29.720560 -81.506110  ...      NaN  POINT (-81.50611 29.72056)
-        25159   30.097514 -81.794375  ...      NaN  POINT (-81.79438 30.09751)
-
-        [221 rows x 52 columns]
+                 latitude  longitude eventName                      hwmTypeName  ... approval_id hwm_uncertainty uncertainty                    geometry
+        hwm_id                                                                   ...
+        14699   38.917360 -75.947890     Irene                           Debris  ...         NaN             NaN         NaN  POINT (-75.94789 38.91736)
+        14700   38.917360 -75.947890     Irene                              Mud  ...         NaN             NaN         NaN  POINT (-75.94789 38.91736)
+        14701   38.917580 -75.948470     Irene                              Mud  ...         NaN             NaN         NaN  POINT (-75.94847 38.91758)
+        14702   38.917360 -75.946060     Irene                       Stain line  ...         NaN             NaN         NaN  POINT (-75.94606 38.91736)
+        14703   38.917580 -75.945970     Irene                              Mud  ...         NaN             NaN         NaN  POINT (-75.94597 38.91758)
+        ...           ...        ...       ...                              ...  ...         ...             ...         ...                         ...
+        41666   44.184900 -72.823970     Irene  Other (Note in Description box)  ...     24707.0             NaN         NaN  POINT (-72.82397 44.18490)
+        41667   43.616332 -72.658893     Irene                      Clear water  ...     24706.0             NaN         NaN  POINT (-72.65889 43.61633)
+        41668   43.617370 -72.667530     Irene                        Seed line  ...     24705.0             NaN         NaN  POINT (-72.66753 43.61737)
+        41670   43.524600 -72.677540     Irene                        Seed line  ...         NaN             NaN         NaN  POINT (-72.67754 43.52460)
+        41671   43.534470 -72.672750     Irene                        Seed line  ...         NaN             NaN         NaN  POINT (-72.67275 43.53447)
+        [1300 rows x 51 columns]
         """
 
         if self.__data is None or self.__previous_query != self.query:
             response = requests.get(self.URL, params=self.query)
-            data = DataFrame(response.json())
+
+            if response.status_code == 200:
+                data = DataFrame(response.json())
+                self.__error = None
+            else:
+                self.__error = f'{response.reason} - {response.request.url}'
+                raise ValueError(self.__error)
+
             if len(data) > 0:
-                data['survey_date'] = pandas.to_datetime(data['survey_date'])
-                data['flag_date'] = pandas.to_datetime(data['flag_date'])
+                data['survey_date'] = pandas.to_datetime(data['survey_date'], errors='coerce')
+                data['flag_date'] = pandas.to_datetime(data['flag_date'], errors='coerce')
                 data.loc[data['markerName'].str.len() == 0, 'markerName'] = None
             else:
                 data = DataFrame(
@@ -340,6 +362,8 @@ class HighWaterMarks:
             data.set_index('hwm_id', inplace=True)
             self.__data = data
             self.__previous_query = self.query
+        elif self.__error is not None:
+            raise ValueError(self.__error)
         else:
             data = self.__data
 
@@ -549,12 +573,9 @@ def usgs_highwatermark_storms(year: int = None) -> DataFrame:
     >>> usgs_highwatermark_storms()
              year                         usgs_name  nhc_name  nhc_code
     usgs_id
-    7        2013                FEMA 2013 exercise      None      None
-    8        2013                             Wilma      None      None
     18       2012                    Isaac Aug 2012     ISAAC  AL092012
     19       2005                              Rita      RITA  AL182005
     23       2011                             Irene     IRENE  AL092011
-    24       2017                             Sandy      None      None
     119      2015                           Joaquin   JOAQUIN  AL112015
     131      2016                           Hermine   HERMINE  AL092016
     133      2003             Isabel September 2003    ISABEL  AL132003
@@ -563,7 +584,6 @@ def usgs_highwatermark_storms(year: int = None) -> DataFrame:
     182      2017               Irma September 2017      IRMA  AL112017
     189      2017              Maria September 2017     MARIA  AL152017
     196      2017                 Nate October 2017      NATE  AL162017
-    281      2019                  Lane August 2018      None      None
     283      2018                 Florence Sep 2018  FLORENCE  AL062018
     287      2018                  Michael Oct 2018   MICHAEL  AL142018
     291      2019             2019 Hurricane Dorian    DORIAN  AL052019
@@ -599,4 +619,6 @@ def usgs_highwatermark_storms(year: int = None) -> DataFrame:
                 events.at[event_id, 'nhc_name'] = storm['name']
                 events.at[event_id, 'nhc_code'] = storm.name
 
-    return events[['year', 'usgs_name', 'nhc_name', 'nhc_code']]
+    return events.loc[
+        ~pandas.isna(events['nhc_code']), ['year', 'usgs_name', 'nhc_name', 'nhc_code']
+    ]
