@@ -48,8 +48,7 @@ def test_usgs_highwatermark_storms():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 7),
-    reason='floating point differences between python 3.7 and lower versions',
+    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
 )
 def test_HighWaterMarks():
     reference_directory = REFERENCE_DIRECTORY / 'test_HighWaterMarks'

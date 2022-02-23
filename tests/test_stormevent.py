@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import sys
 
 import pytest
 from shapely.geometry import box
@@ -123,6 +124,9 @@ def test_track(florence2018, ida2021):
     check_reference_directory(output_directory, reference_directory)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
+)
 def test_high_water_marks(florence2018):
     reference_directory = REFERENCE_DIRECTORY / 'test_high_water_marks'
     output_directory = OUTPUT_DIRECTORY / 'test_high_water_marks'

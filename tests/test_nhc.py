@@ -173,7 +173,7 @@ def test_vortex_types():
 
     for file_deck, values in file_decks.items():
         for record_type in values['record_types']:
-            cyclone = VortexTrack(
+            track = VortexTrack(
                 'al062018',
                 start_date=values['start_date'],
                 end_date=values['end_date'],
@@ -181,8 +181,8 @@ def test_vortex_types():
                 record_type=record_type,
             )
 
-            cyclone.write(
-                output_directory / f'{file_deck}-deck_{record_type}.txt', overwrite=True
+            track.write(
+                output_directory / f'{file_deck}-deck_{record_type}.22', overwrite=True
             )
 
     check_reference_directory(output_directory, reference_directory)
