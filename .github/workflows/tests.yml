@@ -23,9 +23,7 @@ jobs:
           key: ${{ runner.os }}-python${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
           restore-keys: ${{ runner.os }}-python${{ matrix.python-version }}-
       - name: install dependencies
-        run: |
-          pip install dunamai gartersnake
-          pip install ".[development]"
+        run: pip install ".[development]"
       - name: lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -57,8 +55,6 @@ jobs:
         if: contains(matrix.os, 'windows')
         run: pip install pipwin
       - name: install dependencies
-        run: |
-          pip install dunamai gartersnake
-          pip install ".[testing]"
+        run: pip install ".[testing]"
       - name: run tests
         run: pytest --numprocesses auto
