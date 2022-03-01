@@ -1,80 +1,79 @@
+import os
+from pathlib import Path
 import subprocess
 import sys
 
-try:
-    from importlib import metadata as importlib_metadata
-except ImportError:  # for Python<3.8
-    subprocess.run(
-        f'{sys.executable} -m pip install importlib_metadata',
-        shell=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    import importlib_metadata
-
-from typing import List
-
 from setuptools import config, find_packages, setup
 
+DEPENDENCIES = [
+    'bs4',
+    'geopandas',
+    'numpy',
+    'python-dateutil',
+    'pandas',
+    'pooch',
+    'pyproj>=2.6',
+    'requests',
+    'shapely',
+    'typepigeon>=1.0.5',
+    'xarray',
+]
 
-def installed_packages() -> List[str]:
-    installed_distributions = importlib_metadata.distributions()
-    return [
-        distribution.metadata['Name'].lower()
-        for distribution in installed_distributions
-        if distribution.metadata['Name'] is not None
-    ]
+if (Path(sys.prefix) / 'conda-meta').exists() or os.name == 'nt':
+    try:
+        import gartersnake
 
+        MISSING_DEPENDENCIES = gartersnake.missing_requirements(DEPENDENCIES)
+
+        if len(MISSING_DEPENDENCIES) > 0:
+            print(
+                    f'{len(MISSING_DEPENDENCIES)} (out of {len(DEPENDENCIES)}) dependencies are missing')
+
+        if len(MISSING_DEPENDENCIES) > 0 and gartersnake.is_conda():
+            gartersnake.install_conda_requirements(MISSING_DEPENDENCIES)
+            MISSING_DEPENDENCIES = gartersnake.missing_requirements(
+                    DEPENDENCIES)
+
+        if len(MISSING_DEPENDENCIES) > 0 and gartersnake.is_windows():
+            gartersnake.install_windows_requirements(MISSING_DEPENDENCIES)
+            MISSING_DEPENDENCIES = gartersnake.missing_requirements(
+                    DEPENDENCIES)
+    except:
+        pass
 
 try:
-    if 'dunamai' not in installed_packages():
+    try:
+        import dunamai
+    except ImportError:
         subprocess.run(
-            f'{sys.executable} -m pip install dunamai',
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+                f'{sys.executable} -m pip install dunamai',
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
         )
 
     from dunamai import Version
 
-    version = Version.from_any_vcs().serialize()
+    __version__ = Version.from_any_vcs().serialize()
 except (ModuleNotFoundError, RuntimeError) as error:
     print(error)
-    version = '0.0.0'
+    __version__ = '0.0.0'
 
-print(f'using version {version}')
+print(f'using version {__version__}')
 
 metadata = config.read_configuration('setup.cfg')['metadata']
 
 setup(
-    name=metadata['name'],
-    version=version,
-    author=metadata['author'],
-    author_email=metadata['author_email'],
-    description=metadata['description'],
-    long_description=metadata['long_description'],
-    long_description_content_type='text/markdown',
-    url=metadata['url'],
-    packages=find_packages(),
-    python_requires='>=3.6',
-    setup_requires=['dunamai', 'setuptools>=41.2'],
-    install_requires=[
-        'bs4',
-        'geopandas',
-        'numpy',
-        'python-dateutil',
-        'pandas',
-        'pooch',
-        'pyproj>=2.6',
-        'requests',
-        'shapely',
-        'typepigeon>=1.0.5',
-        'xarray',
-    ],
-    # test and development dependencies
-    extras_require={
-        'testing': ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist'],
-        'development': ['dunamai', 'flake8', 'isort', 'oitnb'],
-        'documentation': ['dunamai', 'm2r2', 'sphinx', 'sphinx-rtd-theme'],
-    },
+        **metadata,
+        version=__version__,
+        packages=find_packages(),
+        python_requires='>=3.6',
+        setup_requires=['dunamai', 'setuptools>=41.2'],
+        install_requires=DEPENDENCIES,
+        extras_require={
+            'testing': ['pytest', 'pytest-cov', 'pytest-socket',
+                        'pytest-xdist'],
+            'development': ['flake8', 'isort', 'oitnb'],
+            'documentation': ['m2r2', 'sphinx', 'sphinx-rtd-theme'],
+        },
 )
