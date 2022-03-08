@@ -1,5 +1,5 @@
 from stormevents.usgs.highwatermarks import (
-    HighWaterMarks,
+    FloodEventHighWaterMarks,
     StormHighWaterMarks,
     usgs_highwatermark_events,
     usgs_highwatermark_storms,

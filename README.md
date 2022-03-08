@@ -171,46 +171,35 @@ results of these surveys via their API.
 ##### list flood events that have HWM surveys
 
 ```python
-from stormevents.usgs import usgs_highwatermark_events
+from stormevents import usgs_highwatermark_events
 
 usgs_highwatermark_events()
 ```
 
 ```
-                                     name  year
-usgs_id                                        
-7                      FEMA 2013 exercise  2013
-8                                   Wilma  2013
-18                         Isaac Aug 2012  2012
-19                                   Rita  2005
-23                                  Irene  2011
-24                                  Sandy  2017
-119                               Joaquin  2015
-131                               Hermine  2016
-133                 Isabel September 2003  2003
-135                  Matthew October 2016  2016
-180                       Harvey Aug 2017  2017
-182                   Irma September 2017  2017
-189                  Maria September 2017  2017
-196                     Nate October 2017  2017
-281                      Lane August 2018  2019
-283                     Florence Sep 2018  2018
-287                      Michael Oct 2018  2018
-291                 2019 Hurricane Dorian  2019
-301                 2020 Hurricane Isaias  2020
-303      2020 TS Marco - Hurricane  Laura  2020
-304                  2020 Hurricane Sally  2020
-305                  2020 Hurricane Delta  2020
-310           2021 Tropical Cyclone Henri  2021
-312             2021 Tropical Cyclone Ida  2021
+                                            name  year  ...          start_date            end_date
+usgs_id                                                 ...                                        
+7                             FEMA 2013 exercise  2013  ... 2013-05-15 04:00:00 2013-05-23 04:00:00
+8                                          Wilma  2005  ... 2005-10-20 00:00:00 2005-10-31 00:00:00
+9                            Midwest Floods 2011  2011  ... 2011-02-01 06:00:00 2011-08-30 05:00:00
+10                          2013 - June PA Flood  2013  ... 2013-06-23 00:00:00 2013-07-01 00:00:00
+11               Colorado 2013 Front Range Flood  2013  ... 2013-09-12 05:00:00 2013-09-24 05:00:00
+...                                          ...   ...  ...                 ...                 ...
+311                   2021 August Flash Flood TN  2021  ... 2021-08-21 05:00:00 2021-08-22 05:00:00
+312                    2021 Tropical Cyclone Ida  2021  ... 2021-08-27 05:00:00 2021-09-03 05:00:00
+313                Chesapeake Bay - October 2021  2021  ... 2021-10-28 04:00:00                 NaT
+314      2021 November Flooding Washington State  2021  ... 2021-11-08 06:00:00 2021-11-19 06:00:00
+315          Washington Coastal Winter 2021-2022  2021  ... 2021-11-01 05:00:00 2022-06-30 05:00:00
+
+[292 rows x 11 columns]
 ```
 
 ##### retrieve HWM survey data for any flood event
 
 ```python
-from stormevents.usgs import HighWaterMarks
+from stormevents.usgs import FloodEventHighWaterMarks
 
-survey = HighWaterMarks(182)
+survey = FloodEventHighWaterMarks(182)
 survey.data
 ```
 
@@ -233,9 +222,9 @@ hwm_id                                                         ...
 ```
 
 ```python
-from stormevents.usgs import HighWaterMarks
+from stormevents.usgs import FloodEventHighWaterMarks
 
-survey = HighWaterMarks(182)
+survey = FloodEventHighWaterMarks(182)
 survey.hwm_quality = 'EXCELLENT', 'GOOD'
 survey.data
 ```
@@ -517,7 +506,7 @@ VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 
 from stormevents import StormEvent
 
 storm = StormEvent('florence', 2018)
-storm.high_water_marks
+storm.high_water_marks.data()
 ```
 
 ```

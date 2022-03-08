@@ -177,7 +177,7 @@ class COOPS_Station:
         constituents.set_index('#', inplace=True)
         return constituents
 
-    def get(
+    def data(
         self,
         product: COOPS_Product,
         start_date: datetime,
@@ -200,7 +200,7 @@ class COOPS_Station:
         :return: data for the current station within the specified parameters
 
         >>> station = COOPS_Station(8632200)
-        >>> station.get('water_level', start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
+        >>> station.data('water_level', start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
         <xarray.Dataset>
         Dimensions:  (nos_id: 1, t: 841)
         Coordinates:
@@ -228,19 +228,19 @@ class COOPS_Station:
                 interval=interval,
             )
         else:
-            if start_date is None:
+            if start_date is not None:
                 self.__query.start_date = start_date
-            if end_date is None:
+            if end_date is not None:
                 self.__query.end_date = end_date
-            if product is None:
+            if product is not None:
                 self.__query.product = product
-            if datum is None:
+            if datum is not None:
                 self.__query.datum = datum
-            if units is None:
+            if units is not None:
                 self.__query.units = units
-            if time_zone is None:
+            if time_zone is not None:
                 self.__query.time_zone = time_zone
-            if interval is None:
+            if interval is not None:
                 self.__query.interval = interval
 
         data = self.__query.data
@@ -568,7 +568,7 @@ def coops_stations_within_region(
     :param station_type: one of ``current`` or ``historical``
     :return: data frame of stations within the specified region
 
-    >>> from stormevents import VortexTrack
+    >>> from stormevents.nhc import VortexTrack
     >>> from shapely import ops
     >>> track = VortexTrack('florence2018', file_deck='b')
     >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
@@ -624,7 +624,7 @@ def coops_product_within_region(
     :param station_type: either ``current`` or ``historical``
     :return: array of data within the specified region
 
-    >>> from stormevents import VortexTrack
+    >>> from stormevents.nhc import VortexTrack
     >>> from shapely import ops
     >>> from datetime import datetime, timedelta
     >>> track = VortexTrack('florence2018', file_deck='b')
@@ -647,7 +647,7 @@ def coops_product_within_region(
 
     stations = coops_stations_within_region(region=region, station_type=station_type)
     station_data = [
-        COOPS_Station(station).get(
+        COOPS_Station(station).data(
             product=product,
             start_date=start_date,
             end_date=end_date,

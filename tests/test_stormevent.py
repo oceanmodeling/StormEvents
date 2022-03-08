@@ -134,8 +134,9 @@ def test_high_water_marks(florence2018):
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    high_water_marks = florence2018.high_water_marks
+    flood = florence2018.high_water_marks
 
+    high_water_marks = flood.data()
     high_water_marks.to_csv(output_directory / 'florence2018_hwm.csv')
 
     check_reference_directory(output_directory, reference_directory)

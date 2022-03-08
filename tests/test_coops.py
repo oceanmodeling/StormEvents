@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 
 from shapely import ops
 
-from stormevents import VortexTrack
 from stormevents.coops.tidalstations import (
     coops_product_within_region,
     COOPS_Station,
     coops_stations,
     coops_stations_within_region,
 )
+from stormevents.nhc.track import VortexTrack
 from tests import check_reference_directory, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY
 
 
@@ -55,13 +55,13 @@ def test_COOPS_Station():
     station_2 = COOPS_Station('OOUH1')
     station_3 = COOPS_Station('Calcasieu Test Station')
 
-    station_1_data = station_1.get('water_level', start_date, end_date)
+    station_1_data = station_1.data('water_level', start_date, end_date)
     station_1_constituents = station_1.constituents
 
-    station_2_data = station_2.get('water_level', start_date, end_date)
+    station_2_data = station_2.data('water_level', start_date, end_date)
     station_2_constituents = station_2.constituents
 
-    station_3_data = station_3.get('water_level', start_date, end_date)
+    station_3_data = station_3.data('water_level', start_date, end_date)
     station_3_constituents = station_3.constituents
 
     assert station_1.nos_id == 1612480

@@ -21,7 +21,6 @@ from shapely.geometry import (
 )
 import typepigeon
 
-from stormevents.nhc import nhc_storms
 from stormevents.nhc.atcf import (
     ATCF_FileDeck,
     ATCF_Mode,
@@ -31,7 +30,7 @@ from stormevents.nhc.atcf import (
     normalize_atcf_value,
     read_atcf,
 )
-from stormevents.nhc.storms import nhc_archive_storms
+from stormevents.nhc.storms import nhc_archive_storms, nhc_storms
 from stormevents.utilities import subset_time_interval
 
 

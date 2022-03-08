@@ -3,7 +3,6 @@ from functools import lru_cache
 from os import PathLike
 
 import pandas
-from pandas import DataFrame
 from shapely import ops
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
@@ -11,10 +10,11 @@ import typepigeon
 import xarray
 from xarray import Dataset
 
-from stormevents.coops import COOPS_Station, coops_stations_within_region
 from stormevents.coops.tidalstations import (
     COOPS_Interval,
     COOPS_Product,
+    COOPS_Station,
+    coops_stations_within_region,
     COOPS_StationType,
     COOPS_TidalDatum,
     COOPS_TimeZone,
@@ -291,12 +291,13 @@ class StormEvent:
         )
 
     @property
-    def high_water_marks(self) -> DataFrame:
+    def high_water_marks(self) -> StormHighWaterMarks:
         """
         :return: USGS high-water marks (HWMs) for this storm event
 
         >>> storm = StormEvent('florence', 2018)
-        >>> storm.high_water_marks
+        >>> storm_hwm = storm.high_water_marks
+        >>> storm_hwm.data()
                  latitude  longitude  ... siteZone                    geometry
         hwm_id                        ...
         33496   37.298440 -80.007750  ...      NaN  POINT (-80.00775 37.29844)
@@ -315,7 +316,7 @@ class StormEvent:
 
         configuration = {'name': self.name, 'year': self.year}
         if self.__high_water_marks is None or configuration != self.__previous_configuration:
-            self.__high_water_marks = StormHighWaterMarks(name=self.name, year=self.year).data
+            self.__high_water_marks = StormHighWaterMarks(name=self.name, year=self.year)
         return self.__high_water_marks
 
     def coops_product_within_isotach(
@@ -452,7 +453,7 @@ class StormEvent:
         if len(stations) > 0:
             stations_data = []
             for station in stations.index:
-                station_data = COOPS_Station(station).get(
+                station_data = COOPS_Station(station).data(
                     product=product,
                     start_date=start_date,
                     end_date=end_date,

@@ -5,8 +5,7 @@ from dateutil.parser import parse as parse_date
 import pytest
 from pytest_socket import SocketBlockedError
 
-from stormevents.nhc import nhc_storms
-from stormevents.nhc.storms import nhc_gis_storms
+from stormevents.nhc.storms import nhc_gis_storms, nhc_storms
 from stormevents.nhc.track import VortexTrack
 from tests import (
     check_reference_directory,
@@ -98,6 +97,7 @@ def test_VortexTrack_filters():
     assert len(track) == 175
 
 
+@pytest.mark.disable_socket
 def test_from_fort22():
     input_directory = INPUT_DIRECTORY / 'test_from_fort22'
     output_directory = OUTPUT_DIRECTORY / 'test_from_fort22'
@@ -151,7 +151,7 @@ def test_recompute_velocity():
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_vortex_types():
+def test_file_decks():
     output_directory = OUTPUT_DIRECTORY / 'test_vortex_types'
     reference_directory = REFERENCE_DIRECTORY / 'test_vortex_types'
 

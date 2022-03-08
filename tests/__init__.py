@@ -6,8 +6,7 @@ from typing import Dict, List
 
 import pytest
 
-from stormevents import nhc_storms
-from stormevents.nhc.storms import nhc_archive_storms
+from stormevents.nhc.storms import nhc_archive_storms, nhc_storms
 
 DATA_DIRECTORY = Path(__file__).parent.absolute().resolve() / 'data'
 INPUT_DIRECTORY = DATA_DIRECTORY / 'input'
