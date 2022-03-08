@@ -25,7 +25,7 @@ def test_atcf_nhc_codes():
     assert len(abf_2014_2015) == 96
 
 
-def test_get_atcf_entry():
+def test_atcf_entry():
     storm_1 = get_atcf_entry(year=2018, basin='AL', storm_number=6)
     storm_2 = get_atcf_entry(year=2018, storm_name='florence')
 

@@ -18,7 +18,7 @@ def ida2021() -> StormEvent:
     return StormEvent('florence', 2018)
 
 
-def test_storm_lookup():
+def test_storm_event_lookup():
     florence2018 = StormEvent('florence', 2018)
     paine2016 = StormEvent.from_nhc_code('EP172016')
     henri2021 = StormEvent.from_usgs_id(310)
@@ -48,7 +48,10 @@ def test_storm_lookup():
     assert florence2018.usgs_id == 283
     assert florence2018.start_date == datetime(2018, 8, 30, 6)
     assert florence2018.end_date == datetime(2018, 9, 18, 12)
-    assert repr(florence2018) == "StormEvent('FLORENCE', 2018)"
+    assert (
+        repr(florence2018)
+        == "StormEvent(name='FLORENCE', year=2018, start_date=Timestamp('2018-08-30 06:00:00'), end_date=Timestamp('2018-09-18 12:00:00'))"
+    )
 
     assert paine2016.name == 'PAINE'
     assert paine2016.year == 2016
@@ -72,7 +75,7 @@ def test_storm_lookup():
     assert ida2021.end_date == datetime(2021, 9, 2, 6)
 
 
-def test_time_interval():
+def test_storm_event_time_interval():
     florence2018 = StormEvent('florence', 2018, start_date=timedelta(days=-2))
     paine2016 = StormEvent.from_nhc_code('EP172016', end_date=timedelta(days=1))
     henri2021 = StormEvent.from_usgs_id(
@@ -89,26 +92,33 @@ def test_time_interval():
     assert florence2018.start_date == datetime(2018, 9, 16, 12)
     assert florence2018.end_date == datetime(2018, 9, 18, 12)
     assert (
-        repr(florence2018) == "StormEvent('FLORENCE', 2018, start_date='2018-09-16 12:00:00')"
+        repr(florence2018)
+        == "StormEvent(name='FLORENCE', year=2018, start_date=Timestamp('2018-09-16 12:00:00'), end_date=Timestamp('2018-09-18 12:00:00'))"
     )
 
     assert paine2016.start_date == datetime(2016, 9, 18)
     assert paine2016.end_date == datetime(2016, 9, 19)
-    assert repr(paine2016) == "StormEvent('PAINE', 2016, end_date='2016-09-19 00:00:00')"
+    assert (
+        repr(paine2016)
+        == "StormEvent(name='PAINE', year=2016, start_date=Timestamp('2016-09-18 00:00:00'), end_date=Timestamp('2016-09-19 00:00:00'))"
+    )
 
     assert henri2021.start_date == datetime(2021, 8, 20, 18)
     assert henri2021.end_date == datetime(2021, 8, 22, 12)
-    assert repr(henri2021) == "StormEvent('HENRI', 2021, end_date='2021-08-22 12:00:00')"
+    assert (
+        repr(henri2021)
+        == "StormEvent(name='HENRI', year=2021, start_date=Timestamp('2021-08-20 18:00:00'), end_date=Timestamp('2021-08-22 12:00:00'))"
+    )
 
     assert ida2021.start_date == datetime(2021, 8, 30)
     assert ida2021.end_date == datetime(2021, 9, 1)
     assert (
         repr(ida2021)
-        == "StormEvent('IDA', 2021, start_date='2021-08-30 00:00:00', end_date='2021-09-01 00:00:00')"
+        == "StormEvent(name='IDA', year=2021, start_date=datetime.datetime(2021, 8, 30, 0, 0), end_date=datetime.datetime(2021, 9, 1, 0, 0))"
     )
 
 
-def test_track(florence2018, ida2021):
+def test_storm_event_track(florence2018, ida2021):
     reference_directory = REFERENCE_DIRECTORY / 'test_track'
     output_directory = OUTPUT_DIRECTORY / 'test_track'
 
@@ -127,21 +137,22 @@ def test_track(florence2018, ida2021):
 @pytest.mark.skipif(
     sys.version_info < (3, 10), reason='floating point differences before python 3.10',
 )
-def test_high_water_marks(florence2018):
+def test_storm_event_high_water_marks(florence2018):
     reference_directory = REFERENCE_DIRECTORY / 'test_high_water_marks'
     output_directory = OUTPUT_DIRECTORY / 'test_high_water_marks'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    high_water_marks = florence2018.high_water_marks
+    flood = florence2018.flood_event
 
+    high_water_marks = flood.high_water_marks()
     high_water_marks.to_csv(output_directory / 'florence2018_hwm.csv')
 
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_coops_product_within_isotach(florence2018):
+def test_storm_event_coops_product_within_isotach(florence2018):
     null_data = florence2018.coops_product_within_isotach(
         'water_level', wind_speed=34, end_date=florence2018.start_date + timedelta(minutes=1),
     )
@@ -161,7 +172,7 @@ def test_coops_product_within_isotach(florence2018):
     assert tidal_data.sizes == {'t': 241, 'nos_id': 9}
 
 
-def test_coops_product_within_region(florence2018):
+def test_storm_event_coops_product_within_region(florence2018):
     null_track = florence2018.track(end_date=florence2018.start_date + timedelta(hours=12))
     null_data = florence2018.coops_product_within_region(
         'water_level', region=box(*null_track.linestring.bounds), end_date=null_track.end_date,

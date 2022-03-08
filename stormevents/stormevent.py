@@ -3,7 +3,6 @@ from functools import lru_cache
 from os import PathLike
 
 import pandas
-from pandas import DataFrame
 from shapely import ops
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
@@ -11,10 +10,11 @@ import typepigeon
 import xarray
 from xarray import Dataset
 
-from stormevents.coops import COOPS_Station, coops_stations_within_region
 from stormevents.coops.tidalstations import (
     COOPS_Interval,
     COOPS_Product,
+    COOPS_Station,
+    coops_stations_within_region,
     COOPS_StationType,
     COOPS_TidalDatum,
     COOPS_TimeZone,
@@ -22,7 +22,7 @@ from stormevents.coops.tidalstations import (
 )
 from stormevents.nhc import nhc_storms, VortexTrack
 from stormevents.nhc.atcf import ATCF_FileDeck, ATCF_Mode
-from stormevents.usgs import StormHighWaterMarks, usgs_highwatermark_storms
+from stormevents.usgs import StormFloodEvent, usgs_flood_storms
 from stormevents.utilities import relative_to_time_interval, subset_time_interval
 
 
@@ -45,7 +45,7 @@ class StormEvent:
         StormEvent('FLORENCE', 2018)
 
         >>> StormEvent('paine', 2016, start_date='2016-09-18', end_date=datetime(2016, 9, 19, 12))
-        StormEvent('PAINE', 2016, end_date='2016-09-19 12:00:00')
+        StormEvent('PAINE', 2016, start_date='2016-09-19 00:00:00', end_date='2016-09-19 12:00:00')
 
         >>> StormEvent('florence', 2018, start_date=timedelta(days=2))
         StormEvent('FLORENCE', 2018, start_date='2018-09-01 06:00:00')
@@ -118,16 +118,20 @@ class StormEvent:
         :return: storm object
 
         >>> StormEvent.from_usgs_id(310)
-        StormEvent('HENRI', 2021)
+        StormEvent('HENRI', 2021, end_date='2021-08-24 12:00:00')
         """
 
-        usgs_storm_events = usgs_highwatermark_storms(year=year)
+        flood_events = usgs_flood_storms(year=year)
 
-        if usgs_id in usgs_storm_events.index:
-            usgs_storm_event = usgs_storm_events.loc[usgs_id]
+        if usgs_id in flood_events.index:
+            flood_event = flood_events.loc[usgs_id]
+            if start_date is None:
+                start_date = flood_event['start_date']
+            if end_date is None:
+                end_date = flood_event['end_date']
             storm = cls(
-                name=usgs_storm_event['nhc_name'],
-                year=usgs_storm_event['year'],
+                name=flood_event['nhc_name'],
+                year=flood_event['year'],
                 start_date=start_date,
                 end_date=end_date,
             )
@@ -139,7 +143,7 @@ class StormEvent:
     @property
     def nhc_code(self) -> str:
         """
-        :return: NHC code
+        :return: NHC code, for example `AL112013` for the 11th Atlantic storm in 2013, or `EP032011` for the 3rd Pacific storm in 2011
         """
 
         return self.__entry.name
@@ -151,7 +155,7 @@ class StormEvent:
         """
 
         if self.__usgs_id is None and self.__is_usgs_flood_event:
-            usgs_storm_events = usgs_highwatermark_storms(year=self.year)
+            usgs_storm_events = usgs_flood_storms(year=self.year)
 
             if self.nhc_code in usgs_storm_events['nhc_code'].values:
                 usgs_storm_event = usgs_storm_events.loc[
@@ -164,18 +168,10 @@ class StormEvent:
 
     @property
     def name(self) -> str:
-        """
-        :return: storm name
-        """
-
         return self.__entry['name'].strip()
 
     @property
     def year(self) -> int:
-        """
-        :return: storm year
-        """
-
         return self.__entry['year']
 
     @property
@@ -196,10 +192,6 @@ class StormEvent:
 
     @property
     def start_date(self) -> datetime:
-        """
-        :return: filter start time
-        """
-
         return self.__start_date
 
     @start_date.setter
@@ -223,10 +215,6 @@ class StormEvent:
 
     @property
     def end_date(self) -> datetime:
-        """
-        :return: filter end time
-        """
-
         return self.__end_date
 
     @end_date.setter
@@ -291,31 +279,32 @@ class StormEvent:
         )
 
     @property
-    def high_water_marks(self) -> DataFrame:
+    def flood_event(self) -> StormFloodEvent:
         """
         :return: USGS high-water marks (HWMs) for this storm event
 
         >>> storm = StormEvent('florence', 2018)
-        >>> storm.high_water_marks
-                 latitude  longitude  ... siteZone                    geometry
-        hwm_id                        ...
-        33496   37.298440 -80.007750  ...      NaN  POINT (-80.00775 37.29844)
-        33502   35.342089 -78.041553  ...      NaN  POINT (-78.04155 35.34209)
-        33503   35.378963 -78.010596  ...      NaN  POINT (-78.01060 35.37896)
-        33505   35.216282 -78.935229  ...      NaN  POINT (-78.93523 35.21628)
-        33508   35.199859 -78.960296  ...      NaN  POINT (-78.96030 35.19986)
-                   ...        ...  ...      ...                         ...
-        34191   33.724722 -79.059722  ...      NaN  POINT (-79.05972 33.72472)
-        34235   34.936308 -76.811223  ...           POINT (-76.81122 34.93631)
-        34840   34.145930 -78.868567  ...      NaN  POINT (-78.86857 34.14593)
-        34871   35.424707 -77.593860  ...      NaN  POINT (-77.59386 35.42471)
-        34876   35.301135 -77.264727  ...      NaN  POINT (-77.26473 35.30114)
-        [509 rows x 52 columns]
+        >>> flood = storm.flood_event
+        >>> flood.high_water_marks()
+                 latitude  longitude          eventName  ... siteZone peak_summary_id                    geometry
+        hwm_id                                           ...                                                     
+        33496   37.298440 -80.007750  Florence Sep 2018  ...      NaN             NaN  POINT (-80.00775 37.29844)
+        33497   33.699720 -78.936940  Florence Sep 2018  ...      NaN             NaN  POINT (-78.93694 33.69972)
+        33498   33.758610 -78.792780  Florence Sep 2018  ...      NaN             NaN  POINT (-78.79278 33.75861)
+        33499   33.641389 -78.947778  Florence Sep 2018  ...                      NaN  POINT (-78.94778 33.64139)
+        33500   33.602500 -78.973889  Florence Sep 2018  ...                      NaN  POINT (-78.97389 33.60250)
+        ...           ...        ...                ...  ...      ...             ...                         ...
+        34872   35.534641 -77.038183  Florence Sep 2018  ...      NaN             NaN  POINT (-77.03818 35.53464)
+        34873   35.125000 -77.050044  Florence Sep 2018  ...      NaN             NaN  POINT (-77.05004 35.12500)
+        34874   35.917467 -76.254367  Florence Sep 2018  ...      NaN             NaN  POINT (-76.25437 35.91747)
+        34875   35.111000 -77.037851  Florence Sep 2018  ...      NaN             NaN  POINT (-77.03785 35.11100)
+        34876   35.301135 -77.264727  Florence Sep 2018  ...      NaN             NaN  POINT (-77.26473 35.30114)
+        [644 rows x 53 columns]
         """
 
         configuration = {'name': self.name, 'year': self.year}
         if self.__high_water_marks is None or configuration != self.__previous_configuration:
-            self.__high_water_marks = StormHighWaterMarks(name=self.name, year=self.year).data
+            self.__high_water_marks = StormFloodEvent(name=self.name, year=self.year)
         return self.__high_water_marks
 
     def coops_product_within_isotach(
@@ -411,21 +400,21 @@ class StormEvent:
 
         >>> import shapely
         >>> storm = StormEvent('florence', 2018)
-        >>> region = shapely.geometry.box(*self.track().linestring.bounds)
-        >>> storm.coops_product_within_isotach('water_level', wind_speed=34, start_date='2018-09-12 14:03:00', end_date='2018-09-14')
+        >>> region = shapely.geometry.box(*storm.track().linestring.bounds)
+        >>> storm.coops_product_within_region('water_level', region=region, start_date='2018-09-12 14:03:00', end_date='2018-09-14')
         <xarray.Dataset>
-        Dimensions:  (nos_id: 7, t: 340)
+        Dimensions:  (nos_id: 89, t: 340)
         Coordinates:
-          * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8658120 8658163 8661070
+          * nos_id   (nos_id) int64 2695535 2695540 8447386 ... 9759394 9759938 9761115
           * t        (t) datetime64[ns] 2018-09-12T14:06:00 ... 2018-09-14
-            nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'WLON7' 'JMPN7' 'MROS1'
-            x        (nos_id) float64 -75.75 -75.56 -75.69 -76.69 -77.94 -77.81 -78.94
-            y        (nos_id) float64 36.19 35.78 35.22 34.72 34.22 34.22 33.66
+            nws_id   (nos_id) <U5 'FRCB6' 'BEPB6' 'FRVM3' ... 'MGZP4' 'MISP4' 'BARA9'
+            x        (nos_id) float64 -64.69 -64.69 -71.19 ... -67.19 -67.94 -61.81
+            y        (nos_id) float64 32.38 32.38 41.72 41.69 ... 18.22 18.09 17.59
         Data variables:
-            v        (nos_id, t) float32 7.181 7.199 7.144 7.156 ... 9.6 9.634 9.686
-            s        (nos_id, t) float32 0.317 0.36 0.31 0.318 ... 0.049 0.047 0.054
+            v        (nos_id, t) float32 1.956 1.952 1.948 1.939 ... 8.916 8.901 8.898
+            s        (nos_id, t) object 0.007000000216066837 ... '0.041'
             f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
-            q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
+            q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'p' 'p' 'p' 'p' 'p'
         """
 
         if not isinstance(region, BaseGeometry):
@@ -452,7 +441,7 @@ class StormEvent:
         if len(stations) > 0:
             stations_data = []
             for station in stations.index:
-                station_data = COOPS_Station(station).get(
+                station_data = COOPS_Station(station).product(
                     product=product,
                     start_date=start_date,
                     end_date=end_date,
@@ -472,11 +461,11 @@ class StormEvent:
         return stations_data
 
     def __repr__(self) -> str:
-        attributes = ', '.join(repr(value) for value in (self.name, self.year))
-
-        if self.start_date != self.__entry['start_date']:
-            attributes += f', start_date={repr(str(self.start_date))}'
-        if self.end_date != self.__entry['end_date']:
-            attributes += f', end_date={repr(str(self.end_date))}'
-
-        return f'{self.__class__.__name__}({attributes})'
+        return (
+            f'{self.__class__.__name__}('
+            f'name={repr(self.name)}, '
+            f'year={repr(self.year)}, '
+            f'start_date={repr(self.start_date)}, '
+            f'end_date={repr(self.end_date)}'
+            f')'
+        )

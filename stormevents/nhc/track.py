@@ -21,7 +21,6 @@ from shapely.geometry import (
 )
 import typepigeon
 
-from stormevents.nhc import nhc_storms
 from stormevents.nhc.atcf import (
     ATCF_FileDeck,
     ATCF_Mode,
@@ -31,7 +30,7 @@ from stormevents.nhc.atcf import (
     normalize_atcf_value,
     read_atcf,
 )
-from stormevents.nhc.storms import nhc_archive_storms
+from stormevents.nhc.storms import nhc_storms, nhc_storms_archive
 from stormevents.utilities import subset_time_interval
 
 
@@ -416,7 +415,7 @@ class VortexTrack:
             if self.filename is None:
                 mode = ATCF_Mode.realtime
                 if self.nhc_code is not None:
-                    archive_storms = nhc_archive_storms()
+                    archive_storms = nhc_storms_archive()
                     if self.nhc_code.upper() in archive_storms:
                         mode = ATCF_Mode.historical
             else:
@@ -492,7 +491,7 @@ class VortexTrack:
         :return: track data for the given parameters as a data frame
 
         >>> track = VortexTrack('AL112017')
-        >>> track.data
+        >>> track.high_water_marks
             basin storm_number record_type            datetime  ...   direction     speed    name                    geometry
         0      AL           11        BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
         1      AL           11        BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
@@ -508,7 +507,7 @@ class VortexTrack:
         [173 rows x 22 columns]
 
         >>> track = VortexTrack('AL112017', file_deck='a')
-        >>> track.data
+        >>> track.high_water_marks
               basin storm_number record_type            datetime  ...   direction      speed    name                    geometry
         0        AL           11        CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
         1        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)

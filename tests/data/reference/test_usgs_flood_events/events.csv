@@ -1,0 +1,22 @@
+usgs_id,name,year,description,event_type,event_status,coordinator,instruments,last_updated,last_updated_by,start_date,end_date
+7,FEMA 2013 exercise,2013,Ardent/Sentry 2013 FEMA Exercise,HURRICANE,COMPLETED,36,[],,,2013-05-15 04:00:00,2013-05-23 04:00:00
+8,Wilma,2005,"Category 3 in west FL. 
+Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin. Part of the record breaking 2005 Atlantic hurricane season.",HURRICANE,COMPLETED,515,[],,,2005-10-20 00:00:00,2005-10-31 00:00:00
+18,Isaac Aug 2012,2012,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,36,[],2018-09-10 14:14:55.378445,35.0,2012-08-27 05:00:00,2012-09-02 05:00:00
+19,Rita,2005,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,515,[],,,2005-09-23 04:00:00,2005-09-25 04:00:00
+23,Irene,2011,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,36,[],,,2011-08-26 04:00:00,2011-08-29 04:00:00
+24,Sandy,2012,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,36,[],,,2012-10-21 04:00:00,2012-10-30 04:00:00
+25,Gustav,2008,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,515,[],,,2008-08-31 04:00:00,2008-09-03 04:00:00
+26,Ike,2008,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,515,[],,,2008-09-11 04:00:00,2008-09-12 04:00:00
+119,Joaquin,2015,Hurricane/Tropical storm with intense waves predicted in the Atlantic,HURRICANE,COMPLETED,36,[],,,2015-10-01 04:00:00,2015-10-08 04:00:00
+131,Hermine,2016,Small deployment of Initial landfall of Hermine is in the Big Bend area of FL to assist NWS modeling,HURRICANE,COMPLETED,3,[],,,2016-09-01 04:00:00,2016-09-07 04:00:00
+133,Isabel September 2003,2003,"Hurricane Isabel formed near the Cape Verde Islands from a tropical wave on Sep. 6 and reached peak winds of 165 mph (265 km/h) on Sep. 11.  It made landfall on Sep. 18 in North Carolina, killing 16 and damaging over $5 billion of property.",HURRICANE,COMPLETED,515,[],,,2003-09-06 05:00:00,2003-09-30 05:00:00
+135,Matthew October 2016,2016,Hurricane Matthew,HURRICANE,COMPLETED,35,[],,,2016-10-03 04:00:00,2016-10-30 04:00:00
+180,Harvey Aug 2017,2017,Hurricane Harvey Texas Coast August 2017,HURRICANE,COMPLETED,35,[],,,2017-08-24 05:00:00,2017-09-24 05:00:00
+182,Irma September 2017,2017,"Hurricane affecting PR, USVI and maybe mainland US",HURRICANE,COMPLETED,36,[],2018-09-07 15:07:25.174430,35.0,2017-09-03 05:00:00,2017-09-30 05:00:00
+189,Maria September 2017,2017,TD15,HURRICANE,COMPLETED,36,[],2020-10-05 19:41:33.520407,1.0,2017-09-17 04:00:00,2017-10-02 04:00:00
+190,Jose September 2017,2017,Tropical storm impacting the northeast us,HURRICANE,COMPLETED,36,[],2020-10-05 19:40:26.866120,1.0,2017-09-18 04:00:00,2017-09-25 04:00:00
+196,Nate October 2017,2017,TD16 will be developing into Nate. North Gulf deployment,HURRICANE,COMPLETED,36,[],2018-09-07 15:06:46.782674,35.0,2017-10-05 05:00:00,2017-10-14 05:00:00
+247,Atlantic Fury Exercise May 2018,2018,"*** Mock Data *** for interagency exercise around Hampton Roads, Virginia during the first two weeks of May, 2018",HURRICANE,COMPLETED,35,[],2018-09-07 15:06:34.421058,35.0,2018-04-23 05:00:00,2018-05-18 05:00:00
+284,Isaac Sep 2018,2018,,HURRICANE,COMPLETED,3,[],2018-12-06 16:10:38.342516,3.0,2018-09-11 04:00:00,2018-09-18 04:00:00
+287,Michael Oct 2018,2018,storm hit the Mexico Beach area of the Florida panhandle,HURRICANE,COMPLETED,3,[],2018-12-06 16:24:40.504991,3.0,2018-10-08 04:00:00,2018-10-15 04:00:00
