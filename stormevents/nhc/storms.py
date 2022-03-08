@@ -41,8 +41,7 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
 
     # using Pooch, cache today's NHC storm list
     local_filename = pooch.retrieve(
-            url=url, path=pooch.os_cache('nhc') / f'{datetime.today():%Y%m%d}',
-            known_hash=None,
+        url=url, path=pooch.os_cache('nhc') / f'{datetime.today():%Y%m%d}', known_hash=None,
     )
 
     columns = [
@@ -69,19 +68,17 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
         'nhc_code',
     ]
     storms = pandas.read_csv(
-            local_filename,
-            header=0,
-            names=columns,
-            parse_dates=['start_date', 'end_date'],
-            date_parser=lambda x: pandas.to_datetime(x.strip(),
-                                                     format='%Y%m%d%H')
-            if x.strip() != '9999999999'
-            else numpy.nan,
+        local_filename,
+        header=0,
+        names=columns,
+        parse_dates=['start_date', 'end_date'],
+        date_parser=lambda x: pandas.to_datetime(x.strip(), format='%Y%m%d%H')
+        if x.strip() != '9999999999'
+        else numpy.nan,
     )
 
     storms = storms.astype(
-            {'start_date': 'datetime64[s]', 'end_date': 'datetime64[s]'},
-            copy=False,
+        {'start_date': 'datetime64[s]', 'end_date': 'datetime64[s]'}, copy=False,
     )
 
     storms = storms[
@@ -110,8 +107,7 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     storms.set_index('nhc_code', inplace=True)
 
     gis_storms = nhc_storms_gis_archive(year=year)
-    gis_storms = gis_storms.drop(
-        gis_storms[gis_storms.index.isin(storms.index)].index)
+    gis_storms = gis_storms.drop(gis_storms[gis_storms.index.isin(storms.index)].index)
     if len(gis_storms) > 0:
         gis_storms[['start_date', 'end_date']] = pandas.to_datetime(numpy.nan)
         storms = pandas.concat([storms, gis_storms[storms.columns]])
@@ -130,8 +126,7 @@ def nhc_storms_archive(year: int = None) -> List[str]:
 
     # using Pooch, cache today's NHC storm list
     local_filename = pooch.retrieve(
-            url=url, path=pooch.os_cache('nhc') / f'{datetime.today():%Y%m%d}',
-            known_hash=None,
+        url=url, path=pooch.os_cache('nhc') / f'{datetime.today():%Y%m%d}', known_hash=None,
     )
 
     columns = [
@@ -192,17 +187,16 @@ def nhc_storms_gis_archive(year: int = None) -> pandas.DataFrame:
     """
 
     if year is None:
-        year = list(
-            range(NHC_GIS_ARCHIVE_START_YEAR, datetime.today().year + 1))
+        year = list(range(NHC_GIS_ARCHIVE_START_YEAR, datetime.today().year + 1))
 
     if isinstance(year, Iterable) and not isinstance(year, str):
         years = sorted(pandas.unique(year))
         return pandas.concat(
-                [
-                    nhc_storms_gis_archive(year)
-                    for year in years
-                    if year is not None and year >= NHC_GIS_ARCHIVE_START_YEAR
-                ]
+            [
+                nhc_storms_gis_archive(year)
+                for year in years
+                if year is not None and year >= NHC_GIS_ARCHIVE_START_YEAR
+            ]
         )
     elif not isinstance(year, int):
         year = int(year)
@@ -218,8 +212,7 @@ def nhc_storms_gis_archive(year: int = None) -> pandas.DataFrame:
         short_name = long_name.split()[-1]
         rows.append((f'{identifier}{year}', short_name, long_name, year))
 
-    storms = pandas.DataFrame(rows, columns=['nhc_code', 'name', 'long_name',
-                                             'year'])
+    storms = pandas.DataFrame(rows, columns=['nhc_code', 'name', 'long_name', 'year'])
     storms['nhc_code'] = storms['nhc_code'].str.upper()
     storms.set_index('nhc_code', inplace=True)
 
@@ -228,22 +221,18 @@ def nhc_storms_gis_archive(year: int = None) -> pandas.DataFrame:
 
     storms['class'] = None
     storms.loc[
-        storms['long_name'].str.contains('Tropical Cyclone',
-                                         flags=re.IGNORECASE)
+        storms['long_name'].str.contains('Tropical Cyclone', flags=re.IGNORECASE)
         | storms['long_name'].str.contains('Hurricane', flags=re.IGNORECASE),
         'class',
     ] = 'HU'
     storms.loc[
-        storms['long_name'].str.contains('Tropical Storm',
-                                         flags=re.IGNORECASE), 'class',
+        storms['long_name'].str.contains('Tropical Storm', flags=re.IGNORECASE), 'class',
     ] = 'TS'
     storms.loc[
-        storms['long_name'].str.contains('Tropical Depression',
-                                         flags=re.IGNORECASE), 'class',
+        storms['long_name'].str.contains('Tropical Depression', flags=re.IGNORECASE), 'class',
     ] = 'TD'
     storms.loc[
-        storms['long_name'].str.contains('Subtropical',
-                                         flags=re.IGNORECASE), 'class',
+        storms['long_name'].str.contains('Subtropical', flags=re.IGNORECASE), 'class',
     ] = 'ST'
 
     storms['source'] = 'GIS_ARCHIVE'

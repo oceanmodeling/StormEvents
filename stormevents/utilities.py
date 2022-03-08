@@ -7,10 +7,10 @@ import typepigeon
 
 
 def subset_time_interval(
-        start: datetime,
-        end: datetime,
-        subset_start: Union[datetime, timedelta] = None,
-        subset_end: Union[datetime, timedelta] = None,
+    start: datetime,
+    end: datetime,
+    subset_start: Union[datetime, timedelta] = None,
+    subset_end: Union[datetime, timedelta] = None,
 ) -> (datetime, datetime):
     """
     constrain the given time interval to the given subset times
@@ -31,8 +31,7 @@ def subset_time_interval(
         end = typepigeon.convert_value(end, datetime)
 
     if start > end:
-        raise ValueError(
-            f'given start time ("{start}") ' f'exceeds end time ("{end}")')
+        raise ValueError(f'given start time ("{start}") ' f'exceeds end time ("{end}")')
 
     if not pandas.isna(subset_start):
         try:
@@ -52,21 +51,21 @@ def subset_time_interval(
 
     if subset_start > subset_end:
         raise ValueError(
-                f'subset start time ("{subset_start}") '
-                f'exceeds subset end time ("{subset_end}")'
+            f'subset start time ("{subset_start}") '
+            f'exceeds subset end time ("{subset_end}")'
         )
 
     if start <= subset_start <= end and start <= subset_end <= end:
         return subset_start, subset_end
     else:
         raise ValueError(
-                f'subsetted time interval ("{subset_start} - {subset_end}") '
-                f'exceeds existing time interval ("{start} - {end}")'
+            f'subsetted time interval ("{subset_start} - {subset_end}") '
+            f'exceeds existing time interval ("{start} - {end}")'
         )
 
 
 def relative_to_time_interval(
-        start: datetime, end: datetime, relative: Union[datetime, timedelta],
+    start: datetime, end: datetime, relative: Union[datetime, timedelta],
 ) -> datetime:
     """
     return the absolute time relative to the time interval
@@ -79,7 +78,7 @@ def relative_to_time_interval(
 
     if pandas.isna([start, end, relative]).any():
         raise ValueError(
-                f'cannot parse time interval "{start} - {end}" ir relative time "{relative}"'
+            f'cannot parse time interval "{start} - {end}" ir relative time "{relative}"'
         )
 
     if not isinstance(start, datetime):
@@ -88,8 +87,7 @@ def relative_to_time_interval(
         end = typepigeon.convert_value(end, datetime)
 
     if start > end:
-        raise ValueError(
-            f'given start time ("{start}") ' f'exceeds end time ("{end}")')
+        raise ValueError(f'given start time ("{start}") ' f'exceeds end time ("{end}")')
 
     if isinstance(relative, timedelta) or isinstance(relative, Number):
         relative = typepigeon.convert_value(relative, timedelta)
@@ -104,6 +102,6 @@ def relative_to_time_interval(
         return relative
     else:
         raise ValueError(
-                f'relative time "{relative}" '
-                f'not within given time interval ("{start} - {end}")'
+            f'relative time "{relative}" '
+            f'not within given time interval ("{start} - {end}")'
         )

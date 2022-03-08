@@ -2,26 +2,25 @@ from datetime import datetime, timedelta
 
 from shapely import ops
 
-from stormevents.coops.tidalstations import (COOPS_Station,
-                                             coops_product_within_region,
-                                             coops_stations,
-                                             coops_stations_within_region)
+from stormevents.coops.tidalstations import (
+    coops_product_within_region,
+    COOPS_Station,
+    coops_stations,
+    coops_stations_within_region,
+)
 from stormevents.nhc.track import VortexTrack
-from tests import OUTPUT_DIRECTORY, REFERENCE_DIRECTORY, \
-    check_reference_directory
+from tests import check_reference_directory, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY
 
 
 def test_coops_stations():
     stations = coops_stations()
 
-    assert stations.columns.to_list() == ['nws_id', 'name', 'state', 'removed',
-                                          'geometry']
+    assert stations.columns.to_list() == ['nws_id', 'name', 'state', 'removed', 'geometry']
 
 
 def test_coops_stations_within_region():
     track = VortexTrack('florence2018', file_deck='b')
-    combined_wind_swaths = ops.unary_union(
-        list(track.wind_swaths(34).values()))
+    combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
 
     stations = coops_stations_within_region(region=combined_wind_swaths)
 
@@ -30,14 +29,13 @@ def test_coops_stations_within_region():
 
 def test_coops_product_within_region():
     track = VortexTrack('florence2018', file_deck='b')
-    combined_wind_swaths = ops.unary_union(
-        list(track.wind_swaths(34).values()))
+    combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
 
     data = coops_product_within_region(
-            'water_level',
-            region=combined_wind_swaths,
-            start_date=datetime.now() - timedelta(hours=1),
-            end_date=datetime.now(),
+        'water_level',
+        region=combined_wind_swaths,
+        start_date=datetime.now() - timedelta(hours=1),
+        end_date=datetime.now(),
     )
 
     assert len(data['nos_id']) == 10
@@ -76,10 +74,8 @@ def test_coops_station():
     assert station_3.nws_id == ''
     assert station_3.name == 'Calcasieu Test Station'
 
-    station_1_constituents.to_csv(
-        output_directory / 'station1612480_constituents.csv')
-    station_2_constituents.to_csv(
-        output_directory / 'station1612340_constituents.csv')
+    station_1_constituents.to_csv(output_directory / 'station1612480_constituents.csv')
+    station_2_constituents.to_csv(output_directory / 'station1612340_constituents.csv')
 
     assert len(station_3_data['t']) == 0
     assert len(station_3_constituents) == 0

@@ -120,7 +120,7 @@ class FloodEvent:
         self.__error = None
 
     @classmethod
-    def from_name(cls, name: str, year: int = None, ) -> 'FloodEvent':
+    def from_name(cls, name: str, year: int = None,) -> 'FloodEvent':
         """
         retrieve high-water mark info from the USGS flood event name
 
@@ -182,13 +182,11 @@ class FloodEvent:
 
     @property
     def event_type(self) -> EventType:
-        return typepigeon.convert_value(self.__metadata['event_type'],
-                                        EventType)
+        return typepigeon.convert_value(self.__metadata['event_type'], EventType)
 
     @property
     def event_status(self) -> EventStatus:
-        return typepigeon.convert_value(self.__metadata['event_status'],
-                                        EventStatus)
+        return typepigeon.convert_value(self.__metadata['event_status'], EventStatus)
 
     @property
     def coordinator(self) -> str:
@@ -208,22 +206,21 @@ class FloodEvent:
 
     @property
     def start_date(self) -> datetime:
-        return typepigeon.convert_value(self.__metadata['start_date'],
-                                        datetime)
+        return typepigeon.convert_value(self.__metadata['start_date'], datetime)
 
     @property
     def end_date(self) -> datetime:
         return typepigeon.convert_value(self.__metadata['end_date'], datetime)
 
     def high_water_marks(
-            self,
-            us_states: List[str] = None,
-            us_counties: List[str] = None,
-            hwm_type: HighWaterMarkType = None,
-            quality: HighWaterMarkQuality = None,
-            environment: HighWaterMarkEnvironment = None,
-            survey_completed: bool = None,
-            still_water: bool = None,
+        self,
+        us_states: List[str] = None,
+        us_counties: List[str] = None,
+        hwm_type: HighWaterMarkType = None,
+        quality: HighWaterMarkQuality = None,
+        environment: HighWaterMarkEnvironment = None,
+        survey_completed: bool = None,
+        still_water: bool = None,
     ) -> GeoDataFrame:
         """
         :returns: data frame of data for the current parameters
@@ -248,16 +245,16 @@ class FloodEvent:
 
         if self.__query is None:
             self.__query = HighWaterMarksQuery(
-                    event_id=self.id,
-                    event_type=self.event_type,
-                    event_status=self.event_status,
-                    us_states=us_states,
-                    us_counties=us_counties,
-                    hwm_type=hwm_type,
-                    quality=quality,
-                    environment=environment,
-                    survey_completed=survey_completed,
-                    still_water=still_water,
+                event_id=self.id,
+                event_type=self.event_type,
+                event_status=self.event_status,
+                us_states=us_states,
+                us_counties=us_counties,
+                hwm_type=hwm_type,
+                quality=quality,
+                environment=environment,
+                survey_completed=survey_completed,
+                still_water=still_water,
             )
         else:
             if us_states is not None:
@@ -279,9 +276,9 @@ class FloodEvent:
 
     def __eq__(self, other: 'FloodEvent') -> bool:
         return (
-                self.__query is not None
-                and other.__query is not None
-                and self.__query == other.__query
+            self.__query is not None
+            and other.__query is not None
+            and self.__query == other.__query
         )
 
     def __repr__(self) -> str:
@@ -300,12 +297,10 @@ class StormFloodEvent(FloodEvent):
         """
 
         storms = usgs_flood_storms(year=year)
-        storm = storms[(storms['nhc_name'] == name.upper().strip()) & (
-                storms['year'] == year)]
+        storm = storms[(storms['nhc_name'] == name.upper().strip()) & (storms['year'] == year)]
 
         if len(storm) == 0:
-            raise ValueError(
-                    f'storm "{name} {year}" not found in USGS HWM database')
+            raise ValueError(f'storm "{name} {year}" not found in USGS HWM database')
 
         super().__init__(id=storm.index[0])
 
@@ -319,17 +314,17 @@ class HighWaterMarksQuery:
     URL = 'https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json'
 
     def __init__(
-            self,
-            event_id: int = None,
-            event_type: EventType = None,
-            event_status: EventStatus = None,
-            us_states: List[str] = None,
-            us_counties: List[str] = None,
-            hwm_type: HighWaterMarkType = None,
-            quality: HighWaterMarkQuality = None,
-            environment: HighWaterMarkEnvironment = None,
-            survey_completed: bool = None,
-            still_water: bool = None,
+        self,
+        event_id: int = None,
+        event_type: EventType = None,
+        event_status: EventStatus = None,
+        us_states: List[str] = None,
+        us_counties: List[str] = None,
+        hwm_type: HighWaterMarkType = None,
+        quality: HighWaterMarkQuality = None,
+        environment: HighWaterMarkEnvironment = None,
+        survey_completed: bool = None,
+        still_water: bool = None,
     ):
         """
         :param event_id: USGS event ID
@@ -437,8 +432,7 @@ class HighWaterMarksQuery:
     @environment.setter
     def environment(self, environment: HighWaterMarkEnvironment):
         if environment is not None:
-            self.__environment = convert_value(environment,
-                                               [HighWaterMarkEnvironment])
+            self.__environment = convert_value(environment, [HighWaterMarkEnvironment])
         else:
             self.__environment = None
 
@@ -463,8 +457,7 @@ class HighWaterMarksQuery:
                     value = value.value
                 elif isinstance(value, List):
                     value = [
-                        entry.value if isinstance(entry, Enum) else entry for
-                        entry in value
+                        entry.value if isinstance(entry, Enum) else entry for entry in value
                     ]
                     value = typepigeon.convert_value(value, [str])
 
@@ -504,9 +497,9 @@ class HighWaterMarksQuery:
             query = self.query
 
             if any(
-                    value is not None
-                    for key, value in query.items()
-                    if key not in ['SurveyComplete', 'StillWater']
+                value is not None
+                for key, value in query.items()
+                if key not in ['SurveyComplete', 'StillWater']
             ):
                 url = self.URL
             else:
@@ -522,70 +515,66 @@ class HighWaterMarksQuery:
                 raise ValueError(self.__error)
 
             if len(data) > 0:
-                data['survey_date'] = pandas.to_datetime(data['survey_date'],
-                                                         errors='coerce')
-                data['flag_date'] = pandas.to_datetime(data['flag_date'],
-                                                       errors='coerce')
-                data.loc[
-                    data['markerName'].str.len() == 0, 'markerName'] = None
+                data['survey_date'] = pandas.to_datetime(data['survey_date'], errors='coerce')
+                data['flag_date'] = pandas.to_datetime(data['flag_date'], errors='coerce')
+                data.loc[data['markerName'].str.len() == 0, 'markerName'] = None
             else:
                 data = DataFrame(
-                        columns=[
-                            'latitude',
-                            'longitude',
-                            'eventName',
-                            'hwmTypeName',
-                            'hwmQualityName',
-                            'verticalDatumName',
-                            'verticalMethodName',
-                            'approvalMember',
-                            'markerName',
-                            'horizontalMethodName',
-                            'horizontalDatumName',
-                            'flagMemberName',
-                            'surveyMemberName',
-                            'site_no',
-                            'siteDescription',
-                            'sitePriorityName',
-                            'networkNames',
-                            'stateName',
-                            'countyName',
-                            'siteZone',
-                            'sitePermHousing',
-                            'site_latitude',
-                            'site_longitude',
-                            'hwm_id',
-                            'waterbody',
-                            'site_id',
-                            'event_id',
-                            'hwm_type_id',
-                            'hwm_quality_id',
-                            'latitude_dd',
-                            'longitude_dd',
-                            'survey_date',
-                            'elev_ft',
-                            'vdatum_id',
-                            'vcollect_method_id',
-                            'bank',
-                            'marker_id',
-                            'hcollect_method_id',
-                            'hwm_notes',
-                            'hwm_environment',
-                            'flag_date',
-                            'stillwater',
-                            'hdatum_id',
-                            'hwm_label',
-                            'files',
-                            'height_above_gnd',
-                            'hwm_locationdescription',
-                            'flag_member_id',
-                            'survey_member_id',
-                        ],
+                    columns=[
+                        'latitude',
+                        'longitude',
+                        'eventName',
+                        'hwmTypeName',
+                        'hwmQualityName',
+                        'verticalDatumName',
+                        'verticalMethodName',
+                        'approvalMember',
+                        'markerName',
+                        'horizontalMethodName',
+                        'horizontalDatumName',
+                        'flagMemberName',
+                        'surveyMemberName',
+                        'site_no',
+                        'siteDescription',
+                        'sitePriorityName',
+                        'networkNames',
+                        'stateName',
+                        'countyName',
+                        'siteZone',
+                        'sitePermHousing',
+                        'site_latitude',
+                        'site_longitude',
+                        'hwm_id',
+                        'waterbody',
+                        'site_id',
+                        'event_id',
+                        'hwm_type_id',
+                        'hwm_quality_id',
+                        'latitude_dd',
+                        'longitude_dd',
+                        'survey_date',
+                        'elev_ft',
+                        'vdatum_id',
+                        'vcollect_method_id',
+                        'bank',
+                        'marker_id',
+                        'hcollect_method_id',
+                        'hwm_notes',
+                        'hwm_environment',
+                        'flag_date',
+                        'stillwater',
+                        'hdatum_id',
+                        'hwm_label',
+                        'files',
+                        'height_above_gnd',
+                        'hwm_locationdescription',
+                        'flag_member_id',
+                        'survey_member_id',
+                    ],
                 )
             data.set_index('hwm_id', inplace=True)
             self.__data = GeoDataFrame(
-                    data, geometry=geopandas.points_from_xy(data['longitude'],
-                                                            data['latitude']),
+                data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude']),
             )
             self.__previous_query = query
         elif self.__error is not None:
@@ -615,8 +604,7 @@ class HighWaterMarksQuery:
 
 @lru_cache(maxsize=None)
 def usgs_flood_events(
-        year: int = None, event_type: EventType = None,
-        event_status: EventStatus = None,
+    year: int = None, event_type: EventType = None, event_status: EventStatus = None,
 ) -> DataFrame:
     """
     this function collects all USGS flood events of the given type and status that have high-water mark data
@@ -652,27 +640,25 @@ def usgs_flood_events(
     [292 rows x 11 columns]
     """
 
-    events = pandas.read_json(
-            'https://stn.wim.usgs.gov/STNServices/Events.json')
+    events = pandas.read_json('https://stn.wim.usgs.gov/STNServices/Events.json')
     events.rename(
-            columns={
-                'event_id': 'usgs_id',
-                'event_name': 'name',
-                'event_start_date': 'start_date',
-                'event_end_date': 'end_date',
-                'event_description': 'description',
-                'event_coordinator': 'coordinator',
-            },
-            inplace=True,
+        columns={
+            'event_id': 'usgs_id',
+            'event_name': 'name',
+            'event_start_date': 'start_date',
+            'event_end_date': 'end_date',
+            'event_description': 'description',
+            'event_coordinator': 'coordinator',
+        },
+        inplace=True,
     )
     events.set_index('usgs_id', inplace=True)
     events['start_date'] = pandas.to_datetime(events['start_date'])
     events['end_date'] = pandas.to_datetime(events['end_date'])
     events['last_updated'] = pandas.to_datetime(events['last_updated'])
-    events['event_type'] = events['event_type_id'].apply(
-            lambda value: EventType(value).name)
+    events['event_type'] = events['event_type_id'].apply(lambda value: EventType(value).name)
     events['event_status'] = events['event_status_id'].apply(
-            lambda value: EventStatus(value).name
+        lambda value: EventStatus(value).name
     )
     events['year'] = events['start_date'].dt.year
     events = events[
@@ -769,7 +755,7 @@ def usgs_flood_storms(year: int = None) -> DataFrame:
             storms_matching = storms[
                 storms['name'].str.contains(storm_name, flags=re.IGNORECASE)
                 & (storms['year'] == event['year'])
-                ]
+            ]
 
             for nhc_code, storm in storms_matching.iterrows():
                 events.at[event_id, 'nhc_name'] = storm['name']
@@ -777,5 +763,5 @@ def usgs_flood_storms(year: int = None) -> DataFrame:
 
     return events.loc[
         ~pandas.isna(events['nhc_code']),
-        ['usgs_name', 'year', 'nhc_name', 'nhc_code', *events.columns[2:-2], ],
+        ['usgs_name', 'year', 'nhc_name', 'nhc_code', *events.columns[2:-2],],
     ]

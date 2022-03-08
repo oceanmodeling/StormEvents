@@ -11,10 +11,17 @@ from stormevents.usgs.highwatermarks import (
     usgs_flood_events,
     usgs_flood_storms,
 )
-from tests import INPUT_DIRECTORY, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY, \
-    check_reference_directory
+from tests import (
+    check_reference_directory,
+    INPUT_DIRECTORY,
+    OUTPUT_DIRECTORY,
+    REFERENCE_DIRECTORY,
+)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
+)
 def test_usgs_flood_events():
     reference_directory = REFERENCE_DIRECTORY / 'test_usgs_flood_events'
     output_directory = OUTPUT_DIRECTORY / 'test_usgs_flood_events'
@@ -25,9 +32,9 @@ def test_usgs_flood_events():
     usgs_flood_events(event_status=EventStatus.COMPLETED)
 
     events = usgs_flood_events(
-            year=tuple(range(2003, 2020 + 1)),
-            event_type=EventType.HURRICANE,
-            event_status=EventStatus.COMPLETED,
+        year=tuple(range(2003, 2020 + 1)),
+        event_type=EventType.HURRICANE,
+        event_status=EventStatus.COMPLETED,
     )
 
     events.to_csv(output_directory / 'events.csv')
@@ -35,6 +42,9 @@ def test_usgs_flood_events():
     check_reference_directory(output_directory, reference_directory)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
+)
 def test_usgs_flood_storms():
     reference_directory = REFERENCE_DIRECTORY / 'test_usgs_flood_storms'
     output_directory = OUTPUT_DIRECTORY / 'test_usgs_flood_storms'
@@ -50,8 +60,7 @@ def test_usgs_flood_storms():
 
 
 @pytest.mark.skipif(
-        sys.version_info < (3, 10),
-        reason='floating point differences before python 3.10',
+    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
 )
 def test_usgs_flood_event():
     input_directory = INPUT_DIRECTORY / 'test_usgs_flood_event'
@@ -61,9 +70,7 @@ def test_usgs_flood_event():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    flood_1 = FloodEvent.from_csv(
-            input_directory / 'florence2018.csv'
-    )
+    flood_1 = FloodEvent.from_csv(input_directory / 'florence2018.csv')
     flood_2 = FloodEvent.from_name('Irma September 2017')
 
     with pytest.raises(ValueError):

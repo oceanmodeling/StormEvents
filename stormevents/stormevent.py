@@ -10,16 +10,20 @@ import typepigeon
 import xarray
 from xarray import Dataset
 
-from stormevents.coops.tidalstations import (COOPS_Interval, COOPS_Product,
-                                             COOPS_Station, COOPS_StationType,
-                                             COOPS_TidalDatum, COOPS_TimeZone,
-                                             COOPS_Units,
-                                             coops_stations_within_region)
-from stormevents.nhc import VortexTrack, nhc_storms
+from stormevents.coops.tidalstations import (
+    COOPS_Interval,
+    COOPS_Product,
+    COOPS_Station,
+    coops_stations_within_region,
+    COOPS_StationType,
+    COOPS_TidalDatum,
+    COOPS_TimeZone,
+    COOPS_Units,
+)
+from stormevents.nhc import nhc_storms, VortexTrack
 from stormevents.nhc.atcf import ATCF_FileDeck, ATCF_Mode
 from stormevents.usgs import StormFloodEvent, usgs_flood_storms
-from stormevents.utilities import relative_to_time_interval, \
-    subset_time_interval
+from stormevents.utilities import relative_to_time_interval, subset_time_interval
 
 
 class StormEvent:
@@ -29,8 +33,7 @@ class StormEvent:
     """
 
     def __init__(
-            self, name: str, year: int, start_date: datetime = None,
-            end_date: datetime = None
+        self, name: str, year: int, start_date: datetime = None, end_date: datetime = None
     ):
         """
         :param name: storm name
@@ -59,8 +62,7 @@ class StormEvent:
         if len(storms) > 0:
             self.__entry = storms.iloc[0]
         else:
-            raise ValueError(
-                f'storm "{name} {year}" not found in NHC database')
+            raise ValueError(f'storm "{name} {year}" not found in NHC database')
 
         self.__usgs_id = None
         self.__is_usgs_flood_event = True
@@ -72,8 +74,7 @@ class StormEvent:
 
     @classmethod
     def from_nhc_code(
-            cls, nhc_code: str, start_date: datetime = None,
-            end_date: datetime = None
+        cls, nhc_code: str, start_date: datetime = None, end_date: datetime = None
     ) -> 'StormEvent':
         """
         retrieve storm information from the NHC code
@@ -98,17 +99,16 @@ class StormEvent:
 
         storm = storms.loc[nhc_code]
         return cls(
-                name=storm['name'], year=storm['year'], start_date=start_date,
-                end_date=end_date
+            name=storm['name'], year=storm['year'], start_date=start_date, end_date=end_date
         )
 
     @classmethod
     def from_usgs_id(
-            cls,
-            usgs_id: int,
-            year: int = None,
-            start_date: datetime = None,
-            end_date: datetime = None,
+        cls,
+        usgs_id: int,
+        year: int = None,
+        start_date: datetime = None,
+        end_date: datetime = None,
     ) -> 'StormEvent':
         """
         retrieve storm information from the USGS flood event ID
@@ -130,16 +130,15 @@ class StormEvent:
             if end_date is None:
                 end_date = flood_event['end_date']
             storm = cls(
-                    name=flood_event['nhc_name'],
-                    year=flood_event['year'],
-                    start_date=start_date,
-                    end_date=end_date,
+                name=flood_event['nhc_name'],
+                year=flood_event['year'],
+                start_date=start_date,
+                end_date=end_date,
             )
             storm.__usgs_id = usgs_id
             return storm
         else:
-            raise ValueError(
-                f'flood event "{usgs_id}" not found in USGS HWM database')
+            raise ValueError(f'flood event "{usgs_id}" not found in USGS HWM database')
 
     @property
     def nhc_code(self) -> str:
@@ -161,7 +160,7 @@ class StormEvent:
             if self.nhc_code in usgs_storm_events['nhc_code'].values:
                 usgs_storm_event = usgs_storm_events.loc[
                     usgs_storm_events['nhc_code'] == self.nhc_code
-                    ]
+                ]
                 self.__usgs_id = usgs_storm_event.index[0]
             else:
                 self.__is_usgs_flood_event = False
@@ -202,8 +201,7 @@ class StormEvent:
         else:
             # interpret timedelta as a temporal movement around start / end
             start_date, _ = subset_time_interval(
-                    start=self.__data_start, end=self.__data_end,
-                    subset_start=start_date,
+                start=self.__data_start, end=self.__data_end, subset_start=start_date,
             )
         self.__start_date = start_date
 
@@ -212,8 +210,7 @@ class StormEvent:
     def __data_start(self) -> datetime:
         data_start = self.__entry['start_date']
         if pandas.isna(data_start):
-            data_start = VortexTrack.from_storm_name(self.name,
-                                                     self.year).start_date
+            data_start = VortexTrack.from_storm_name(self.name, self.year).start_date
         return data_start
 
     @property
@@ -227,8 +224,7 @@ class StormEvent:
         else:
             # interpret timedelta as a temporal movement around start / end
             _, end_date = subset_time_interval(
-                    start=self.__data_start, end=self.__data_end,
-                    subset_end=end_date,
+                start=self.__data_start, end=self.__data_end, subset_end=end_date,
             )
         self.__end_date = end_date
 
@@ -237,19 +233,18 @@ class StormEvent:
     def __data_end(self) -> datetime:
         data_end = self.__entry['end_date']
         if pandas.isna(data_end):
-            data_end = VortexTrack.from_storm_name(self.name,
-                                                   self.year).end_date
+            data_end = VortexTrack.from_storm_name(self.name, self.year).end_date
         return data_end
 
     @lru_cache(maxsize=None)
     def track(
-            self,
-            start_date: datetime = None,
-            end_date: datetime = None,
-            file_deck: ATCF_FileDeck = None,
-            mode: ATCF_Mode = None,
-            record_type: str = None,
-            filename: PathLike = None,
+        self,
+        start_date: datetime = None,
+        end_date: datetime = None,
+        file_deck: ATCF_FileDeck = None,
+        mode: ATCF_Mode = None,
+        record_type: str = None,
+        filename: PathLike = None,
     ) -> VortexTrack:
         """
         retrieve NHC ATCF track data
@@ -273,14 +268,14 @@ class StormEvent:
             end_date = self.end_date
 
         return VortexTrack.from_storm_name(
-                name=self.name,
-                year=self.year,
-                start_date=start_date,
-                end_date=end_date,
-                file_deck=file_deck,
-                mode=mode,
-                record_type=record_type,
-                filename=filename,
+            name=self.name,
+            year=self.year,
+            start_date=start_date,
+            end_date=end_date,
+            file_deck=file_deck,
+            mode=mode,
+            record_type=record_type,
+            filename=filename,
         )
 
     @property
@@ -309,22 +304,21 @@ class StormEvent:
 
         configuration = {'name': self.name, 'year': self.year}
         if self.__high_water_marks is None or configuration != self.__previous_configuration:
-            self.__high_water_marks = StormFloodEvent(name=self.name,
-                                                      year=self.year)
+            self.__high_water_marks = StormFloodEvent(name=self.name, year=self.year)
         return self.__high_water_marks
 
     def coops_product_within_isotach(
-            self,
-            product: COOPS_Product,
-            wind_speed: int,
-            station_type: COOPS_StationType = None,
-            start_date: datetime = None,
-            end_date: datetime = None,
-            datum: COOPS_TidalDatum = None,
-            units: COOPS_Units = None,
-            time_zone: COOPS_TimeZone = None,
-            interval: COOPS_Interval = None,
-            track: VortexTrack = None,
+        self,
+        product: COOPS_Product,
+        wind_speed: int,
+        station_type: COOPS_StationType = None,
+        start_date: datetime = None,
+        end_date: datetime = None,
+        datum: COOPS_TidalDatum = None,
+        units: COOPS_Units = None,
+        time_zone: COOPS_TimeZone = None,
+        interval: COOPS_Interval = None,
+        track: VortexTrack = None,
     ) -> Dataset:
         """
         retrieve CO-OPS tidal station data from within the specified polygon
@@ -362,34 +356,33 @@ class StormEvent:
             track.start_date = start_date
             track.end_date = end_date
         else:
-            track = self.track(start_date=start_date, end_date=end_date,
-                               filename=track)
+            track = self.track(start_date=start_date, end_date=end_date, filename=track)
 
         region = ops.unary_union(list(track.wind_swaths(wind_speed).values()))
 
         return self.coops_product_within_region(
-                region=region,
-                station_type=station_type,
-                start_date=start_date,
-                end_date=end_date,
-                product=product,
-                datum=datum,
-                units=units,
-                time_zone=time_zone,
-                interval=interval,
+            region=region,
+            station_type=station_type,
+            start_date=start_date,
+            end_date=end_date,
+            product=product,
+            datum=datum,
+            units=units,
+            time_zone=time_zone,
+            interval=interval,
         )
 
     def coops_product_within_region(
-            self,
-            product: COOPS_Product,
-            region: Polygon,
-            start_date: datetime = None,
-            end_date: datetime = None,
-            station_type: COOPS_StationType = None,
-            datum: COOPS_TidalDatum = None,
-            units: COOPS_Units = None,
-            time_zone: COOPS_TimeZone = None,
-            interval: COOPS_Interval = None,
+        self,
+        product: COOPS_Product,
+        region: Polygon,
+        start_date: datetime = None,
+        end_date: datetime = None,
+        station_type: COOPS_StationType = None,
+        datum: COOPS_TidalDatum = None,
+        units: COOPS_Units = None,
+        time_zone: COOPS_TimeZone = None,
+        interval: COOPS_Interval = None,
     ) -> Dataset:
         """
         retrieve CO-OPS tidal station data from within the specified region
@@ -434,43 +427,35 @@ class StormEvent:
             start_date = self.start_date
         else:
             start_date = relative_to_time_interval(
-                    start=self.start_date, end=self.end_date,
-                    relative=start_date
+                start=self.start_date, end=self.end_date, relative=start_date
             )
         if end_date is None:
             end_date = self.end_date
         else:
             end_date = relative_to_time_interval(
-                    start=self.start_date, end=self.end_date, relative=end_date
+                start=self.start_date, end=self.end_date, relative=end_date
             )
 
-        stations = coops_stations_within_region(region=region,
-                                                station_type=station_type)
+        stations = coops_stations_within_region(region=region, station_type=station_type)
 
         if len(stations) > 0:
             stations_data = []
             for station in stations.index:
                 station_data = COOPS_Station(station).product(
-                        product=product,
-                        start_date=start_date,
-                        end_date=end_date,
-                        datum=datum,
-                        units=units,
-                        time_zone=time_zone,
-                        interval=interval,
+                    product=product,
+                    start_date=start_date,
+                    end_date=end_date,
+                    datum=datum,
+                    units=units,
+                    time_zone=time_zone,
+                    interval=interval,
                 )
                 if len(station_data['t']) > 0:
                     stations_data.append(station_data)
-            stations_data = xarray.combine_nested(stations_data,
-                                                  concat_dim='nos_id')
+            stations_data = xarray.combine_nested(stations_data, concat_dim='nos_id')
         else:
             stations_data = Dataset(
-                    coords={
-                        't': None,
-                        'nos_id': None,
-                        'nws_id': None,
-                        'x': None,
-                        'y': None}
+                coords={'t': None, 'nos_id': None, 'nws_id': None, 'x': None, 'y': None}
             )
 
         return stations_data

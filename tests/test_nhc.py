@@ -7,8 +7,12 @@ from pytest_socket import SocketBlockedError
 
 from stormevents.nhc.storms import nhc_storms, nhc_storms_gis_archive
 from stormevents.nhc.track import VortexTrack
-from tests import (INPUT_DIRECTORY, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY,
-                   check_reference_directory)
+from tests import (
+    check_reference_directory,
+    INPUT_DIRECTORY,
+    OUTPUT_DIRECTORY,
+    REFERENCE_DIRECTORY,
+)
 
 
 def test_nhc_gis_storms():
@@ -58,13 +62,11 @@ def test_vortex_track():
     ]
 
     tracks = [
-        VortexTrack(storm, file_deck='a', start_date=timedelta(days=-1)) for
-        storm in tracks
+        VortexTrack(storm, file_deck='a', start_date=timedelta(days=-1)) for storm in tracks
     ]
 
     for track in tracks:
-        track.write(output_directory / f'{track.name}{track.year}.fort.22',
-                    overwrite=True)
+        track.write(output_directory / f'{track.name}{track.year}.fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 
@@ -104,9 +106,8 @@ def test_vortex_track_from_file():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    track_1 = VortexTrack.from_fort22(
-        fort22=input_directory / 'irma2017_fort.22', )
-    track_2 = VortexTrack.from_atcf_file(atcf=input_directory / 'atcf.trk', )
+    track_1 = VortexTrack.from_fort22(fort22=input_directory / 'irma2017_fort.22',)
+    track_2 = VortexTrack.from_atcf_file(atcf=input_directory / 'atcf.trk',)
 
     assert track_1.nhc_code == 'AL112017'
     assert track_1.name == 'IRMA'
@@ -159,16 +160,15 @@ def test_vortex_track_file_decks():
     for file_deck, values in file_decks.items():
         for record_type in values['record_types']:
             track = VortexTrack(
-                    'al062018',
-                    start_date=values['start_date'],
-                    end_date=values['end_date'],
-                    file_deck=file_deck,
-                    record_type=record_type,
+                'al062018',
+                start_date=values['start_date'],
+                end_date=values['end_date'],
+                file_deck=file_deck,
+                record_type=record_type,
             )
 
             track.write(
-                    output_directory / f'{file_deck}-deck_{record_type}.22',
-                    overwrite=True
+                output_directory / f'{file_deck}-deck_{record_type}.22', overwrite=True
             )
 
     check_reference_directory(output_directory, reference_directory)
