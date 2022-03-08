@@ -78,19 +78,19 @@ def test_vortex_track_properties():
 
     track.start_date = timedelta(days=1)
 
-    assert len(track) == 10224
+    assert len(track) == 9877
 
-    track.end_date = datetime(2018, 9, 20)
+    track.end_date = timedelta(days=-1)
 
-    assert len(track) == 10165
+    assert len(track) == 9826
 
     track.record_type = 'OFCL'
 
-    assert len(track) == 1313
+    assert len(track) == 1273
 
     track.end_date = None
 
-    assert len(track) == 1335
+    assert len(track) == 1296
 
     track.nhc_code = 'AL072018'
 
