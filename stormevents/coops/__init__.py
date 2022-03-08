@@ -1,5 +1,4 @@
 from stormevents.coops.tidalstations import (
-    COOP_VelocityType,
     COOPS_Interval,
     COOPS_Product,
     coops_product_within_region,
@@ -11,4 +10,5 @@ from stormevents.coops.tidalstations import (
     COOPS_TidalDatum,
     COOPS_TimeZone,
     COOPS_Units,
+    COOPS_VelocityType,
 )

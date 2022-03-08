@@ -67,7 +67,7 @@ class COOPS_TidalDatum(Enum):
     STND = 'STND'  # Station Datum
 
 
-class COOP_VelocityType(Enum):
+class COOPS_VelocityType(Enum):
     SPEED_DIR = 'speed_dir'  # Return results for speed and dirction
     DEFAULT = 'default'  # Return results for velocity major, mean flood direction and mean ebb dirction
 
@@ -177,7 +177,7 @@ class COOPS_Station:
         constituents.set_index('#', inplace=True)
         return constituents
 
-    def get(
+    def product(
         self,
         product: COOPS_Product,
         start_date: datetime,
@@ -200,7 +200,7 @@ class COOPS_Station:
         :return: data for the current station within the specified parameters
 
         >>> station = COOPS_Station(8632200)
-        >>> station.get('water_level', start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
+        >>> station.product('water_level', start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
         <xarray.Dataset>
         Dimensions:  (nos_id: 1, t: 841)
         Coordinates:
@@ -218,7 +218,7 @@ class COOPS_Station:
 
         if self.__query is None:
             self.__query = COOPS_Query(
-                station=self,
+                station=self.nos_id,
                 product=product,
                 start_date=start_date,
                 end_date=end_date,
@@ -228,19 +228,19 @@ class COOPS_Station:
                 interval=interval,
             )
         else:
-            if start_date is None:
+            if start_date is not None:
                 self.__query.start_date = start_date
-            if end_date is None:
+            if end_date is not None:
                 self.__query.end_date = end_date
-            if product is None:
+            if product is not None:
                 self.__query.product = product
-            if datum is None:
+            if datum is not None:
                 self.__query.datum = datum
-            if units is None:
+            if units is not None:
                 self.__query.units = units
-            if time_zone is None:
+            if time_zone is not None:
                 self.__query.time_zone = time_zone
-            if interval is None:
+            if interval is not None:
                 self.__query.interval = interval
 
         data = self.__query.data
@@ -302,9 +302,8 @@ class COOPS_Query:
         COOPS_Query(1612480, datetime.datetime(2022, 1, 1, 0, 0), datetime.datetime(2022, 1, 3, 0, 0), 'water_level', 'MLLW', 'metric', 'gmt', 'h')
         """
 
-        if not isinstance(station, COOPS_Station):
-            station = COOPS_Station(station)
-        station = station.nos_id
+        if isinstance(station, COOPS_Station):
+            station = station.nos_id
         if end_date is None:
             end_date = datetime.today()
         if datum is None:
@@ -429,17 +428,17 @@ class COOPS_Query:
         >>> query.data
                                  v      s        f  q
         t
-        2022-01-01 00:00:00  1.193  0.002  0,0,0,0  p
-        2022-01-01 00:06:00  1.180  0.002  1,0,0,0  p
-        2022-01-01 00:12:00  1.167  0.002  0,0,0,0  p
-        2022-01-01 00:18:00  1.156  0.003  1,0,0,0  p
-        2022-01-01 00:24:00  1.147  0.003  0,0,0,0  p
-        ...                    ...    ...      ... ..
-        2022-01-02 23:36:00  1.229  0.004  1,0,0,0  p
-        2022-01-02 23:42:00  1.219  0.003  1,0,0,0  p
-        2022-01-02 23:48:00  1.223  0.004  1,0,0,0  p
-        2022-01-02 23:54:00  1.217  0.004  0,0,0,0  p
-        2022-01-03 00:00:00  1.207  0.002  0,0,0,0  p
+        2022-01-01 00:00:00  1.193  0.002  0,0,0,0  v
+        2022-01-01 00:06:00  1.180  0.002  0,0,0,0  v
+        2022-01-01 00:12:00  1.167  0.002  0,0,0,0  v
+        2022-01-01 00:18:00  1.156  0.003  0,0,0,0  v
+        2022-01-01 00:24:00  1.147  0.003  0,0,0,0  v
+                            ...    ...      ... ..
+        2022-01-02 23:36:00  1.229  0.004  0,0,0,0  v
+        2022-01-02 23:42:00  1.219  0.003  0,0,0,0  v
+        2022-01-02 23:48:00  1.223  0.004  0,0,0,0  v
+        2022-01-02 23:54:00  1.217  0.004  0,0,0,0  v
+        2022-01-03 00:00:00  1.207  0.002  0,0,0,0  v
         [481 rows x 4 columns]
         """
 
@@ -568,7 +567,7 @@ def coops_stations_within_region(
     :param station_type: one of ``current`` or ``historical``
     :return: data frame of stations within the specified region
 
-    >>> from stormevents import VortexTrack
+    >>> from stormevents.nhc import VortexTrack
     >>> from shapely import ops
     >>> track = VortexTrack('florence2018', file_deck='b')
     >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
@@ -624,30 +623,30 @@ def coops_product_within_region(
     :param station_type: either ``current`` or ``historical``
     :return: array of data within the specified region
 
-    >>> from stormevents import VortexTrack
+    >>> from stormevents.nhc import VortexTrack
     >>> from shapely import ops
     >>> from datetime import datetime, timedelta
     >>> track = VortexTrack('florence2018', file_deck='b')
     >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
     >>> coops_product_within_region('water_level', region=combined_wind_swaths, start_date=datetime.now() - timedelta(hours=1), end_date=datetime.now())
     <xarray.Dataset>
-    Dimensions:  (nos_id: 10, t: 10)
+    Dimensions:  (nos_id: 10, t: 11)
     Coordinates:
       * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8662245 8665530 8670870
-      * t        (t) datetime64[ns] 2022-02-23T08:06:00 ... 2022-02-23T09:00:00
+      * t        (t) datetime64[ns] 2022-03-08T14:48:00 ... 2022-03-08T15:48:00
         nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'NITS1' 'CHTS1' 'FPKG1'
         x        (nos_id) float64 -75.75 -75.56 -75.69 ... -79.19 -79.94 -80.88
         y        (nos_id) float64 36.19 35.78 35.22 34.72 ... 33.34 32.78 32.03
     Data variables:
-        v        (nos_id, t) float32 6.097 6.096 6.059 6.005 ... 2.39 2.324 2.336
-        s        (nos_id, t) float32 0.07 0.052 0.054 0.063 ... 0.014 0.02 0.009
-        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '0,0,0,0' '1,0,0,0'
+        v        (nos_id, t) float32 6.256 6.304 6.361 6.375 ... 2.633 2.659 2.686
+        s        (nos_id, t) float32 0.107 0.097 0.127 0.122 ... 0.005 0.004 0.004
+        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '1,0,0,0' '1,0,0,0'
         q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
     """
 
     stations = coops_stations_within_region(region=region, station_type=station_type)
     station_data = [
-        COOPS_Station(station).get(
+        COOPS_Station(station).product(
             product=product,
             start_date=start_date,
             end_date=end_date,

@@ -13,128 +13,6 @@ NHC_GIS_ARCHIVE_START_YEAR = 2008
 
 
 @lru_cache(maxsize=None)
-def nhc_archive_storms(year: int = None) -> List[str]:
-    url = 'https://ftp.nhc.noaa.gov/atcf/archive/storm.table'
-
-    # using Pooch, cache today's NHC storm list
-    local_filename = pooch.retrieve(
-        url=url, path=pooch.os_cache('nhc') / f'{datetime.today():%Y%m%d}', known_hash=None,
-    )
-
-    columns = [
-        'name',
-        'basin',
-        2,
-        3,
-        4,
-        5,
-        6,
-        'number',
-        'year',
-        'class',
-        10,
-        'start_date',
-        'end_date',
-        13,
-        14,
-        15,
-        16,
-        17,
-        'source',
-        19,
-        'nhc_code',
-    ]
-
-    storms = pandas.read_csv(local_filename, header=0, names=columns)
-
-    if year is not None:
-        storms = storms[storms['year'] == year]
-
-    return storms['nhc_code'].str.strip().to_list()
-
-
-@lru_cache(maxsize=None)
-def nhc_gis_storms(year: int = None) -> pandas.DataFrame:
-    """
-    retrieve list of hurricanes from GIS archive since 2008
-
-    :param year: storm year
-    :return: table of storms
-
-    >>> nhc_gis_storms()
-                   name class  year basin  number       source
-    nhc_code
-    AL012008     ARTHUR    TS  2008    AL       1  GIS_ARCHIVE
-    AL022008     BERTHA    HU  2008    AL       2  GIS_ARCHIVE
-    AL032008  CRISTOBAL    TS  2008    AL       3  GIS_ARCHIVE
-    AL042008      DOLLY    HU  2008    AL       4  GIS_ARCHIVE
-    AL052008    EDOUARD    TS  2008    AL       5  GIS_ARCHIVE
-         ...        ...   ...   ...   ...     ...          ...
-    EP152021       OLAF    HU  2021    EP      15  GIS_ARCHIVE
-    EP162021     PAMELA    HU  2021    EP      16  GIS_ARCHIVE
-    EP172021       RICK    HU  2021    EP      17  GIS_ARCHIVE
-    EP182021      TERRY    TS  2021    EP      18  GIS_ARCHIVE
-    EP192021     SANDRA    TS  2021    EP      19  GIS_ARCHIVE
-    [523 rows x 6 columns]
-    """
-
-    if year is None:
-        year = list(range(NHC_GIS_ARCHIVE_START_YEAR, datetime.today().year + 1))
-
-    if isinstance(year, Iterable) and not isinstance(year, str):
-        years = sorted(pandas.unique(year))
-        return pandas.concat(
-            [
-                nhc_gis_storms(year)
-                for year in years
-                if year is not None and year >= NHC_GIS_ARCHIVE_START_YEAR
-            ]
-        )
-    elif not isinstance(year, int):
-        year = int(year)
-
-    url = 'http://www.nhc.noaa.gov/gis/archive_wsurge.php'
-    response = requests.get(url, params={'year': year})
-    soup = BeautifulSoup(response.content, features='html.parser')
-    table = soup.find('table')
-
-    rows = []
-    for row in table.find_all('tr')[1:]:
-        identifier, long_name = (entry.text for entry in row.find_all('td'))
-        short_name = long_name.split()[-1]
-        rows.append((f'{identifier}{year}', short_name, long_name, year))
-
-    storms = pandas.DataFrame(rows, columns=['nhc_code', 'name', 'long_name', 'year'])
-    storms['nhc_code'] = storms['nhc_code'].str.upper()
-    storms.set_index('nhc_code', inplace=True)
-
-    storms['number'] = storms.index.str.slice(2, 4).astype(int)
-    storms['basin'] = storms.index.str.slice(0, 2)
-
-    storms['class'] = None
-    storms.loc[
-        storms['long_name'].str.contains('Tropical Cyclone', flags=re.IGNORECASE)
-        | storms['long_name'].str.contains('Hurricane', flags=re.IGNORECASE),
-        'class',
-    ] = 'HU'
-    storms.loc[
-        storms['long_name'].str.contains('Tropical Storm', flags=re.IGNORECASE), 'class',
-    ] = 'TS'
-    storms.loc[
-        storms['long_name'].str.contains('Tropical Depression', flags=re.IGNORECASE), 'class',
-    ] = 'TD'
-    storms.loc[
-        storms['long_name'].str.contains('Subtropical', flags=re.IGNORECASE), 'class',
-    ] = 'ST'
-
-    storms['source'] = 'GIS_ARCHIVE'
-
-    storms.sort_values(['year', 'basin', 'number'], inplace=True)
-
-    return storms[['name', 'class', 'year', 'basin', 'number', 'source']]
-
-
-@lru_cache(maxsize=None)
 def nhc_storms(year: int = None) -> pandas.DataFrame:
     """
     retrieve a list of hurricanes from NHC since 1851
@@ -228,7 +106,7 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
 
     storms.set_index('nhc_code', inplace=True)
 
-    gis_storms = nhc_gis_storms(year=year)
+    gis_storms = nhc_storms_gis_archive(year=year)
     gis_storms = gis_storms.drop(gis_storms[gis_storms.index.isin(storms.index)].index)
     if len(gis_storms) > 0:
         gis_storms[['start_date', 'end_date']] = pandas.to_datetime(numpy.nan)
@@ -240,3 +118,125 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     storms.sort_values(['year', 'number', 'basin'], inplace=True)
 
     return storms
+
+
+@lru_cache(maxsize=None)
+def nhc_storms_archive(year: int = None) -> List[str]:
+    url = 'https://ftp.nhc.noaa.gov/atcf/archive/storm.table'
+
+    # using Pooch, cache today's NHC storm list
+    local_filename = pooch.retrieve(
+        url=url, path=pooch.os_cache('nhc') / f'{datetime.today():%Y%m%d}', known_hash=None,
+    )
+
+    columns = [
+        'name',
+        'basin',
+        2,
+        3,
+        4,
+        5,
+        6,
+        'number',
+        'year',
+        'class',
+        10,
+        'start_date',
+        'end_date',
+        13,
+        14,
+        15,
+        16,
+        17,
+        'source',
+        19,
+        'nhc_code',
+    ]
+
+    storms = pandas.read_csv(local_filename, header=0, names=columns)
+
+    if year is not None:
+        storms = storms[storms['year'] == year]
+
+    return storms['nhc_code'].str.strip().to_list()
+
+
+@lru_cache(maxsize=None)
+def nhc_storms_gis_archive(year: int = None) -> pandas.DataFrame:
+    """
+    retrieve list of hurricanes from GIS archive since 2008
+
+    :param year: storm year
+    :return: table of storms
+
+    >>> nhc_storms_gis_archive()
+                   name class  year basin  number       source
+    nhc_code
+    AL012008     ARTHUR    TS  2008    AL       1  GIS_ARCHIVE
+    AL022008     BERTHA    HU  2008    AL       2  GIS_ARCHIVE
+    AL032008  CRISTOBAL    TS  2008    AL       3  GIS_ARCHIVE
+    AL042008      DOLLY    HU  2008    AL       4  GIS_ARCHIVE
+    AL052008    EDOUARD    TS  2008    AL       5  GIS_ARCHIVE
+         ...        ...   ...   ...   ...     ...          ...
+    EP152021       OLAF    HU  2021    EP      15  GIS_ARCHIVE
+    EP162021     PAMELA    HU  2021    EP      16  GIS_ARCHIVE
+    EP172021       RICK    HU  2021    EP      17  GIS_ARCHIVE
+    EP182021      TERRY    TS  2021    EP      18  GIS_ARCHIVE
+    EP192021     SANDRA    TS  2021    EP      19  GIS_ARCHIVE
+    [523 rows x 6 columns]
+    """
+
+    if year is None:
+        year = list(range(NHC_GIS_ARCHIVE_START_YEAR, datetime.today().year + 1))
+
+    if isinstance(year, Iterable) and not isinstance(year, str):
+        years = sorted(pandas.unique(year))
+        return pandas.concat(
+            [
+                nhc_storms_gis_archive(year)
+                for year in years
+                if year is not None and year >= NHC_GIS_ARCHIVE_START_YEAR
+            ]
+        )
+    elif not isinstance(year, int):
+        year = int(year)
+
+    url = 'http://www.nhc.noaa.gov/gis/archive_wsurge.php'
+    response = requests.get(url, params={'year': year})
+    soup = BeautifulSoup(response.content, features='html.parser')
+    table = soup.find('table')
+
+    rows = []
+    for row in table.find_all('tr')[1:]:
+        identifier, long_name = (entry.text for entry in row.find_all('td'))
+        short_name = long_name.split()[-1]
+        rows.append((f'{identifier}{year}', short_name, long_name, year))
+
+    storms = pandas.DataFrame(rows, columns=['nhc_code', 'name', 'long_name', 'year'])
+    storms['nhc_code'] = storms['nhc_code'].str.upper()
+    storms.set_index('nhc_code', inplace=True)
+
+    storms['number'] = storms.index.str.slice(2, 4).astype(int)
+    storms['basin'] = storms.index.str.slice(0, 2)
+
+    storms['class'] = None
+    storms.loc[
+        storms['long_name'].str.contains('Tropical Cyclone', flags=re.IGNORECASE)
+        | storms['long_name'].str.contains('Hurricane', flags=re.IGNORECASE),
+        'class',
+    ] = 'HU'
+    storms.loc[
+        storms['long_name'].str.contains('Tropical Storm', flags=re.IGNORECASE), 'class',
+    ] = 'TS'
+    storms.loc[
+        storms['long_name'].str.contains('Tropical Depression', flags=re.IGNORECASE), 'class',
+    ] = 'TD'
+    storms.loc[
+        storms['long_name'].str.contains('Subtropical', flags=re.IGNORECASE), 'class',
+    ] = 'ST'
+
+    storms['source'] = 'GIS_ARCHIVE'
+
+    storms.sort_values(['year', 'basin', 'number'], inplace=True)
+
+    return storms[['name', 'class', 'year', 'basin', 'number', 'source']]

@@ -6,8 +6,7 @@ from typing import Dict, List
 
 import pytest
 
-from stormevents import nhc_storms
-from stormevents.nhc.storms import nhc_archive_storms
+from stormevents.nhc.storms import nhc_storms, nhc_storms_archive
 
 DATA_DIRECTORY = Path(__file__).parent.absolute().resolve() / 'data'
 INPUT_DIRECTORY = DATA_DIRECTORY / 'input'
@@ -18,7 +17,7 @@ REFERENCE_DIRECTORY = DATA_DIRECTORY / 'reference'
 @pytest.fixture(scope='session', autouse=True)
 def cache_nhc_storms():
     nhc_storms()
-    nhc_archive_storms()
+    nhc_storms_archive()
 
 
 def check_reference_directory(
