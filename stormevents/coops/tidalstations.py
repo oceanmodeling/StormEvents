@@ -16,7 +16,7 @@ import numpy
 import pandas
 from pandas import DataFrame
 import requests
-from shapely.geometry import box, MultiPolygon, Polygon
+from shapely.geometry import MultiPolygon, Polygon, box
 import typepigeon
 import xarray
 from xarray import Dataset
@@ -67,7 +67,7 @@ class COOPS_TidalDatum(Enum):
     STND = 'STND'  # Station Datum
 
 
-class COOP_VelocityType(Enum):
+class COOPS_VelocityType(Enum):
     SPEED_DIR = 'speed_dir'  # Return results for speed and dirction
     DEFAULT = 'default'  # Return results for velocity major, mean flood direction and mean ebb dirction
 
@@ -157,35 +157,38 @@ class COOPS_Station:
         table = soup.find_all('table', {'class': 'table table-striped'})
         if len(table) > 0:
             table = table[0]
-            columns = [field.text for field in table.find('thead').find('tr').find_all('th')]
+            columns = [field.text for field in
+                       table.find('thead').find('tr').find_all('th')]
             constituents = []
             for row in table.find_all('tr')[1:]:
-                constituents.append([entry.text for entry in row.find_all('td')])
+                constituents.append(
+                        [entry.text for entry in row.find_all('td')])
             constituents = DataFrame(constituents, columns=columns)
             constituents.rename(columns={'Constituent #': '#'}, inplace=True)
             constituents = constituents.astype(
-                {
-                    '#': numpy.int32,
-                    'Amplitude': numpy.float64,
-                    'Phase': numpy.float64,
-                    'Speed': numpy.float64,
-                }
+                    {
+                        '#': numpy.int32,
+                        'Amplitude': numpy.float64,
+                        'Phase': numpy.float64,
+                        'Speed': numpy.float64,
+                    }
             )
         else:
-            constituents = DataFrame(columns=['#', 'Amplitude', 'Phase', 'Speed'])
+            constituents = DataFrame(
+                columns=['#', 'Amplitude', 'Phase', 'Speed'])
 
         constituents.set_index('#', inplace=True)
         return constituents
 
-    def data(
-        self,
-        product: COOPS_Product,
-        start_date: datetime,
-        end_date: datetime = None,
-        datum: COOPS_TidalDatum = None,
-        units: COOPS_Units = None,
-        time_zone: COOPS_TimeZone = None,
-        interval: COOPS_Interval = None,
+    def product(
+            self,
+            product: COOPS_Product,
+            start_date: datetime,
+            end_date: datetime = None,
+            datum: COOPS_TidalDatum = None,
+            units: COOPS_Units = None,
+            time_zone: COOPS_TimeZone = None,
+            interval: COOPS_Interval = None,
     ) -> Dataset:
         """
         retrieve data for the current station within the specified parameters
@@ -200,7 +203,7 @@ class COOPS_Station:
         :return: data for the current station within the specified parameters
 
         >>> station = COOPS_Station(8632200)
-        >>> station.data('water_level', start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
+        >>> station.product('water_level', start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
         <xarray.Dataset>
         Dimensions:  (nos_id: 1, t: 841)
         Coordinates:
@@ -218,14 +221,14 @@ class COOPS_Station:
 
         if self.__query is None:
             self.__query = COOPS_Query(
-                station=self,
-                product=product,
-                start_date=start_date,
-                end_date=end_date,
-                datum=datum,
-                units=units,
-                time_zone=time_zone,
-                interval=interval,
+                    station=self.nos_id,
+                    product=product,
+                    start_date=start_date,
+                    end_date=end_date,
+                    datum=datum,
+                    units=units,
+                    time_zone=time_zone,
+                    interval=interval,
             )
         else:
             if start_date is not None:
@@ -252,9 +255,9 @@ class COOPS_Station:
 
         if len(data['t']) > 0:
             data = data.assign_coords(
-                nws_id=('nos_id', [self.nws_id]),
-                x=('nos_id', [self.location.x]),
-                y=('nos_id', [self.location.y]),
+                    nws_id=('nos_id', [self.nws_id]),
+                    x=('nos_id', [self.location.x]),
+                    y=('nos_id', [self.location.y]),
             )
 
         return data
@@ -275,15 +278,15 @@ class COOPS_Query:
     URL = 'https://tidesandcurrents.noaa.gov/api/datagetter?'
 
     def __init__(
-        self,
-        station: int,
-        product: COOPS_Product,
-        start_date: datetime,
-        end_date: datetime = None,
-        datum: COOPS_TidalDatum = None,
-        units: COOPS_Units = None,
-        time_zone: COOPS_TimeZone = None,
-        interval: COOPS_Interval = None,
+            self,
+            station: int,
+            product: COOPS_Product,
+            start_date: datetime,
+            end_date: datetime = None,
+            datum: COOPS_TidalDatum = None,
+            units: COOPS_Units = None,
+            time_zone: COOPS_TimeZone = None,
+            interval: COOPS_Interval = None,
     ):
         """
         instantiate a new query with the specified parameters
@@ -302,9 +305,8 @@ class COOPS_Query:
         COOPS_Query(1612480, datetime.datetime(2022, 1, 1, 0, 0), datetime.datetime(2022, 1, 3, 0, 0), 'water_level', 'MLLW', 'metric', 'gmt', 'h')
         """
 
-        if not isinstance(station, COOPS_Station):
-            station = COOPS_Station(station)
-        station = station.nos_id
+        if isinstance(station, COOPS_Station):
+            station = station.nos_id
         if end_date is None:
             end_date = datetime.today()
         if datum is None:
@@ -429,17 +431,17 @@ class COOPS_Query:
         >>> query.data
                                  v      s        f  q
         t
-        2022-01-01 00:00:00  1.193  0.002  0,0,0,0  p
-        2022-01-01 00:06:00  1.180  0.002  1,0,0,0  p
-        2022-01-01 00:12:00  1.167  0.002  0,0,0,0  p
-        2022-01-01 00:18:00  1.156  0.003  1,0,0,0  p
-        2022-01-01 00:24:00  1.147  0.003  0,0,0,0  p
-        ...                    ...    ...      ... ..
-        2022-01-02 23:36:00  1.229  0.004  1,0,0,0  p
-        2022-01-02 23:42:00  1.219  0.003  1,0,0,0  p
-        2022-01-02 23:48:00  1.223  0.004  1,0,0,0  p
-        2022-01-02 23:54:00  1.217  0.004  0,0,0,0  p
-        2022-01-03 00:00:00  1.207  0.002  0,0,0,0  p
+        2022-01-01 00:00:00  1.193  0.002  0,0,0,0  v
+        2022-01-01 00:06:00  1.180  0.002  0,0,0,0  v
+        2022-01-01 00:12:00  1.167  0.002  0,0,0,0  v
+        2022-01-01 00:18:00  1.156  0.003  0,0,0,0  v
+        2022-01-01 00:24:00  1.147  0.003  0,0,0,0  v
+                            ...    ...      ... ..
+        2022-01-02 23:36:00  1.229  0.004  0,0,0,0  v
+        2022-01-02 23:42:00  1.219  0.003  0,0,0,0  v
+        2022-01-02 23:48:00  1.223  0.004  0,0,0,0  v
+        2022-01-02 23:54:00  1.217  0.004  0,0,0,0  v
+        2022-01-03 00:00:00  1.207  0.002  0,0,0,0  v
         [481 rows x 4 columns]
         """
 
@@ -453,8 +455,12 @@ class COOPS_Query:
             else:
                 data = DataFrame(data['data'], columns=fields)
                 data = data.astype(
-                    {'v': numpy.float32, 's': numpy.float32, 'f': 'string', 'q': 'string'},
-                    errors='ignore',
+                        {
+                            'v': numpy.float32,
+                            's': numpy.float32,
+                            'f': 'string',
+                            'q': 'string'},
+                        errors='ignore',
                 )
                 data['t'] = pandas.to_datetime(data['t'])
 
@@ -469,7 +475,7 @@ class COOPS_Query:
 @lru_cache(maxsize=None)
 def __coops_stations_html_tables() -> bs4.element.ResultSet:
     response = requests.get(
-        'https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current',
+            'https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current',
     )
     soup = BeautifulSoup(response.content, features='html.parser')
     return soup.find_all('div', {'class': 'table-responsive'})
@@ -503,7 +509,8 @@ def coops_stations(station_type: COOPS_StationType = None) -> GeoDataFrame:
     if station_type is None:
         station_type = COOPS_StationType.CURRENT
     elif not isinstance(station_type, COOPS_StationType):
-        station_type = typepigeon.convert_value(station_type, COOPS_StationType)
+        station_type = typepigeon.convert_value(station_type,
+                                                COOPS_StationType)
 
     if station_type == COOPS_StationType.CURRENT:
         table_id = 'NWSTable'
@@ -514,35 +521,38 @@ def coops_stations(station_type: COOPS_StationType = None) -> GeoDataFrame:
 
     tables = __coops_stations_html_tables()
 
-    stations_table = tables[table_index].find('table', {'id': table_id}).find_all('tr')
+    stations_table = tables[table_index].find('table',
+                                              {'id': table_id}).find_all('tr')
 
-    stations_columns = [field.text for field in stations_table[0].find_all('th')]
+    stations_columns = [field.text for field in
+                        stations_table[0].find_all('th')]
     stations = []
     for station in stations_table[1:]:
-        stations.append([value.text.strip() for value in station.find_all('td')])
+        stations.append(
+                [value.text.strip() for value in station.find_all('td')])
 
     stations = DataFrame(stations, columns=stations_columns)
     stations.rename(
-        columns={
-            'NOS ID': 'nos_id',
-            'NWS ID': 'nws_id',
-            'Latitude': 'y',
-            'Longitude': 'x',
-            'State': 'state',
-            'Station Name': 'name',
-        },
-        inplace=True,
+            columns={
+                'NOS ID': 'nos_id',
+                'NWS ID': 'nws_id',
+                'Latitude': 'y',
+                'Longitude': 'x',
+                'State': 'state',
+                'Station Name': 'name',
+            },
+            inplace=True,
     )
     stations = stations.astype(
-        {
-            'nos_id': numpy.int32,
-            'nws_id': 'string',
-            'x': numpy.float16,
-            'y': numpy.float16,
-            'state': 'string',
-            'name': 'string',
-        },
-        copy=False,
+            {
+                'nos_id': numpy.int32,
+                'nws_id': 'string',
+                'x': numpy.float16,
+                'y': numpy.float16,
+                'state': 'string',
+                'name': 'string',
+            },
+            copy=False,
     )
     stations.set_index('nos_id', inplace=True)
 
@@ -553,13 +563,13 @@ def coops_stations(station_type: COOPS_StationType = None) -> GeoDataFrame:
         stations['removed'] = pandas.to_datetime(numpy.nan)
 
     return GeoDataFrame(
-        stations[['nws_id', 'name', 'state', 'removed']],
-        geometry=geopandas.points_from_xy(stations['x'], stations['y']),
+            stations[['nws_id', 'name', 'state', 'removed']],
+            geometry=geopandas.points_from_xy(stations['x'], stations['y']),
     )
 
 
 def coops_stations_within_region(
-    region: Polygon, station_type: COOPS_StationType = None,
+        region: Polygon, station_type: COOPS_StationType = None,
 ) -> GeoDataFrame:
     """
     retrieve all stations within the specified region of interest
@@ -592,23 +602,25 @@ def coops_stations_within_region(
 
 
 def coops_stations_within_bounds(
-    minx: float, miny: float, maxx: float, maxy: float, station_type: COOPS_StationType = None,
+        minx: float, miny: float, maxx: float, maxy: float,
+        station_type: COOPS_StationType = None,
 ) -> GeoDataFrame:
     return coops_stations_within_region(
-        region=box(minx=minx, miny=miny, maxx=maxx, maxy=maxy), station_type=station_type
+            region=box(minx=minx, miny=miny, maxx=maxx, maxy=maxy),
+            station_type=station_type
     )
 
 
 def coops_product_within_region(
-    product: COOPS_Product,
-    region: Union[Polygon, MultiPolygon],
-    start_date: datetime,
-    end_date: datetime = None,
-    datum: COOPS_TidalDatum = None,
-    units: COOPS_Units = None,
-    time_zone: COOPS_TimeZone = None,
-    interval: COOPS_Interval = None,
-    station_type: COOPS_StationType = None,
+        product: COOPS_Product,
+        region: Union[Polygon, MultiPolygon],
+        start_date: datetime,
+        end_date: datetime = None,
+        datum: COOPS_TidalDatum = None,
+        units: COOPS_Units = None,
+        time_zone: COOPS_TimeZone = None,
+        interval: COOPS_Interval = None,
+        station_type: COOPS_StationType = None,
 ) -> Dataset:
     """
     retrieve CO-OPS data from within the specified region of interest
@@ -631,30 +643,31 @@ def coops_product_within_region(
     >>> combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
     >>> coops_product_within_region('water_level', region=combined_wind_swaths, start_date=datetime.now() - timedelta(hours=1), end_date=datetime.now())
     <xarray.Dataset>
-    Dimensions:  (nos_id: 10, t: 10)
+    Dimensions:  (nos_id: 10, t: 11)
     Coordinates:
       * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8662245 8665530 8670870
-      * t        (t) datetime64[ns] 2022-02-23T08:06:00 ... 2022-02-23T09:00:00
+      * t        (t) datetime64[ns] 2022-03-08T14:48:00 ... 2022-03-08T15:48:00
         nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'NITS1' 'CHTS1' 'FPKG1'
         x        (nos_id) float64 -75.75 -75.56 -75.69 ... -79.19 -79.94 -80.88
         y        (nos_id) float64 36.19 35.78 35.22 34.72 ... 33.34 32.78 32.03
     Data variables:
-        v        (nos_id, t) float32 6.097 6.096 6.059 6.005 ... 2.39 2.324 2.336
-        s        (nos_id, t) float32 0.07 0.052 0.054 0.063 ... 0.014 0.02 0.009
-        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '0,0,0,0' '1,0,0,0'
+        v        (nos_id, t) float32 6.256 6.304 6.361 6.375 ... 2.633 2.659 2.686
+        s        (nos_id, t) float32 0.107 0.097 0.127 0.122 ... 0.005 0.004 0.004
+        f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '1,0,0,0' '1,0,0,0'
         q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
     """
 
-    stations = coops_stations_within_region(region=region, station_type=station_type)
+    stations = coops_stations_within_region(region=region,
+                                            station_type=station_type)
     station_data = [
-        COOPS_Station(station).data(
-            product=product,
-            start_date=start_date,
-            end_date=end_date,
-            datum=datum,
-            units=units,
-            time_zone=time_zone,
-            interval=interval,
+        COOPS_Station(station).product(
+                product=product,
+                start_date=start_date,
+                end_date=end_date,
+                datum=datum,
+                units=units,
+                time_zone=time_zone,
+                interval=interval,
         )
         for station in stations.index
     ]

@@ -1,6 +1,7 @@
 import pytest
 
-from stormevents.nhc.atcf import ATCF_FileDeck, atcf_files, ATCF_Mode, atcf_url, get_atcf_entry
+from stormevents.nhc.atcf import ATCF_FileDeck, ATCF_Mode, atcf_files, \
+    atcf_url, get_atcf_entry
 
 
 def test_atcf_url():
@@ -14,9 +15,11 @@ def test_atcf_url():
 
 
 def test_atcf_nhc_codes():
-    a_realtime = atcf_files(file_deck=ATCF_FileDeck.ADVISORY, mode=ATCF_Mode.realtime)
+    a_realtime = atcf_files(file_deck=ATCF_FileDeck.ADVISORY,
+                            mode=ATCF_Mode.realtime)
     abf_realtime = atcf_files(mode=ATCF_Mode.realtime)
-    a_2014_2015 = atcf_files(file_deck=ATCF_FileDeck.ADVISORY, year=range(2014, 2015))
+    a_2014_2015 = atcf_files(file_deck=ATCF_FileDeck.ADVISORY,
+                             year=range(2014, 2015))
     abf_2014_2015 = atcf_files(year=range(2014, 2015))
 
     assert len(a_realtime) == 67
@@ -25,12 +28,13 @@ def test_atcf_nhc_codes():
     assert len(abf_2014_2015) == 96
 
 
-def test_get_atcf_entry():
+def test_atcf_entry():
     storm_1 = get_atcf_entry(year=2018, basin='AL', storm_number=6)
     storm_2 = get_atcf_entry(year=2018, storm_name='florence')
 
     with pytest.raises(ValueError):
-        get_atcf_entry(year=2018, basin=None, storm_name=None, storm_number=None)
+        get_atcf_entry(year=2018, basin=None, storm_name=None,
+                       storm_number=None)
     with pytest.raises(ValueError):
         get_atcf_entry(year=2018, basin='EP', storm_name='nonexistent')
     with pytest.raises(ValueError):

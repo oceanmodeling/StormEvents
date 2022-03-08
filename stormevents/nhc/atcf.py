@@ -26,26 +26,29 @@ pandas.options.mode.chained_assignment = None
 
 
 def atcf_files(
-    file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None, year: int = None
+        file_deck: 'ATCF_FileDeck' = None, mode: 'ATCF_Mode' = None,
+        year: int = None
 ) -> List[str]:
     if file_deck is None:
         return list(
-            itertools.chain(
-                *(
-                    atcf_files(file_deck=file_deck.value, mode=mode, year=year)
-                    for file_deck in ATCF_FileDeck
+                itertools.chain(
+                        *(
+                            atcf_files(file_deck=file_deck.value, mode=mode,
+                                       year=year)
+                            for file_deck in ATCF_FileDeck
+                        )
                 )
-            )
         )
 
     if mode is None:
         return list(
-            itertools.chain(
-                *(
-                    atcf_files(file_deck=file_deck, mode=mode.value, year=year)
-                    for mode in ATCF_Mode
+                itertools.chain(
+                        *(
+                            atcf_files(file_deck=file_deck, mode=mode.value,
+                                       year=year)
+                            for mode in ATCF_Mode
+                        )
                 )
-            )
         )
 
     if not isinstance(file_deck, ATCF_FileDeck):
@@ -54,13 +57,16 @@ def atcf_files(
     if not isinstance(mode, ATCF_Mode):
         mode = typepigeon.convert_value(mode, ATCF_Mode)
 
-    if mode == ATCF_Mode.historical and year is None or isinstance(year, Iterable):
+    if mode == ATCF_Mode.historical and year is None or isinstance(year,
+                                                                   Iterable):
         if year is None:
             year = range(ATCF_RECORD_START_YEAR, datetime.today().year + 1)
         return list(
-            itertools.chain(
-                *(atcf_files(file_deck=file_deck, mode=mode, year=entry) for entry in year)
-            )
+                itertools.chain(
+                        *(
+                        atcf_files(file_deck=file_deck, mode=mode, year=entry)
+                        for entry in year)
+                )
         )
 
     url = atcf_url(file_deck=file_deck, mode=mode, year=year)
@@ -76,7 +82,8 @@ def atcf_files(
     filenames = sorted((filename for filename in filenames), reverse=True)
 
     if year is not None:
-        filenames = [filename for filename in filenames if str(year) in filename]
+        filenames = [filename for filename in filenames if
+                     str(year) in filename]
 
     return [url + filename for filename in filenames]
 
@@ -107,12 +114,14 @@ class ATCF_RecordType(Enum):
 
 
 def get_atcf_entry(
-    year: int, basin: str = None, storm_number: int = None, storm_name: str = None,
+        year: int, basin: str = None, storm_number: int = None,
+        storm_name: str = None,
 ) -> Series:
     storms = nhc_storms(year=year)
 
     if storm_name is None and (basin is None and storm_number is None):
-        raise ValueError('need either storm name + year OR basin + storm number + year')
+        raise ValueError(
+            'need either storm name + year OR basin + storm number + year')
 
     if basin is not None:
         storms = storms[storms['basin'].str.contains(basin.upper())]
@@ -138,7 +147,8 @@ def get_atcf_entry(
 
 
 def atcf_url(
-    nhc_code: str = None, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None, year=None,
+        nhc_code: str = None, file_deck: ATCF_FileDeck = None,
+        mode: ATCF_Mode = None, year=None,
 ) -> str:
     if nhc_code is not None:
         year = int(nhc_code[4:])
@@ -146,7 +156,8 @@ def atcf_url(
     if mode is None:
         if nhc_code is None:
             raise ValueError('NHC storm code not given')
-        entry = get_atcf_entry(basin=nhc_code[:2], storm_number=int(nhc_code[2:4]), year=year)
+        entry = get_atcf_entry(basin=nhc_code[:2],
+                               storm_number=int(nhc_code[2:4]), year=year)
         if entry['source'] == 'ARCHIVE':
             mode = ATCF_Mode.historical
         else:
@@ -182,7 +193,8 @@ def atcf_url(
             nhc_dir = 'fix'
             suffix = '.dat'
         else:
-            raise NotImplementedError(f'filedeck "{file_deck}" is not implemented')
+            raise NotImplementedError(
+                f'filedeck "{file_deck}" is not implemented')
 
     url = f'ftp://ftp.nhc.noaa.gov/atcf/{nhc_dir}/'
 
@@ -193,9 +205,10 @@ def atcf_url(
 
 
 def get_atcf_file(
-    nhc_code: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
+        nhc_code: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
 ) -> io.BytesIO:
-    url = atcf_url(file_deck=file_deck, nhc_code=nhc_code, mode=mode).replace('ftp://', "")
+    url = atcf_url(file_deck=file_deck, nhc_code=nhc_code, mode=mode).replace(
+        'ftp://', "")
     logging.info(f'Downloading storm data from {url}')
 
     hostname, filename = url.split('/', 1)
@@ -212,7 +225,8 @@ def get_atcf_file(
     return handle
 
 
-def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -> Any:
+def normalize_atcf_value(value: Any, to_type: type,
+                         round_digits: int = None, ) -> Any:
     if type(value).__name__ == 'Quantity':
         value = value.magnitude
     if not (value is None or pandas.isna(value) or value == ''):
@@ -225,11 +239,13 @@ def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -
 
 
 def read_atcf(
-    atcf: Union[PathLike, io.BytesIO, TextIO], record_types: List[ATCF_RecordType] = None,
+        atcf: Union[PathLike, io.BytesIO, TextIO],
+        record_types: List[ATCF_RecordType] = None,
 ) -> GeoDataFrame:
     if record_types is not None:
         record_types = [
-            typepigeon.convert_value(record_type, str) for record_type in record_types
+            typepigeon.convert_value(record_type, str) for record_type in
+            record_types
         ]
 
     if isinstance(atcf, io.BytesIO):
@@ -268,7 +284,8 @@ def read_atcf(
     data = DataFrame(records)
 
     return GeoDataFrame(
-        data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude'])
+            data, geometry=geopandas.points_from_xy(data['longitude'],
+                                                    data['latitude'])
     )
 
 
@@ -324,58 +341,60 @@ def read_atcf_line(line: str) -> Dict[str, Any]:
     record['longitude'] = longitude
 
     record.update(
-        {
-            'max_sustained_wind_speed': normalize_atcf_value(line[8], int),
-            'central_pressure': normalize_atcf_value(line[9], int),
-            'development_level': line[10],
-        }
+            {
+                'max_sustained_wind_speed': normalize_atcf_value(line[8], int),
+                'central_pressure': normalize_atcf_value(line[9], int),
+                'development_level': line[10],
+            }
     )
 
     try:
         record['isotach'] = normalize_atcf_value(line[11], int)
     except ValueError:
         raise Exception(
-            'Error: No radial wind information for this storm; '
-            'parametric wind model cannot be built.'
+                'Error: No radial wind information for this storm; '
+                'parametric wind model cannot be built.'
         )
 
     record.update(
-        {
-            'quadrant': line[12],
-            'radius_for_NEQ': normalize_atcf_value(line[13], int),
-            'radius_for_SEQ': normalize_atcf_value(line[14], int),
-            'radius_for_SWQ': normalize_atcf_value(line[15], int),
-            'radius_for_NWQ': normalize_atcf_value(line[16], int),
-        }
+            {
+                'quadrant': line[12],
+                'radius_for_NEQ': normalize_atcf_value(line[13], int),
+                'radius_for_SEQ': normalize_atcf_value(line[14], int),
+                'radius_for_SWQ': normalize_atcf_value(line[15], int),
+                'radius_for_NWQ': normalize_atcf_value(line[16], int),
+            }
     )
 
     if len(line) > 18:
         record.update(
-            {
-                'background_pressure': normalize_atcf_value(line[17], int),
-                'radius_of_last_closed_isobar': normalize_atcf_value(line[18], int),
-                'radius_of_maximum_winds': normalize_atcf_value(line[19], int),
-            }
+                {
+                    'background_pressure': normalize_atcf_value(line[17], int),
+                    'radius_of_last_closed_isobar': normalize_atcf_value(
+                            line[18], int),
+                    'radius_of_maximum_winds': normalize_atcf_value(line[19],
+                                                                    int),
+                }
         )
     else:
         record.update(
-            {
-                'background_pressure': numpy.nan,
-                'radius_of_last_closed_isobar': numpy.nan,
-                'radius_of_maximum_winds': numpy.nan,
-            }
+                {
+                    'background_pressure': numpy.nan,
+                    'radius_of_last_closed_isobar': numpy.nan,
+                    'radius_of_maximum_winds': numpy.nan,
+                }
         )
 
     if len(line) > 23:
         record.update(
-            {
-                'direction': normalize_atcf_value(line[25], int),
-                'speed': normalize_atcf_value(line[26], int),
-            }
+                {
+                    'direction': normalize_atcf_value(line[25], int),
+                    'speed': normalize_atcf_value(line[26], int),
+                }
         )
     else:
         record.update(
-            {'direction': numpy.nan, 'speed': numpy.nan,}
+                {'direction': numpy.nan, 'speed': numpy.nan, }
         )
 
     if len(line) > 27:

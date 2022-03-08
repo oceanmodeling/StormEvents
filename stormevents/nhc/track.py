@@ -30,7 +30,7 @@ from stormevents.nhc.atcf import (
     normalize_atcf_value,
     read_atcf,
 )
-from stormevents.nhc.storms import nhc_archive_storms, nhc_storms
+from stormevents.nhc.storms import nhc_storms, nhc_storms_archive
 from stormevents.utilities import subset_time_interval
 
 
@@ -40,14 +40,14 @@ class VortexTrack:
     """
 
     def __init__(
-        self,
-        storm: Union[str, PathLike, DataFrame, io.BytesIO],
-        start_date: datetime = None,
-        end_date: datetime = None,
-        file_deck: ATCF_FileDeck = None,
-        mode: ATCF_Mode = None,
-        record_type: ATCF_RecordType = None,
-        filename: PathLike = None,
+            self,
+            storm: Union[str, PathLike, DataFrame, io.BytesIO],
+            start_date: datetime = None,
+            end_date: datetime = None,
+            file_deck: ATCF_FileDeck = None,
+            mode: ATCF_Mode = None,
+            record_type: ATCF_RecordType = None,
+            filename: PathLike = None,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -116,15 +116,15 @@ class VortexTrack:
 
     @classmethod
     def from_storm_name(
-        cls,
-        name: str,
-        year: int,
-        start_date: datetime = None,
-        end_date: datetime = None,
-        file_deck: ATCF_FileDeck = None,
-        mode: ATCF_Mode = None,
-        record_type: str = None,
-        filename: PathLike = None,
+            cls,
+            name: str,
+            year: int,
+            start_date: datetime = None,
+            end_date: datetime = None,
+            file_deck: ATCF_FileDeck = None,
+            mode: ATCF_Mode = None,
+            record_type: str = None,
+            filename: PathLike = None,
     ) -> 'VortexTrack':
         """
         :param name: storm name
@@ -144,18 +144,19 @@ class VortexTrack:
         atcf_id = get_atcf_entry(storm_name=name, year=year).name
 
         return cls(
-            storm=atcf_id,
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=file_deck,
-            mode=mode,
-            record_type=record_type,
-            filename=filename,
+                storm=atcf_id,
+                start_date=start_date,
+                end_date=end_date,
+                file_deck=file_deck,
+                mode=mode,
+                record_type=record_type,
+                filename=filename,
         )
 
     @classmethod
     def from_fort22(
-        cls, fort22: PathLike, start_date: datetime = None, end_date: datetime = None,
+            cls, fort22: PathLike, start_date: datetime = None,
+            end_date: datetime = None,
     ) -> 'VortexTrack':
         """
         :param fort22: file path to ``fort.22``
@@ -171,18 +172,19 @@ class VortexTrack:
             filename = fort22
 
         return cls(
-            storm=read_atcf(fort22),
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=None,
-            mode=None,
-            record_type=None,
-            filename=filename,
+                storm=read_atcf(fort22),
+                start_date=start_date,
+                end_date=end_date,
+                file_deck=None,
+                mode=None,
+                record_type=None,
+                filename=filename,
         )
 
     @classmethod
     def from_atcf_file(
-        cls, atcf: PathLike, start_date: datetime = None, end_date: datetime = None,
+            cls, atcf: PathLike, start_date: datetime = None,
+            end_date: datetime = None,
     ) -> 'VortexTrack':
         """
         :param atcf: file path to ATCF data
@@ -198,13 +200,13 @@ class VortexTrack:
             filename = atcf
 
         return cls(
-            storm=atcf,
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=None,
-            mode=None,
-            record_type=None,
-            filename=filename,
+                storm=atcf,
+                start_date=start_date,
+                end_date=end_date,
+                file_deck=None,
+                mode=None,
+                record_type=None,
+                filename=filename,
         )
 
     @property
@@ -288,8 +290,11 @@ class VortexTrack:
                 except ValueError:
                     try:
                         nhc_code = get_atcf_entry(
-                            storm_name=self.__unfiltered_data['name'].tolist()[-1],
-                            year=self.__unfiltered_data['datetime'].tolist()[-1].year,
+                                storm_name=
+                                self.__unfiltered_data['name'].tolist()[-1],
+                                year=
+                                self.__unfiltered_data['datetime'].tolist()[
+                                    -1].year,
                         ).name
                         self.nhc_code = nhc_code
                     except ValueError:
@@ -304,7 +309,7 @@ class VortexTrack:
 
             if digits == 4:
                 atcf_nhc_code = get_atcf_entry(
-                    storm_name=nhc_code[:-4], year=int(nhc_code[-4:])
+                        storm_name=nhc_code[:-4], year=int(nhc_code[-4:])
                 ).name
                 if atcf_nhc_code is None:
                     raise ValueError(f'No storm with id: {nhc_code}')
@@ -343,7 +348,7 @@ class VortexTrack:
             # interpret timedelta as a temporal movement around start / end
             data_end = self.unfiltered_data['datetime'].iloc[-1]
             start_date, _ = subset_time_interval(
-                start=data_start, end=data_end, subset_start=start_date,
+                    start=data_start, end=data_end, subset_start=start_date,
             )
             if not isinstance(start_date, pandas.Timestamp):
                 start_date = pandas.to_datetime(start_date)
@@ -382,7 +387,7 @@ class VortexTrack:
             # interpret timedelta as a temporal movement around start / end
             data_start = self.unfiltered_data['datetime'].iloc[0]
             _, end_date = subset_time_interval(
-                start=data_start, end=data_end, subset_end=end_date,
+                    start=data_start, end=data_end, subset_end=end_date,
             )
             if not isinstance(end_date, pandas.Timestamp):
                 end_date = pandas.to_datetime(end_date)
@@ -415,7 +420,7 @@ class VortexTrack:
             if self.filename is None:
                 mode = ATCF_Mode.realtime
                 if self.nhc_code is not None:
-                    archive_storms = nhc_archive_storms()
+                    archive_storms = nhc_storms_archive()
                     if self.nhc_code.upper() in archive_storms:
                         mode = ATCF_Mode.historical
             else:
@@ -450,7 +455,7 @@ class VortexTrack:
             record_type = record_type.upper()
             if record_type not in self.valid_record_types:
                 raise ValueError(
-                    f'invalid advisory "{record_type}"; not one of {self.valid_record_types}'
+                        f'invalid advisory "{record_type}"; not one of {self.valid_record_types}'
                 )
         self.__record_type = record_type
 
@@ -460,14 +465,16 @@ class VortexTrack:
             # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
             # there are more but they may not have enough columns
             valid_record_types = [
-                entry.value for entry in ATCF_RecordType if entry != ATCF_RecordType.best
+                entry.value for entry in ATCF_RecordType if
+                entry != ATCF_RecordType.best
             ]
         elif self.file_deck == ATCF_FileDeck.BEST:
             valid_record_types = [ATCF_RecordType.best.value]
         elif self.file_deck == ATCF_FileDeck.FIXED:
             valid_record_types = [entry.value for entry in ATCF_RecordType]
         else:
-            raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
+            raise NotImplementedError(
+                f'file deck {self.file_deck.value} not implemented')
 
         return valid_record_types
 
@@ -491,7 +498,7 @@ class VortexTrack:
         :return: track data for the given parameters as a data frame
 
         >>> track = VortexTrack('AL112017')
-        >>> track.data
+        >>> track.high_water_marks
             basin storm_number record_type            datetime  ...   direction     speed    name                    geometry
         0      AL           11        BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
         1      AL           11        BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
@@ -507,7 +514,7 @@ class VortexTrack:
         [173 rows x 22 columns]
 
         >>> track = VortexTrack('AL112017', file_deck='a')
-        >>> track.data
+        >>> track.high_water_marks
               basin storm_number record_type            datetime  ...   direction      speed    name                    geometry
         0        AL           11        CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
         1        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)
@@ -526,7 +533,7 @@ class VortexTrack:
         return self.unfiltered_data.loc[
             (self.unfiltered_data['datetime'] >= self.start_date)
             & (self.unfiltered_data['datetime'] <= self.end_date)
-        ]
+            ]
 
     def write(self, path: PathLike, overwrite: bool = False):
         """
@@ -543,7 +550,7 @@ class VortexTrack:
                 content = self.fort_22
             else:
                 raise NotImplementedError(
-                    'writing to files other than `*.22` not yet implemented'
+                        'writing to files other than `*.22` not yet implemented'
                 )
             with open(path, 'w') as f:
                 f.write(content)
@@ -567,18 +574,18 @@ class VortexTrack:
             line = []
 
             line.extend(
-                [
-                    f'{record["basin"]:<2}',
-                    f'{record["storm_number"]:>3}',
-                    f'{record["datetime"]:%Y%m%d%H}'.rjust(11),
-                    f'{"":3}',
-                    f'{record["record_type"]:>5}',
-                    f'{normalize_atcf_value((record["datetime"] - self.start_date) / timedelta(hours=1), to_type=int):>4}',
-                ]
+                    [
+                        f'{record["basin"]:<2}',
+                        f'{record["storm_number"]:>3}',
+                        f'{record["datetime"]:%Y%m%d%H}'.rjust(11),
+                        f'{"":3}',
+                        f'{record["record_type"]:>5}',
+                        f'{normalize_atcf_value((record["datetime"] - self.start_date) / timedelta(hours=1), to_type=int):>4}',
+                    ]
             )
 
             latitude = normalize_atcf_value(
-                record['latitude'] / 0.1, to_type=int, round_digits=1
+                    record['latitude'] / 0.1, to_type=int, round_digits=1
             )
             if latitude >= 0:
                 line.append(f'{latitude:>4}N')
@@ -586,7 +593,7 @@ class VortexTrack:
                 line.append(f'{latitude * -.1:>4}S')
 
             longitude = normalize_atcf_value(
-                record['longitude'] / 0.1, to_type=int, round_digits=1
+                    record['longitude'] / 0.1, to_type=int, round_digits=1
             )
             if longitude >= 0:
                 line.append(f'{longitude:>5}E')
@@ -594,58 +601,63 @@ class VortexTrack:
                 line.append(f'{longitude * -1:>5}W')
 
             line.extend(
-                [
-                    f'{normalize_atcf_value(record["max_sustained_wind_speed"], to_type=int, round_digits=0):>4}',
-                    f'{normalize_atcf_value(record["central_pressure"], to_type=int, round_digits=0):>5}',
-                    f'{record["development_level"]:>3}',
-                    f'{normalize_atcf_value(record["isotach"], to_type=int, round_digits=0):>4}',
-                    f'{record["quadrant"]:>4}',
-                    f'{normalize_atcf_value(record["radius_for_NEQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(record["radius_for_SEQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(record["radius_for_SWQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(record["radius_for_NWQ"], to_type=int, round_digits=0):>5}',
-                ]
+                    [
+                        f'{normalize_atcf_value(record["max_sustained_wind_speed"], to_type=int, round_digits=0):>4}',
+                        f'{normalize_atcf_value(record["central_pressure"], to_type=int, round_digits=0):>5}',
+                        f'{record["development_level"]:>3}',
+                        f'{normalize_atcf_value(record["isotach"], to_type=int, round_digits=0):>4}',
+                        f'{record["quadrant"]:>4}',
+                        f'{normalize_atcf_value(record["radius_for_NEQ"], to_type=int, round_digits=0):>5}',
+                        f'{normalize_atcf_value(record["radius_for_SEQ"], to_type=int, round_digits=0):>5}',
+                        f'{normalize_atcf_value(record["radius_for_SWQ"], to_type=int, round_digits=0):>5}',
+                        f'{normalize_atcf_value(record["radius_for_NWQ"], to_type=int, round_digits=0):>5}',
+                    ]
             )
 
             if record['background_pressure'] is None:
-                record['background_pressure'] = self.data['background_pressure'].iloc[
+                record['background_pressure'] = \
+                self.data['background_pressure'].iloc[
                     index - 1
-                ]
+                    ]
 
             try:
                 if (
-                    not pandas.isna(record['central_pressure'])
-                    and record['background_pressure'] <= record['central_pressure']
+                        not pandas.isna(record['central_pressure'])
+                        and record['background_pressure'] <= record[
+                    'central_pressure']
                 ):
                     if 1013 > record['central_pressure']:
                         background_pressure = 1013
                     else:
                         background_pressure = normalize_atcf_value(
-                            record['central_pressure'] + 1, to_type=int, round_digits=0,
+                                record['central_pressure'] + 1, to_type=int,
+                                round_digits=0,
                         )
                 else:
                     background_pressure = normalize_atcf_value(
-                        record['background_pressure'], to_type=int, round_digits=0,
+                            record['background_pressure'], to_type=int,
+                            round_digits=0,
                     )
             except:
                 background_pressure = normalize_atcf_value(
-                    record['background_pressure'], to_type=int, round_digits=0,
+                        record['background_pressure'], to_type=int,
+                        round_digits=0,
                 )
             line.append(f'{background_pressure:>5}')
 
             line.extend(
-                [
-                    f'{normalize_atcf_value(record["radius_of_last_closed_isobar"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(record["radius_of_maximum_winds"], to_type=int, round_digits=0):>4}',
-                    f'{"":>5}',  # gust
-                    f'{"":>4}',  # eye
-                    f'{"":>4}',  # subregion
-                    f'{"":>4}',  # maxseas
-                    f'{"":>4}',  # initials
-                    f'{record["direction"]:>3}',
-                    f'{record["speed"]:>4}',
-                    f'{record["name"]:^12}',
-                ]
+                    [
+                        f'{normalize_atcf_value(record["radius_of_last_closed_isobar"], to_type=int, round_digits=0):>5}',
+                        f'{normalize_atcf_value(record["radius_of_maximum_winds"], to_type=int, round_digits=0):>4}',
+                        f'{"":>5}',  # gust
+                        f'{"":>4}',  # eye
+                        f'{"":>4}',  # subregion
+                        f'{"":>4}',  # maxseas
+                        f'{"":>4}',  # initials
+                        f'{record["direction"]:>3}',
+                        f'{record["speed"]:>4}',
+                        f'{record["name"]:^12}',
+                    ]
             )
 
             # from this point forwards it's all aswip
@@ -663,8 +675,8 @@ class VortexTrack:
 
         linestrings = [
             self.data[self.data['record_type'] == record_type]
-            .sort_values('datetime')['geometry']
-            .drop_duplicates()
+                .sort_values('datetime')['geometry']
+                .drop_duplicates()
             for record_type in pandas.unique(self.data['record_type'])
         ]
 
@@ -689,15 +701,15 @@ class VortexTrack:
 
         geodetic = Geod(ellps='WGS84')
         _, _, distances = geodetic.inv(
-            self.data['longitude'].iloc[:-1],
-            self.data['latitude'].iloc[:-1],
-            self.data['longitude'].iloc[1:],
-            self.data['latitude'].iloc[1:],
+                self.data['longitude'].iloc[:-1],
+                self.data['latitude'].iloc[:-1],
+                self.data['longitude'].iloc[1:],
+                self.data['latitude'].iloc[1:],
         )
         return numpy.sum(distances)
 
     def isotachs(
-        self, wind_speed: float, segments: int = 91
+            self, wind_speed: float, segments: int = 91
     ) -> Dict[str, Dict[datetime, Polygon]]:
         """
         calculate the isotach at the given speed at every time in the dataset
@@ -741,7 +753,8 @@ class VortexTrack:
                     # skip if quadrant radius is zero
                     if row[quadrant_name] > 1:
                         # enter the angle range for this quadrant
-                        theta = numpy.linspace(start_angle, end_angle, segments)
+                        theta = numpy.linspace(start_angle, end_angle,
+                                               segments)
 
                         # move angle to next quadrant
                         start_angle = start_angle + 90
@@ -749,24 +762,27 @@ class VortexTrack:
 
                         # make the coordinate list for this quadrant using forward geodetic (origin,angle,dist)
                         vectorized_forward_geodetic = numpy.vectorize(
-                            partial(
-                                geodetic.fwd,
-                                lons=row['longitude'],
-                                lats=row['latitude'],
-                                dist=row[quadrant_name],
-                            )
+                                partial(
+                                        geodetic.fwd,
+                                        lons=row['longitude'],
+                                        lats=row['latitude'],
+                                        dist=row[quadrant_name],
+                                )
                         )
-                        x, y, reverse_azimuth = vectorized_forward_geodetic(az=theta)
+                        x, y, reverse_azimuth = vectorized_forward_geodetic(
+                            az=theta)
                         vertices = numpy.stack([x, y], axis=1)
 
                         # insert center point at beginning and end of list
                         vertices = numpy.concatenate(
-                            [
-                                row[['longitude', 'latitude']].values[None, :],
-                                vertices,
-                                row[['longitude', 'latitude']].values[None, :],
-                            ],
-                            axis=0,
+                                [
+                                    row[['longitude', 'latitude']].values[None,
+                                    :],
+                                    vertices,
+                                    row[['longitude', 'latitude']].values[None,
+                                    :],
+                                ],
+                                axis=0,
                         )
 
                         quadrants.append(Polygon(vertices))
@@ -784,7 +800,8 @@ class VortexTrack:
 
         return isotachs
 
-    def wind_swaths(self, wind_speed: int, segments: int = 91) -> Dict[str, Polygon]:
+    def wind_swaths(self, wind_speed: int, segments: int = 91) -> Dict[
+        str, Polygon]:
         """
         extract the wind swath of the BestTrackForcing class object as a Polygon object
 
@@ -794,10 +811,11 @@ class VortexTrack:
 
         valid_isotach_values = [34, 50, 64]
         assert (
-            wind_speed in valid_isotach_values
+                wind_speed in valid_isotach_values
         ), f'isotach must be one of {valid_isotach_values}'
 
-        record_type_isotachs = self.isotachs(wind_speed=wind_speed, segments=segments)
+        record_type_isotachs = self.isotachs(wind_speed=wind_speed,
+                                             segments=segments)
 
         wind_swaths = {}
         for record_type, isotachs in record_type_isotachs.items():
@@ -805,7 +823,8 @@ class VortexTrack:
             convex_hulls = []
             for index in range(len(isotachs) - 1):
                 convex_hulls.append(
-                    ops.unary_union([isotachs[index], isotachs[index + 1]]).convex_hull
+                        ops.unary_union([isotachs[index],
+                                         isotachs[index + 1]]).convex_hull
                 )
 
             # get the union of polygons
@@ -835,11 +854,12 @@ class VortexTrack:
         }
 
         if (
-            self.nhc_code is not None
-            and self.__remote_atcf is None
-            or configuration != self.__previous_configuration
+                self.nhc_code is not None
+                and self.__remote_atcf is None
+                or configuration != self.__previous_configuration
         ):
-            self.__remote_atcf = get_atcf_file(self.nhc_code, self.file_deck, self.mode)
+            self.__remote_atcf = get_atcf_file(self.nhc_code, self.file_deck,
+                                               self.mode)
 
         return self.__remote_atcf
 
@@ -853,16 +873,18 @@ class VortexTrack:
 
         # only download new file if the configuration has changed since the last download
         if (
-            self.__unfiltered_data is None
-            or len(self.__unfiltered_data) == 0
-            or configuration != self.__previous_configuration
+                self.__unfiltered_data is None
+                or len(self.__unfiltered_data) == 0
+                or configuration != self.__previous_configuration
         ):
             if configuration['filename'] is not None:
-                record_types = None if self.record_type is None else [self.record_type]
+                record_types = None if self.record_type is None else [
+                    self.record_type]
                 atcf_file = configuration['filename']
             else:
                 record_types = (
-                    self.valid_record_types if self.record_type is None else [self.record_type]
+                    self.valid_record_types if self.record_type is None else [
+                        self.record_type]
                 )
                 atcf_file = self.remote_atcf
 
@@ -874,17 +896,20 @@ class VortexTrack:
             self.__previous_configuration = configuration
 
         # if location values have changed, recompute velocity
-        location_hash = pandas.util.hash_pandas_object(self.__unfiltered_data['geometry'])
+        location_hash = pandas.util.hash_pandas_object(
+                self.__unfiltered_data['geometry'])
 
-        if self.__location_hash is None or len(location_hash) != len(self.__location_hash):
+        if self.__location_hash is None or len(location_hash) != len(
+                self.__location_hash):
             updated_locations = ~self.__unfiltered_data.index.isnull()
         else:
             updated_locations = location_hash != self.__location_hash
         updated_locations |= pandas.isna(self.__unfiltered_data['speed'])
 
         if updated_locations.any():
-            self.__unfiltered_data.loc[updated_locations] = self.__compute_velocity(
-                self.__unfiltered_data[updated_locations]
+            self.__unfiltered_data.loc[
+                updated_locations] = self.__compute_velocity(
+                    self.__unfiltered_data[updated_locations]
             )
             self.__location_hash = location_hash
 
@@ -907,8 +932,10 @@ class VortexTrack:
     @property
     def __record_numbers(self) -> numpy.ndarray:
         record_numbers = numpy.empty((len(self.data)), dtype=int)
-        for index, record_datetime in enumerate(self.data['datetime'].unique()):
-            record_numbers[self.data['datetime'] == record_datetime] = index + 1
+        for index, record_datetime in enumerate(
+                self.data['datetime'].unique()):
+            record_numbers[
+                self.data['datetime'] == record_datetime] = index + 1
         return record_numbers
 
     @staticmethod
@@ -919,10 +946,12 @@ class VortexTrack:
             record_data = data.loc[data['record_type'] == record_type]
 
             indices = numpy.array(
-                [
-                    numpy.where(record_data['datetime'] == unique_datetime)[0][0]
-                    for unique_datetime in pandas.unique(record_data['datetime'])
-                ]
+                    [
+                        numpy.where(
+                            record_data['datetime'] == unique_datetime)[0][0]
+                        for unique_datetime in
+                        pandas.unique(record_data['datetime'])
+                    ]
             )
             shifted_indices = numpy.roll(indices, 1)
             shifted_indices[0] = 0
@@ -931,18 +960,20 @@ class VortexTrack:
             shifted_indices = record_data.index[shifted_indices]
 
             _, inverse_azimuths, distances = geodetic.inv(
-                record_data.loc[indices, 'longitude'],
-                record_data.loc[indices, 'latitude'],
-                record_data.loc[shifted_indices, 'longitude'],
-                record_data.loc[shifted_indices, 'latitude'],
+                    record_data.loc[indices, 'longitude'],
+                    record_data.loc[indices, 'latitude'],
+                    record_data.loc[shifted_indices, 'longitude'],
+                    record_data.loc[shifted_indices, 'latitude'],
             )
 
             intervals = record_data.loc[indices, 'datetime'].diff()
             speeds = distances / (intervals / pandas.to_timedelta(1, 's'))
-            bearings = pandas.Series(inverse_azimuths % 360, index=speeds.index)
+            bearings = pandas.Series(inverse_azimuths % 360,
+                                     index=speeds.index)
 
             for index in indices:
-                cluster_index = record_data['datetime'] == record_data.loc[index, 'datetime']
+                cluster_index = record_data['datetime'] == record_data.loc[
+                    index, 'datetime']
                 record_data.loc[cluster_index, 'speed'] = speeds[index]
                 record_data.loc[cluster_index, 'direction'] = bearings[index]
 
@@ -964,12 +995,12 @@ class VortexTrack:
 
     def __copy__(self) -> 'VortexTrack':
         return self.__class__(
-            storm=self.unfiltered_data.copy(),
-            start_date=self.start_date,
-            end_date=self.end_date,
-            file_deck=self.file_deck,
-            record_type=self.record_type,
-            filename=self.filename,
+                storm=self.unfiltered_data.copy(),
+                start_date=self.start_date,
+                end_date=self.end_date,
+                file_deck=self.file_deck,
+                record_type=self.record_type,
+                filename=self.filename,
         )
 
     def __eq__(self, other: 'VortexTrack') -> bool:

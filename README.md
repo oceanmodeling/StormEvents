@@ -93,7 +93,7 @@ If you do not know the storm code, you can input the storm name and year:
 ```python
 from stormevents.nhc import VortexTrack
 
-vortex = VortexTrack.from_storm_name('irma', 2017)
+VortexTrack.from_storm_name('irma', 2017)
 ```
 
 ```
@@ -126,7 +126,7 @@ track.data
 10742    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 44.00000)
 10743    AL           11        HMON 2017-09-16 15:00:00  ...  122.402907  22.540200          POINT (-81.90000 39.80000)
 
-[10744 rows x 22 columns
+[10744 rows x 22 columns]
 ```
 
 ##### read storm track from file
@@ -140,7 +140,7 @@ VortexTrack.from_atcf_file('tests/data/input/test_from_atcf/atcf.trk')
 ```
 
 ```
-VortexTrack('BT02008', Timestamp('2008-10-16 17:06:00'), Timestamp('2008-10-20 20:06:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_from_atcf/florence2018_atcf.trk'))
+VortexTrack('BT02008', Timestamp('2008-10-16 17:06:00'), Timestamp('2008-10-20 20:06:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', 'tests/data/input/test_from_atcf/atcf.trk')
 ```
 
 ```python
@@ -150,7 +150,7 @@ VortexTrack.from_fort22('tests/data/input/test_from_fort22/irma2017_fort.22')
 ```
 
 ```
-VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-19 00:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_from_fort22/irma2017_fort.22'))
+VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-19 00:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', 'tests/data/input/test_from_fort22/irma2017_fort.22')
 ```
 
 ##### write storm track to `fort.22` file
@@ -168,17 +168,17 @@ The [United States Geological Survey (USGS)](https://www.usgs.gov)
 conducts surveys of flooded areas following flood events to determine the highest level of water elevation, and provides the
 results of these surveys via their API.
 
-##### list flood events that have HWM surveys
+##### list flood events defined by the USGS that have HWM surveys
 
 ```python
-from stormevents import usgs_highwatermark_events
+from stormevents.usgs import usgs_flood_events
 
-usgs_highwatermark_events()
+usgs_flood_events()
 ```
 
 ```
                                             name  year  ...          start_date            end_date
-usgs_id                                                 ...                                        
+usgs_id                                                 ...
 7                             FEMA 2013 exercise  2013  ... 2013-05-15 04:00:00 2013-05-23 04:00:00
 8                                          Wilma  2005  ... 2005-10-20 00:00:00 2005-10-31 00:00:00
 9                            Midwest Floods 2011  2011  ... 2011-02-01 06:00:00 2011-08-30 05:00:00
@@ -197,54 +197,53 @@ usgs_id                                                 ...
 ##### retrieve HWM survey data for any flood event
 
 ```python
-from stormevents.usgs import FloodEventHighWaterMarks
+from stormevents.usgs import FloodEvent
 
-survey = FloodEventHighWaterMarks(182)
-survey.data
+flood = FloodEvent(182)
+flood.high_water_marks()
 ```
 
 ```
-         latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
-hwm_id                                                         ...                                                       
-22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
-22757   30.510528 -81.460833  Irma September 2017      Debris  ...       HWM 1    []        0  POINT (-81.46083 30.51053)
-22885   30.770560 -81.581390  Irma September 2017   Seed line  ...  GACAM17842    []      NaN  POINT (-81.58139 30.77056)
-22965   31.063150 -81.404540  Irma September 2017      Debris  ...         HWM    []      NaN  POINT (-81.40454 31.06315)
-23052   30.845000 -81.560000  Irma September 2017      Debris  ...  GACAM17840    []      NaN  POINT (-81.56000 30.84500)
-...           ...        ...                  ...         ...  ...         ...   ...      ...                         ...
-25147   30.018190 -81.859657  Irma September 2017         Mud  ...       HWM01    []      NaN  POINT (-81.85966 30.01819)
-25148   30.097214 -81.891451  Irma September 2017   Seed line  ...      hwm 01    []      NaN  POINT (-81.89145 30.09721)
-25150   30.038222 -81.880928  Irma September 2017   Seed line  ...       HWM01    []      NaN  POINT (-81.88093 30.03822)
-25158   29.720560 -81.506110  Irma September 2017   Seed line  ...         HWM    []      NaN  POINT (-81.50611 29.72056)
-25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
+         latitude  longitude            eventName  ...                                          hwm_notes siteZone                    geometry
+hwm_id                                             ...                                                                                        
+22602   31.170642 -81.428402  Irma September 2017  ...                                                NaN      NaN  POINT (-81.42840 31.17064)
+22605   31.453850 -81.362853  Irma September 2017  ...                                                NaN      NaN  POINT (-81.36285 31.45385)
+22612   30.720000 -81.549440  Irma September 2017  ...  There is a secondary peak around 5.5 ft, so th...      NaN  POINT (-81.54944 30.72000)
+22636   32.007730 -81.238270  Irma September 2017  ...  Trimble R8 used to establish TBM. Levels ran f...      NaN  POINT (-81.23827 32.00773)
+22653   31.531078 -81.358894  Irma September 2017  ...                                                NaN      NaN  POINT (-81.35889 31.53108)
+...           ...        ...                  ...  ...                                                ...      ...                         ...
+26171   18.470402 -66.246631  Irma September 2017  ...                                                NaN      NaN  POINT (-66.24663 18.47040)
+26173   18.470300 -66.449900  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.44990 18.47030)
+26175   18.463954 -66.140869  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.14087 18.46395)
+26177   18.488720 -66.392160  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.39216 18.48872)
+26179   18.005607 -65.871768  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-65.87177 18.00561)
 
-[221 rows x 52 columns]
+[506 rows x 53 columns]
 ```
 
 ```python
-from stormevents.usgs import FloodEventHighWaterMarks
+from stormevents.usgs import FloodEvent
 
-survey = FloodEventHighWaterMarks(182)
-survey.hwm_quality = 'EXCELLENT', 'GOOD'
-survey.data
+flood = FloodEvent(182)
+flood.high_water_marks(quality=['EXCELLENT', 'GOOD'])
 ```
 
 ```
-         latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
-hwm_id                                                         ...                                                       
-22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
-22885   30.770560 -81.581390  Irma September 2017   Seed line  ...  GACAM17842    []      NaN  POINT (-81.58139 30.77056)
-23130   31.034720 -81.640000  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.64000 31.03472)
-23216   32.035150 -81.045040  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.04504 32.03515)
-23236   32.083650 -81.157520  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.15752 32.08365)
-...           ...        ...                  ...         ...  ...         ...   ...      ...                         ...
-25146   29.992580 -81.851518  Irma September 2017   Seed line  ...      HWM 01    []      NaN  POINT (-81.85152 29.99258)
-25148   30.097214 -81.891451  Irma September 2017   Seed line  ...      hwm 01    []      NaN  POINT (-81.89145 30.09721)
-25150   30.038222 -81.880928  Irma September 2017   Seed line  ...       HWM01    []      NaN  POINT (-81.88093 30.03822)
-25158   29.720560 -81.506110  Irma September 2017   Seed line  ...         HWM    []      NaN  POINT (-81.50611 29.72056)
-25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
+         latitude  longitude            eventName  ...                                          hwm_notes siteZone                    geometry
+hwm_id                                             ...                                                                                        
+22602   31.170642 -81.428402  Irma September 2017  ...                                                NaN      NaN  POINT (-81.42840 31.17064)
+22605   31.453850 -81.362853  Irma September 2017  ...                                                NaN      NaN  POINT (-81.36285 31.45385)
+22612   30.720000 -81.549440  Irma September 2017  ...  There is a secondary peak around 5.5 ft, so th...      NaN  POINT (-81.54944 30.72000)
+22636   32.007730 -81.238270  Irma September 2017  ...  Trimble R8 used to establish TBM. Levels ran f...      NaN  POINT (-81.23827 32.00773)
+22653   31.531078 -81.358894  Irma September 2017  ...                                                NaN      NaN  POINT (-81.35889 31.53108)
+...           ...        ...                  ...  ...                                                ...      ...                         ...
+26171   18.470402 -66.246631  Irma September 2017  ...                                                NaN      NaN  POINT (-66.24663 18.47040)
+26173   18.470300 -66.449900  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.44990 18.47030)
+26175   18.463954 -66.140869  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.14087 18.46395)
+26177   18.488720 -66.392160  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.39216 18.48872)
+26179   18.005607 -65.871768  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-65.87177 18.00561)
 
-[138 rows x 52 columns]
+[506 rows x 53 columns]
 ```
 
 #### data products from the Center for Operational Oceanographic Products and Services (CO-OPS)
@@ -306,11 +305,37 @@ nos_id
 8670870  FPKG1                       Fort Pulaski    GA     NaT  POINT (-80.87500 32.03125)
 ```
 
+##### retrieve CO-OPS data product for a specific station
+
+```python
+from datetime import datetime
+from stormevents.coops import COOPS_Station
+
+station = COOPS_Station(8632200)
+station.product('water_level', start_date=datetime(2018, 9, 13), end_date=datetime(2018, 9, 16, 12))
+```
+
+```
+<xarray.Dataset>
+Dimensions:  (nos_id: 1, t: 841)
+Coordinates:
+  * nos_id   (nos_id) int64 8632200
+  * t        (t) datetime64[ns] 2018-09-13 ... 2018-09-16T12:00:00
+    nws_id   (nos_id) <U5 'KPTV2'
+    x        (nos_id) float64 -76.0
+    y        (nos_id) float64 37.16
+Data variables:
+    v        (nos_id, t) float32 1.67 1.694 1.73 1.751 ... 1.597 1.607 1.605
+    s        (nos_id, t) float32 0.026 0.027 0.034 0.03 ... 0.018 0.019 0.021
+    f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
+    q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'v' 'v' 'v' 'v' 'v'
+```
+
 ##### retrieve CO-OPS data product from within a region and time interval
 
 To retrieve data, you must provide three things:
 
-1. the data product of interest; one of
+1. the **data product** of interest; one of
     - `water_level` - Preliminary or verified water levels, depending on availability.
     - `air_temperature` - Air temperature as measured at the station.
     - `water_temperature` - Water temperature as measured at the station.
@@ -330,8 +355,8 @@ To retrieve data, you must provide three things:
     - `datums` - datums data for the stations.
     - `currents` - Currents data for currents stations.
     - `currents_predictions` - Currents predictions data for currents predictions stations.
-2. a region within which to retrieve the data product
-3. a time interval within which to retrieve the data product
+2. a **region** within which to retrieve the data product
+3. a **time interval** within which to retrieve the data product
 
 ```python
 from datetime import datetime, timedelta
@@ -350,17 +375,17 @@ coops_product_within_region(
 
 ```
 <xarray.Dataset>
-Dimensions:  (nos_id: 10, t: 10)
+Dimensions:  (nos_id: 10, t: 11)
 Coordinates:
   * nos_id   (nos_id) int64 8651370 8652587 8654467 ... 8662245 8665530 8670870
-  * t        (t) datetime64[ns] 2022-02-23T08:06:00 ... 2022-02-23T09:00:00
+  * t        (t) datetime64[ns] 2022-03-08T14:48:00 ... 2022-03-08T15:48:00
     nws_id   (nos_id) <U5 'DUKN7' 'ORIN7' 'HCGN7' ... 'NITS1' 'CHTS1' 'FPKG1'
     x        (nos_id) float64 -75.75 -75.56 -75.69 ... -79.19 -79.94 -80.88
     y        (nos_id) float64 36.19 35.78 35.22 34.72 ... 33.34 32.78 32.03
 Data variables:
-    v        (nos_id, t) float32 6.097 6.096 6.059 6.005 ... 2.39 2.324 2.336
-    s        (nos_id, t) float32 0.07 0.052 0.054 0.063 ... 0.014 0.02 0.009
-    f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '0,0,0,0' '1,0,0,0'
+    v        (nos_id, t) float32 6.256 6.304 6.361 6.375 ... 2.633 2.659 2.686
+    s        (nos_id, t) float32 0.107 0.097 0.127 0.122 ... 0.005 0.004 0.004
+    f        (nos_id, t) object '1,0,0,0' '1,0,0,0' ... '1,0,0,0' '1,0,0,0'
     q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
 ```
 
@@ -402,7 +427,7 @@ StormEvent.from_usgs_id(310)
 ```
 
 ```
-StormEvent('HENRI', 2021)
+StormEvent('HENRI', 2021, end_date='2021-08-24 12:00:00')
 ```
 
 To constrain the time interval, you can provide an absolute time range,
@@ -493,11 +518,11 @@ VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 
 from stormevents import StormEvent
 
 storm = StormEvent('florence', 2018)
-storm.track(file_deck='b')
+storm.track(file_deck='a')
 ```
 
 ```
-VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.ADVISORY: 'a'>, <ATCF_Mode.historical: 'ARCHIVE'>, None, None)
 ```
 
 ##### high-water mark (HWM) surveys provided by the United States Geological Survey (USGS)
@@ -506,31 +531,31 @@ VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 
 from stormevents import StormEvent
 
 storm = StormEvent('florence', 2018)
-storm.high_water_marks.data()
+flood = storm.flood_event
+flood.high_water_marks()
 ```
 
 ```
-         latitude  longitude  ... siteZone                    geometry
-hwm_id                        ...                                     
-33496   37.298440 -80.007750  ...      NaN  POINT (-80.00775 37.29844)
-33502   35.342089 -78.041553  ...      NaN  POINT (-78.04155 35.34209)
-33503   35.378963 -78.010596  ...      NaN  POINT (-78.01060 35.37896)
-33505   35.216282 -78.935229  ...      NaN  POINT (-78.93523 35.21628)
-33508   35.199859 -78.960296  ...      NaN  POINT (-78.96030 35.19986)
-           ...        ...  ...      ...                         ...
-34191   33.724722 -79.059722  ...      NaN  POINT (-79.05972 33.72472)
-34235   34.936308 -76.811223  ...           POINT (-76.81122 34.93631)
-34840   34.145930 -78.868567  ...      NaN  POINT (-78.86857 34.14593)
-34871   35.424707 -77.593860  ...      NaN  POINT (-77.59386 35.42471)
-34876   35.301135 -77.264727  ...      NaN  POINT (-77.26473 35.30114)
+         latitude  longitude          eventName  ... siteZone peak_summary_id                    geometry
+hwm_id                                           ...                                                     
+33496   37.298440 -80.007750  Florence Sep 2018  ...      NaN             NaN  POINT (-80.00775 37.29844)
+33497   33.699720 -78.936940  Florence Sep 2018  ...      NaN             NaN  POINT (-78.93694 33.69972)
+33498   33.758610 -78.792780  Florence Sep 2018  ...      NaN             NaN  POINT (-78.79278 33.75861)
+33499   33.641389 -78.947778  Florence Sep 2018  ...                      NaN  POINT (-78.94778 33.64139)
+33500   33.602500 -78.973889  Florence Sep 2018  ...                      NaN  POINT (-78.97389 33.60250)
+...           ...        ...                ...  ...      ...             ...                         ...
+34872   35.534641 -77.038183  Florence Sep 2018  ...      NaN             NaN  POINT (-77.03818 35.53464)
+34873   35.125000 -77.050044  Florence Sep 2018  ...      NaN             NaN  POINT (-77.05004 35.12500)
+34874   35.917467 -76.254367  Florence Sep 2018  ...      NaN             NaN  POINT (-76.25437 35.91747)
+34875   35.111000 -77.037851  Florence Sep 2018  ...      NaN             NaN  POINT (-77.03785 35.11100)
+34876   35.301135 -77.264727  Florence Sep 2018  ...      NaN             NaN  POINT (-77.26473 35.30114)
 
-[509 rows x 52 columns]
+[644 rows x 53 columns]
 ```
 
 ##### products from the Center for Operational Oceanographic Products and Services (CO-OPS)
 
 ```python
-
 from stormevents import StormEvent
 
 storm = StormEvent('florence', 2018)

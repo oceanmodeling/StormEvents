@@ -5,14 +5,10 @@ from dateutil.parser import parse as parse_date
 import pytest
 from pytest_socket import SocketBlockedError
 
-from stormevents.nhc.storms import nhc_gis_storms, nhc_storms
+from stormevents.nhc.storms import nhc_storms, nhc_storms_gis_archive
 from stormevents.nhc.track import VortexTrack
-from tests import (
-    check_reference_directory,
-    INPUT_DIRECTORY,
-    OUTPUT_DIRECTORY,
-    REFERENCE_DIRECTORY,
-)
+from tests import (INPUT_DIRECTORY, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY,
+                   check_reference_directory)
 
 
 def test_nhc_gis_storms():
@@ -22,7 +18,7 @@ def test_nhc_gis_storms():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    storms = nhc_gis_storms(year=tuple(range(2008, 2021 + 1)))
+    storms = nhc_storms_gis_archive(year=tuple(range(2008, 2021 + 1)))
 
     storms.to_csv(output_directory / 'storms.csv')
 
@@ -42,9 +38,9 @@ def test_nhc_storms():
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_VortexTrack():
-    output_directory = OUTPUT_DIRECTORY / 'test_VortexTrack'
-    reference_directory = REFERENCE_DIRECTORY / 'test_VortexTrack'
+def test_vortex_track():
+    output_directory = OUTPUT_DIRECTORY / 'test_vortex_track'
+    reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
@@ -62,16 +58,18 @@ def test_VortexTrack():
     ]
 
     tracks = [
-        VortexTrack(storm, file_deck='a', start_date=timedelta(days=-1)) for storm in tracks
+        VortexTrack(storm, file_deck='a', start_date=timedelta(days=-1)) for
+        storm in tracks
     ]
 
     for track in tracks:
-        track.write(output_directory / f'{track.name}{track.year}.fort.22', overwrite=True)
+        track.write(output_directory / f'{track.name}{track.year}.fort.22',
+                    overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_VortexTrack_filters():
+def test_vortex_track_properties():
     track = VortexTrack('florence2018', file_deck='a')
 
     assert len(track) == 10234
@@ -98,62 +96,49 @@ def test_VortexTrack_filters():
 
 
 @pytest.mark.disable_socket
-def test_from_fort22():
-    input_directory = INPUT_DIRECTORY / 'test_from_fort22'
-    output_directory = OUTPUT_DIRECTORY / 'test_from_fort22'
-    reference_directory = REFERENCE_DIRECTORY / 'test_from_fort22'
+def test_vortex_track_from_file():
+    input_directory = INPUT_DIRECTORY / 'test_vortex_track_from_file'
+    output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_from_file'
+    reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_from_file'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexTrack.from_fort22(fort22=input_directory / 'irma2017_fort.22',)
+    track_1 = VortexTrack.from_fort22(
+        fort22=input_directory / 'irma2017_fort.22', )
+    track_2 = VortexTrack.from_atcf_file(atcf=input_directory / 'atcf.trk', )
 
-    assert vortex.nhc_code == 'AL112017'
-    assert vortex.name == 'IRMA'
+    assert track_1.nhc_code == 'AL112017'
+    assert track_1.name == 'IRMA'
+    assert track_2.nhc_code == 'BT02008'
+    assert track_2.name == 'WRT00001'
 
-    vortex.write(output_directory / 'irma2017_fort.22', overwrite=True)
+    track_1.write(output_directory / 'irma2017_fort.22', overwrite=True)
+    track_2.write(output_directory / 'fromatcf_fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_from_atcf():
-    input_directory = INPUT_DIRECTORY / 'test_from_atcf'
-    output_directory = OUTPUT_DIRECTORY / 'test_from_atcf'
-    reference_directory = REFERENCE_DIRECTORY / 'test_from_atcf'
+def test_vortex_track_recompute_velocity():
+    output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_recompute_velocity'
+    reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_recompute_velocity'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    vortex = VortexTrack.from_atcf_file(atcf=input_directory / 'atcf.trk',)
+    track = VortexTrack('irma2017')
 
-    assert vortex.nhc_code == 'BT02008'
-    assert vortex.name == 'WRT00001'
+    track.data.at[5, 'longitude'] -= 0.1
+    track.data.at[5, 'latitude'] += 0.1
 
-    vortex.write(output_directory / 'fort.22', overwrite=True)
-
-    check_reference_directory(output_directory, reference_directory)
-
-
-def test_recompute_velocity():
-    output_directory = OUTPUT_DIRECTORY / 'test_recompute_velocity'
-    reference_directory = REFERENCE_DIRECTORY / 'test_recompute_velocity'
-
-    if not output_directory.exists():
-        output_directory.mkdir(parents=True, exist_ok=True)
-
-    vortex = VortexTrack('irma2017')
-
-    vortex.data.at[5, 'longitude'] -= 0.1
-    vortex.data.at[5, 'latitude'] += 0.1
-
-    vortex.write(output_directory / 'irma2017_fort.22', overwrite=True)
+    track.write(output_directory / 'irma2017_fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_file_decks():
-    output_directory = OUTPUT_DIRECTORY / 'test_vortex_types'
-    reference_directory = REFERENCE_DIRECTORY / 'test_vortex_types'
+def test_vortex_track_file_decks():
+    output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_file_decks'
+    reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_file_decks'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
@@ -174,25 +159,26 @@ def test_file_decks():
     for file_deck, values in file_decks.items():
         for record_type in values['record_types']:
             track = VortexTrack(
-                'al062018',
-                start_date=values['start_date'],
-                end_date=values['end_date'],
-                file_deck=file_deck,
-                record_type=record_type,
+                    'al062018',
+                    start_date=values['start_date'],
+                    end_date=values['end_date'],
+                    file_deck=file_deck,
+                    record_type=record_type,
             )
 
             track.write(
-                output_directory / f'{file_deck}-deck_{record_type}.22', overwrite=True
+                    output_directory / f'{file_deck}-deck_{record_type}.22',
+                    overwrite=True
             )
 
     check_reference_directory(output_directory, reference_directory)
 
 
 @pytest.mark.disable_socket
-def test_no_internet():
-    input_directory = INPUT_DIRECTORY / 'test_no_internet'
-    output_directory = OUTPUT_DIRECTORY / 'test_no_internet'
-    reference_directory = REFERENCE_DIRECTORY / 'test_no_internet'
+def test_vortex_track_no_internet():
+    input_directory = INPUT_DIRECTORY / 'test_vortex_track_no_internet'
+    output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_no_internet'
+    reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_no_internet'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
@@ -203,16 +189,16 @@ def test_no_internet():
     with pytest.raises((ConnectionError, SocketBlockedError)):
         VortexTrack(storm='al062018', start_date='20180911', end_date=None)
 
-    vortex_1 = VortexTrack.from_fort22(input_directory / 'fort.22')
-    vortex_1.write(output_directory / 'vortex_1.22', overwrite=True)
+    track_1 = VortexTrack.from_fort22(input_directory / 'fort.22')
+    track_1.write(output_directory / 'vortex_1.22', overwrite=True)
 
-    vortex_2 = VortexTrack.from_fort22(vortex_1.filename)
-    vortex_2.write(output_directory / 'vortex_2.22', overwrite=True)
+    track_2 = VortexTrack.from_fort22(track_1.filename)
+    track_2.write(output_directory / 'vortex_2.22', overwrite=True)
 
-    vortex_3 = copy(vortex_1)
-    vortex_3.write(output_directory / 'vortex_3.22', overwrite=True)
+    track_3 = copy(track_1)
+    track_3.write(output_directory / 'vortex_3.22', overwrite=True)
 
-    assert vortex_1 == vortex_2
-    assert vortex_1 == vortex_3
+    assert track_1 == track_2
+    assert track_1 == track_3
 
     check_reference_directory(output_directory, reference_directory)

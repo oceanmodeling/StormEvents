@@ -26,7 +26,8 @@ def repository_root(path: PathLike = None) -> Path:
         path = Path(path)
     if path.is_file():
         path = path.parent
-    if '.git' in (child.name for child in path.iterdir()) or path == path.parent:
+    if '.git' in (child.name for child in
+                  path.iterdir()) or path == path.parent:
         return path
     else:
         return repository_root(path.parent)
@@ -35,10 +36,10 @@ def repository_root(path: PathLike = None) -> Path:
 sys.path.insert(0, str(repository_root()))
 
 subprocess.run(
-    f'{sys.executable} -m pip install -U pip',
-    shell=True,
-    stdout=subprocess.DEVNULL,
-    stderr=subprocess.DEVNULL,
+        f'{sys.executable} -m pip install -U pip',
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
 )
 
 # -- Project information -----------------------------------------------------

@@ -5,28 +5,29 @@ import pytest
 from stormevents.usgs.highwatermarks import (
     EventStatus,
     EventType,
-    FloodEventHighWaterMarks,
+    FloodEvent,
     HighWaterMarksQuery,
-    StormHighWaterMarks,
-    usgs_highwatermark_events,
-    usgs_highwatermark_storms,
+    StormFloodEvent,
+    usgs_flood_events,
+    usgs_flood_storms,
 )
-from tests import check_reference_directory, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY
+from tests import INPUT_DIRECTORY, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY, \
+    check_reference_directory
 
 
-def test_usgs_highwatermark_events():
-    reference_directory = REFERENCE_DIRECTORY / 'test_usgs_highwatermark_events'
-    output_directory = OUTPUT_DIRECTORY / 'test_usgs_highwatermark_events'
+def test_usgs_flood_events():
+    reference_directory = REFERENCE_DIRECTORY / 'test_usgs_flood_events'
+    output_directory = OUTPUT_DIRECTORY / 'test_usgs_flood_events'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    usgs_highwatermark_events(event_status=EventStatus.COMPLETED)
+    usgs_flood_events(event_status=EventStatus.COMPLETED)
 
-    events = usgs_highwatermark_events(
-        year=tuple(range(2003, 2020 + 1)),
-        event_type=EventType.HURRICANE,
-        event_status=EventStatus.COMPLETED,
+    events = usgs_flood_events(
+            year=tuple(range(2003, 2020 + 1)),
+            event_type=EventType.HURRICANE,
+            event_status=EventStatus.COMPLETED,
     )
 
     events.to_csv(output_directory / 'events.csv')
@@ -34,14 +35,14 @@ def test_usgs_highwatermark_events():
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_usgs_highwatermark_storms():
-    reference_directory = REFERENCE_DIRECTORY / 'test_usgs_highwatermark_storms'
-    output_directory = OUTPUT_DIRECTORY / 'test_usgs_highwatermark_storms'
+def test_usgs_flood_storms():
+    reference_directory = REFERENCE_DIRECTORY / 'test_usgs_flood_storms'
+    output_directory = OUTPUT_DIRECTORY / 'test_usgs_flood_storms'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    storms = usgs_highwatermark_storms(year=tuple(range(2003, 2020 + 1)))
+    storms = usgs_flood_storms(year=tuple(range(2003, 2020 + 1)))
 
     storms.to_csv(output_directory / 'storms.csv')
 
@@ -49,33 +50,35 @@ def test_usgs_highwatermark_storms():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
+        sys.version_info < (3, 10),
+        reason='floating point differences before python 3.10',
 )
-def test_FloodEventHighWaterMarks():
-    reference_directory = REFERENCE_DIRECTORY / 'test_FloodEventHighWaterMarks'
-    output_directory = OUTPUT_DIRECTORY / 'test_FloodEventHighWaterMarks'
+def test_usgs_flood_event():
+    input_directory = INPUT_DIRECTORY / 'test_usgs_flood_event'
+    reference_directory = REFERENCE_DIRECTORY / 'test_usgs_flood_event'
+    output_directory = OUTPUT_DIRECTORY / 'test_usgs_flood_event'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    flood_1 = FloodEventHighWaterMarks.from_csv(
-        reference_directory / 'florence2018.csv', 'Florence Sep 2018'
+    flood_1 = FloodEvent.from_csv(
+            input_directory / 'florence2018.csv'
     )
-    flood_2 = FloodEventHighWaterMarks.from_name('Irma September 2017')
+    flood_2 = FloodEvent.from_name('Irma September 2017')
 
     with pytest.raises(ValueError):
-        StormHighWaterMarks.from_name('nonexistent')
+        StormFloodEvent.from_name('nonexistent')
 
-    assert flood_2.data().shape == (506, 53)
+    assert flood_2.high_water_marks().shape == (506, 53)
     assert flood_1 != flood_2
-    flood_1.data().to_csv(output_directory / 'florence2018.csv')
+    flood_1.high_water_marks().to_csv(output_directory / 'florence2018.csv')
 
     check_reference_directory(output_directory, reference_directory)
 
 
-def test_HighWaterMarksQuery():
+def test_usgs_high_water_marks_query():
     query_1 = HighWaterMarksQuery(182)
-    query_2 = HighWaterMarksQuery(23, hwm_quality='EXCELLENT')
+    query_2 = HighWaterMarksQuery(23, quality='EXCELLENT')
     query_3 = HighWaterMarksQuery('nonexistent')
 
     assert len(query_1.data) == 506
@@ -84,9 +87,9 @@ def test_HighWaterMarksQuery():
     with pytest.raises(ValueError):
         query_3.data
 
-    query_1.hwm_quality = 'EXCELLENT', 'GOOD'
-    query_2.hwm_quality = 'EXCELLENT', 'GOOD'
-    query_3.hwm_quality = 'EXCELLENT', 'GOOD'
+    query_1.quality = 'EXCELLENT', 'GOOD'
+    query_2.quality = 'EXCELLENT', 'GOOD'
+    query_3.quality = 'EXCELLENT', 'GOOD'
 
     assert len(query_1.data) == 277
     assert len(query_2.data) == 628

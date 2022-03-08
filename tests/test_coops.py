@@ -2,48 +2,50 @@ from datetime import datetime, timedelta
 
 from shapely import ops
 
-from stormevents.coops.tidalstations import (
-    coops_product_within_region,
-    COOPS_Station,
-    coops_stations,
-    coops_stations_within_region,
-)
+from stormevents.coops.tidalstations import (COOPS_Station,
+                                             coops_product_within_region,
+                                             coops_stations,
+                                             coops_stations_within_region)
 from stormevents.nhc.track import VortexTrack
-from tests import check_reference_directory, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY
+from tests import OUTPUT_DIRECTORY, REFERENCE_DIRECTORY, \
+    check_reference_directory
 
 
 def test_coops_stations():
     stations = coops_stations()
 
-    assert stations.columns.to_list() == ['nws_id', 'name', 'state', 'removed', 'geometry']
+    assert stations.columns.to_list() == ['nws_id', 'name', 'state', 'removed',
+                                          'geometry']
 
 
 def test_coops_stations_within_region():
     track = VortexTrack('florence2018', file_deck='b')
-    combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
+    combined_wind_swaths = ops.unary_union(
+        list(track.wind_swaths(34).values()))
 
     stations = coops_stations_within_region(region=combined_wind_swaths)
 
     assert len(stations) == 10
 
 
-def test_coops_data_within_region():
+def test_coops_product_within_region():
     track = VortexTrack('florence2018', file_deck='b')
-    combined_wind_swaths = ops.unary_union(list(track.wind_swaths(34).values()))
+    combined_wind_swaths = ops.unary_union(
+        list(track.wind_swaths(34).values()))
 
     data = coops_product_within_region(
-        'water_level',
-        region=combined_wind_swaths,
-        start_date=datetime.now() - timedelta(hours=1),
-        end_date=datetime.now(),
+            'water_level',
+            region=combined_wind_swaths,
+            start_date=datetime.now() - timedelta(hours=1),
+            end_date=datetime.now(),
     )
 
     assert len(data['nos_id']) == 10
 
 
-def test_COOPS_Station():
-    reference_directory = REFERENCE_DIRECTORY / 'test_COOPS_Station'
-    output_directory = OUTPUT_DIRECTORY / 'test_COOPS_Station'
+def test_coops_station():
+    reference_directory = REFERENCE_DIRECTORY / 'test_coops_station'
+    output_directory = OUTPUT_DIRECTORY / 'test_coops_station'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
@@ -55,13 +57,13 @@ def test_COOPS_Station():
     station_2 = COOPS_Station('OOUH1')
     station_3 = COOPS_Station('Calcasieu Test Station')
 
-    station_1_data = station_1.data('water_level', start_date, end_date)
+    station_1_data = station_1.product('water_level', start_date, end_date)
     station_1_constituents = station_1.constituents
 
-    station_2_data = station_2.data('water_level', start_date, end_date)
+    station_2_data = station_2.product('water_level', start_date, end_date)
     station_2_constituents = station_2.constituents
 
-    station_3_data = station_3.data('water_level', start_date, end_date)
+    station_3_data = station_3.product('water_level', start_date, end_date)
     station_3_constituents = station_3.constituents
 
     assert station_1.nos_id == 1612480
@@ -74,8 +76,10 @@ def test_COOPS_Station():
     assert station_3.nws_id == ''
     assert station_3.name == 'Calcasieu Test Station'
 
-    station_1_constituents.to_csv(output_directory / 'station1612480_constituents.csv')
-    station_2_constituents.to_csv(output_directory / 'station1612340_constituents.csv')
+    station_1_constituents.to_csv(
+        output_directory / 'station1612480_constituents.csv')
+    station_2_constituents.to_csv(
+        output_directory / 'station1612340_constituents.csv')
 
     assert len(station_3_data['t']) == 0
     assert len(station_3_constituents) == 0

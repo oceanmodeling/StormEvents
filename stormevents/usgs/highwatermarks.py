@@ -69,9 +69,9 @@ class HighWaterMarkEnvironment(Enum):
     RIVERINE = 'Riverine'
 
 
-class FloodEventHighWaterMarks:
+class FloodEvent:
     """
-    representation of high-water mark (HWM) surveys for an arbitrary flood event
+    representation of an arbitrary flood event as defined by the USGS
     """
 
     URL = 'https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json'
@@ -80,8 +80,8 @@ class FloodEventHighWaterMarks:
         """
         :param id: USGS event ID
 
-        >>> survey = FloodEventHighWaterMarks(182)
-        >>> survey.data()
+        >>> flood = FloodEvent(182)
+        >>> flood.high_water_marks()
                  latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
         hwm_id                                                         ...
         22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
@@ -96,7 +96,7 @@ class FloodEventHighWaterMarks:
         25158   29.720560 -81.506110  Irma September 2017   Seed line  ...         HWM    []      NaN  POINT (-81.50611 29.72056)
         25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
         [221 rows x 52 columns]
-        >>> survey.data(hwm_quality=['EXCELLENT', 'GOOD'])
+        >>> flood.high_water_marks(quality=['EXCELLENT', 'GOOD'])
                  latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
         hwm_id                                                         ...
         22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
@@ -120,16 +120,16 @@ class FloodEventHighWaterMarks:
         self.__error = None
 
     @classmethod
-    def from_name(cls, name: str, year: int = None,) -> 'FloodEventHighWaterMarks':
+    def from_name(cls, name: str, year: int = None, ) -> 'FloodEvent':
         """
         retrieve high-water mark info from the USGS flood event name
 
         :param name: USGS flood event name
         :param year: year of flood event
-        :return: high-water marks object
+        :return: flood event object
         """
 
-        events = usgs_highwatermark_events(year=year)
+        events = usgs_flood_events(year=year)
         events = events[events['name'] == name]
 
         if len(events) == 0:
@@ -143,20 +143,19 @@ class FloodEventHighWaterMarks:
         return cls(id=event.name)
 
     @classmethod
-    def from_csv(cls, filename: PathLike, id: int) -> 'FloodEventHighWaterMarks':
+    def from_csv(cls, filename: PathLike) -> 'FloodEvent':
         """
         read a CSV file with high-water mark data
 
         :param filename: file path to CSV
-        :param id: USGS flood event ID
-        :return: high-water marks object
+        :return: flood event object
         """
 
         data = pandas.read_csv(filename, index_col='hwm_id')
         try:
-            instance = cls(id=int(id))
-        except:
-            instance = cls.from_name(id)
+            instance = cls(id=int(data['event_id'].iloc[0]))
+        except KeyError:
+            instance = cls.from_name(data['eventName'].iloc[0])
         instance.__data = data
         return instance
 
@@ -166,7 +165,7 @@ class FloodEventHighWaterMarks:
 
     @id.setter
     def id(self, id: int):
-        self.__metadata = usgs_highwatermark_events().loc[id]
+        self.__metadata = usgs_flood_events().loc[id]
         self.__id = self.__metadata.name
 
     @property
@@ -183,11 +182,13 @@ class FloodEventHighWaterMarks:
 
     @property
     def event_type(self) -> EventType:
-        return typepigeon.convert_value(self.__metadata['event_type'], EventType)
+        return typepigeon.convert_value(self.__metadata['event_type'],
+                                        EventType)
 
     @property
     def event_status(self) -> EventStatus:
-        return typepigeon.convert_value(self.__metadata['event_status'], EventStatus)
+        return typepigeon.convert_value(self.__metadata['event_status'],
+                                        EventStatus)
 
     @property
     def coordinator(self) -> str:
@@ -207,27 +208,28 @@ class FloodEventHighWaterMarks:
 
     @property
     def start_date(self) -> datetime:
-        return typepigeon.convert_value(self.__metadata['start_date'], datetime)
+        return typepigeon.convert_value(self.__metadata['start_date'],
+                                        datetime)
 
     @property
     def end_date(self) -> datetime:
         return typepigeon.convert_value(self.__metadata['end_date'], datetime)
 
-    def data(
-        self,
-        us_states: List[str] = None,
-        us_counties: List[str] = None,
-        hwm_type: HighWaterMarkType = None,
-        hwm_quality: HighWaterMarkQuality = None,
-        hwm_environment: HighWaterMarkEnvironment = None,
-        survey_completed: bool = None,
-        still_water: bool = None,
+    def high_water_marks(
+            self,
+            us_states: List[str] = None,
+            us_counties: List[str] = None,
+            hwm_type: HighWaterMarkType = None,
+            quality: HighWaterMarkQuality = None,
+            environment: HighWaterMarkEnvironment = None,
+            survey_completed: bool = None,
+            still_water: bool = None,
     ) -> GeoDataFrame:
         """
         :returns: data frame of data for the current parameters
 
-        >>> survey = FloodEventHighWaterMarks(23)
-        >>> survey.data()
+        >>> flood = FloodEvent(23)
+        >>> flood.high_water_marks()
                  latitude  longitude eventName                      hwmTypeName  ... approval_id hwm_uncertainty uncertainty                    geometry
         hwm_id                                                                   ...
         14699   38.917360 -75.947890     Irene                           Debris  ...         NaN             NaN         NaN  POINT (-75.94789 38.91736)
@@ -246,16 +248,16 @@ class FloodEventHighWaterMarks:
 
         if self.__query is None:
             self.__query = HighWaterMarksQuery(
-                event_id=self.id,
-                event_type=self.event_type,
-                event_status=self.event_status,
-                us_states=us_states,
-                us_counties=us_counties,
-                hwm_type=hwm_type,
-                hwm_quality=hwm_quality,
-                hwm_environment=hwm_environment,
-                survey_completed=survey_completed,
-                still_water=still_water,
+                    event_id=self.id,
+                    event_type=self.event_type,
+                    event_status=self.event_status,
+                    us_states=us_states,
+                    us_counties=us_counties,
+                    hwm_type=hwm_type,
+                    quality=quality,
+                    environment=environment,
+                    survey_completed=survey_completed,
+                    still_water=still_water,
             )
         else:
             if us_states is not None:
@@ -264,10 +266,10 @@ class FloodEventHighWaterMarks:
                 self.__query.us_counties = us_counties
             if hwm_type is not None:
                 self.__query.hwm_type = hwm_type
-            if hwm_quality is not None:
-                self.__query.hwm_quality = hwm_quality
-            if hwm_environment is not None:
-                self.__query.hwm_environment = hwm_environment
+            if quality is not None:
+                self.__query.quality = quality
+            if environment is not None:
+                self.__query.environment = environment
             if survey_completed is not None:
                 self.__query.survey_completed = survey_completed
             if still_water is not None:
@@ -275,20 +277,20 @@ class FloodEventHighWaterMarks:
 
         return self.__query.data
 
-    def __eq__(self, other: 'FloodEventHighWaterMarks') -> bool:
+    def __eq__(self, other: 'FloodEvent') -> bool:
         return (
-            self.__query is not None
-            and other.__query is not None
-            and self.__query == other.__query
+                self.__query is not None
+                and other.__query is not None
+                and self.__query == other.__query
         )
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(event_id={repr(self.id)})'
 
 
-class StormHighWaterMarks(FloodEventHighWaterMarks):
+class StormFloodEvent(FloodEvent):
     """
-    representation of high-water mark (HWM) surveys for a named storm event
+    representation of an arbitrary storm flood event as defined by the USGS and NHC
     """
 
     def __init__(self, name: str, year: int):
@@ -297,11 +299,13 @@ class StormHighWaterMarks(FloodEventHighWaterMarks):
         :param year: storm year
         """
 
-        storms = usgs_highwatermark_storms(year=year)
-        storm = storms[(storms['nhc_name'] == name.upper().strip()) & (storms['year'] == year)]
+        storms = usgs_flood_storms(year=year)
+        storm = storms[(storms['nhc_name'] == name.upper().strip()) & (
+                storms['year'] == year)]
 
         if len(storm) == 0:
-            raise ValueError(f'storm "{name} {year}" not found in USGS HWM database')
+            raise ValueError(
+                    f'storm "{name} {year}" not found in USGS HWM database')
 
         super().__init__(id=storm.index[0])
 
@@ -315,17 +319,17 @@ class HighWaterMarksQuery:
     URL = 'https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json'
 
     def __init__(
-        self,
-        event_id: int = None,
-        event_type: EventType = None,
-        event_status: EventStatus = None,
-        us_states: List[str] = None,
-        us_counties: List[str] = None,
-        hwm_type: HighWaterMarkType = None,
-        hwm_quality: HighWaterMarkQuality = None,
-        hwm_environment: HighWaterMarkEnvironment = None,
-        survey_completed: bool = None,
-        still_water: bool = None,
+            self,
+            event_id: int = None,
+            event_type: EventType = None,
+            event_status: EventStatus = None,
+            us_states: List[str] = None,
+            us_counties: List[str] = None,
+            hwm_type: HighWaterMarkType = None,
+            quality: HighWaterMarkQuality = None,
+            environment: HighWaterMarkEnvironment = None,
+            survey_completed: bool = None,
+            still_water: bool = None,
     ):
         """
         :param event_id: USGS event ID
@@ -334,13 +338,13 @@ class HighWaterMarksQuery:
         :param us_states: U.S. states in which to query
         :param us_counties: U.S. counties in which to query
         :param hwm_type: HWM type filter
-        :param hwm_quality: HWM quality filter
-        :param hwm_environment: HWM environment filter
+        :param quality: HWM quality filter
+        :param environment: HWM environment filter
         :param survey_completed: whether HWM survey should be complete
         :param still_water: HWM still water filter
 
         >>> query = HighWaterMarksQuery(182)
-        >>> query.data
+        >>> query.high_water_marks
                  latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
         hwm_id                                                         ...
         22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
@@ -355,8 +359,8 @@ class HighWaterMarksQuery:
         25158   29.720560 -81.506110  Irma September 2017   Seed line  ...         HWM    []      NaN  POINT (-81.50611 29.72056)
         25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
         [221 rows x 52 columns]
-        >>> query.hwm_quality = 'EXCELLENT', 'GOOD'
-        >>> query.data
+        >>> query.quality = 'EXCELLENT', 'GOOD'
+        >>> query.high_water_marks
                  latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
         hwm_id                                                         ...
         22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
@@ -379,8 +383,8 @@ class HighWaterMarksQuery:
         self.us_states = us_states
         self.us_counties = us_counties
         self.hwm_type = hwm_type
-        self.hwm_quality = hwm_quality
-        self.hwm_environment = hwm_environment
+        self.quality = quality
+        self.environment = environment
         self.survey_completed = survey_completed
         self.still_water = still_water
 
@@ -405,17 +409,6 @@ class HighWaterMarksQuery:
         self.__us_counties = typepigeon.convert_value(us_counties, [str])
 
     @property
-    def hwm_quality(self) -> List[HighWaterMarkQuality]:
-        return self.__hwm_quality
-
-    @hwm_quality.setter
-    def hwm_quality(self, hwm_quality: HighWaterMarkQuality):
-        if hwm_quality is not None:
-            self.__hwm_quality = convert_value(hwm_quality, [HighWaterMarkQuality])
-        else:
-            self.__hwm_quality = None
-
-    @property
     def hwm_type(self) -> List[HighWaterMarkType]:
         return self.__hwm_type
 
@@ -427,15 +420,27 @@ class HighWaterMarksQuery:
             self.__hwm_type = None
 
     @property
-    def hwm_environment(self) -> List[HighWaterMarkEnvironment]:
-        return self.__hwm_environment
+    def quality(self) -> List[HighWaterMarkQuality]:
+        return self.__quality
 
-    @hwm_environment.setter
-    def hwm_environment(self, hwm_environment: HighWaterMarkEnvironment):
-        if hwm_environment is not None:
-            self.__hwm_environment = convert_value(hwm_environment, [HighWaterMarkEnvironment])
+    @quality.setter
+    def quality(self, quality: HighWaterMarkQuality):
+        if quality is not None:
+            self.__quality = convert_value(quality, [HighWaterMarkQuality])
         else:
-            self.__hwm_environment = None
+            self.__quality = None
+
+    @property
+    def environment(self) -> List[HighWaterMarkEnvironment]:
+        return self.__environment
+
+    @environment.setter
+    def environment(self, environment: HighWaterMarkEnvironment):
+        if environment is not None:
+            self.__environment = convert_value(environment,
+                                               [HighWaterMarkEnvironment])
+        else:
+            self.__environment = None
 
     @property
     def query(self) -> Dict[str, Any]:
@@ -446,8 +451,8 @@ class HighWaterMarksQuery:
             'States': self.us_states,
             'County': self.us_counties,
             'HWMType': self.hwm_type,
-            'HWMQuality': self.hwm_quality,
-            'HWMEnvironment': self.hwm_environment,
+            'HWMQuality': self.quality,
+            'HWMEnvironment': self.environment,
             'SurveyComplete': self.survey_completed,
             'StillWater': self.still_water,
         }
@@ -458,7 +463,8 @@ class HighWaterMarksQuery:
                     value = value.value
                 elif isinstance(value, List):
                     value = [
-                        entry.value if isinstance(entry, Enum) else entry for entry in value
+                        entry.value if isinstance(entry, Enum) else entry for
+                        entry in value
                     ]
                     value = typepigeon.convert_value(value, [str])
 
@@ -477,7 +483,7 @@ class HighWaterMarksQuery:
         :returns: data frame of data for the current parameters
 
         >>> query = HighWaterMarksQuery(23)
-        >>> query.data
+        >>> query.high_water_marks
                  latitude  longitude eventName                      hwmTypeName  ... approval_id hwm_uncertainty uncertainty                    geometry
         hwm_id                                                                   ...
         14699   38.917360 -75.947890     Irene                           Debris  ...         NaN             NaN         NaN  POINT (-75.94789 38.91736)
@@ -498,9 +504,9 @@ class HighWaterMarksQuery:
             query = self.query
 
             if any(
-                value is not None
-                for key, value in query.items()
-                if key not in ['SurveyComplete', 'StillWater']
+                    value is not None
+                    for key, value in query.items()
+                    if key not in ['SurveyComplete', 'StillWater']
             ):
                 url = self.URL
             else:
@@ -516,66 +522,70 @@ class HighWaterMarksQuery:
                 raise ValueError(self.__error)
 
             if len(data) > 0:
-                data['survey_date'] = pandas.to_datetime(data['survey_date'], errors='coerce')
-                data['flag_date'] = pandas.to_datetime(data['flag_date'], errors='coerce')
-                data.loc[data['markerName'].str.len() == 0, 'markerName'] = None
+                data['survey_date'] = pandas.to_datetime(data['survey_date'],
+                                                         errors='coerce')
+                data['flag_date'] = pandas.to_datetime(data['flag_date'],
+                                                       errors='coerce')
+                data.loc[
+                    data['markerName'].str.len() == 0, 'markerName'] = None
             else:
                 data = DataFrame(
-                    columns=[
-                        'latitude',
-                        'longitude',
-                        'eventName',
-                        'hwmTypeName',
-                        'hwmQualityName',
-                        'verticalDatumName',
-                        'verticalMethodName',
-                        'approvalMember',
-                        'markerName',
-                        'horizontalMethodName',
-                        'horizontalDatumName',
-                        'flagMemberName',
-                        'surveyMemberName',
-                        'site_no',
-                        'siteDescription',
-                        'sitePriorityName',
-                        'networkNames',
-                        'stateName',
-                        'countyName',
-                        'siteZone',
-                        'sitePermHousing',
-                        'site_latitude',
-                        'site_longitude',
-                        'hwm_id',
-                        'waterbody',
-                        'site_id',
-                        'event_id',
-                        'hwm_type_id',
-                        'hwm_quality_id',
-                        'latitude_dd',
-                        'longitude_dd',
-                        'survey_date',
-                        'elev_ft',
-                        'vdatum_id',
-                        'vcollect_method_id',
-                        'bank',
-                        'marker_id',
-                        'hcollect_method_id',
-                        'hwm_notes',
-                        'hwm_environment',
-                        'flag_date',
-                        'stillwater',
-                        'hdatum_id',
-                        'hwm_label',
-                        'files',
-                        'height_above_gnd',
-                        'hwm_locationdescription',
-                        'flag_member_id',
-                        'survey_member_id',
-                    ],
+                        columns=[
+                            'latitude',
+                            'longitude',
+                            'eventName',
+                            'hwmTypeName',
+                            'hwmQualityName',
+                            'verticalDatumName',
+                            'verticalMethodName',
+                            'approvalMember',
+                            'markerName',
+                            'horizontalMethodName',
+                            'horizontalDatumName',
+                            'flagMemberName',
+                            'surveyMemberName',
+                            'site_no',
+                            'siteDescription',
+                            'sitePriorityName',
+                            'networkNames',
+                            'stateName',
+                            'countyName',
+                            'siteZone',
+                            'sitePermHousing',
+                            'site_latitude',
+                            'site_longitude',
+                            'hwm_id',
+                            'waterbody',
+                            'site_id',
+                            'event_id',
+                            'hwm_type_id',
+                            'hwm_quality_id',
+                            'latitude_dd',
+                            'longitude_dd',
+                            'survey_date',
+                            'elev_ft',
+                            'vdatum_id',
+                            'vcollect_method_id',
+                            'bank',
+                            'marker_id',
+                            'hcollect_method_id',
+                            'hwm_notes',
+                            'hwm_environment',
+                            'flag_date',
+                            'stillwater',
+                            'hdatum_id',
+                            'hwm_label',
+                            'files',
+                            'height_above_gnd',
+                            'hwm_locationdescription',
+                            'flag_member_id',
+                            'survey_member_id',
+                        ],
                 )
             data.set_index('hwm_id', inplace=True)
             self.__data = GeoDataFrame(
-                data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude']),
+                    data, geometry=geopandas.points_from_xy(data['longitude'],
+                                                            data['latitude']),
             )
             self.__previous_query = query
         elif self.__error is not None:
@@ -595,8 +605,8 @@ class HighWaterMarksQuery:
             f'us_states={self.us_states}, '
             f'us_counties={self.us_counties}, '
             f'hwm_type={self.hwm_type}, '
-            f'hwm_quality={self.hwm_quality}, '
-            f'hwm_environment={self.hwm_environment}, '
+            f'quality={self.quality}, '
+            f'environment={self.environment}, '
             f'survey_completed={self.survey_completed}, '
             f'still_water={self.still_water}'
             f')'
@@ -604,8 +614,9 @@ class HighWaterMarksQuery:
 
 
 @lru_cache(maxsize=None)
-def usgs_highwatermark_events(
-    year: int = None, event_type: EventType = None, event_status: EventStatus = None,
+def usgs_flood_events(
+        year: int = None, event_type: EventType = None,
+        event_status: EventStatus = None,
 ) -> DataFrame:
     """
     this function collects all USGS flood events of the given type and status that have high-water mark data
@@ -624,7 +635,7 @@ def usgs_highwatermark_events(
     :return: table of flood events
 
 
-    >>> usgs_highwatermark_events()
+    >>> usgs_flood_events()
                                                 name  year  ...          start_date            end_date
     usgs_id                                                 ...
     7                             FEMA 2013 exercise  2013  ... 2013-05-15 04:00:00 2013-05-23 04:00:00
@@ -641,25 +652,27 @@ def usgs_highwatermark_events(
     [292 rows x 11 columns]
     """
 
-    events = pandas.read_json('https://stn.wim.usgs.gov/STNServices/Events.json')
+    events = pandas.read_json(
+            'https://stn.wim.usgs.gov/STNServices/Events.json')
     events.rename(
-        columns={
-            'event_id': 'usgs_id',
-            'event_name': 'name',
-            'event_start_date': 'start_date',
-            'event_end_date': 'end_date',
-            'event_description': 'description',
-            'event_coordinator': 'coordinator',
-        },
-        inplace=True,
+            columns={
+                'event_id': 'usgs_id',
+                'event_name': 'name',
+                'event_start_date': 'start_date',
+                'event_end_date': 'end_date',
+                'event_description': 'description',
+                'event_coordinator': 'coordinator',
+            },
+            inplace=True,
     )
     events.set_index('usgs_id', inplace=True)
     events['start_date'] = pandas.to_datetime(events['start_date'])
     events['end_date'] = pandas.to_datetime(events['end_date'])
     events['last_updated'] = pandas.to_datetime(events['last_updated'])
-    events['event_type'] = events['event_type_id'].apply(lambda value: EventType(value).name)
+    events['event_type'] = events['event_type_id'].apply(
+            lambda value: EventType(value).name)
     events['event_status'] = events['event_status_id'].apply(
-        lambda value: EventStatus(value).name
+            lambda value: EventStatus(value).name
     )
     events['year'] = events['start_date'].dt.year
     events = events[
@@ -694,7 +707,7 @@ def usgs_highwatermark_events(
 
 
 @lru_cache(maxsize=None)
-def usgs_highwatermark_storms(year: int = None) -> DataFrame:
+def usgs_flood_storms(year: int = None) -> DataFrame:
     """
     this function collects USGS high-water mark data for storm events and cross-correlates it with NHC storm data
 
@@ -703,42 +716,42 @@ def usgs_highwatermark_storms(year: int = None) -> DataFrame:
     :param year: storm year
     :return: table of USGS flood events with NHC storm names
 
-    >>> usgs_highwatermark_storms()
-                                                   usgs_name  year  nhc_name  nhc_code
-    usgs_id
-    8                                                  Wilma  2005     WILMA  AL252005
-    18                                        Isaac Aug 2012  2012     ISAAC  AL092012
-    19                                                  Rita  2005      RITA  AL182005
-    23                                                 Irene  2011     IRENE  AL092011
-    24                                                 Sandy  2012     SANDY  AL182012
-    25                                                Gustav  2008    GUSTAV  AL072008
-    26                                                   Ike  2008       IKE  AL092008
-    119                                              Joaquin  2015   JOAQUIN  AL112015
-    131                                              Hermine  2016   HERMINE  AL092016
-    133                                Isabel September 2003  2003    ISABEL  AL132003
-    135                                 Matthew October 2016  2016   MATTHEW  AL142016
-    180                                      Harvey Aug 2017  2017    HARVEY  AL092017
-    182                                  Irma September 2017  2017      IRMA  AL112017
-    189                                 Maria September 2017  2017     MARIA  AL152017
-    190                                  Jose September 2017  2017      JOSE  AL122017
-    196                                    Nate October 2017  2017      NATE  AL162017
-    281                                     Lane August 2018  2018      LANE  EP142018
-    282                                      Gordon Sep 2018  2018    GORDON  AL072018
-    283                                    Florence Sep 2018  2018  FLORENCE  AL062018
-    284                                       Isaac Sep 2018  2018     ISAAC  AL092018
-    287                                     Michael Oct 2018  2018   MICHAEL  AL142018
-    291                                2019 Hurricane Dorian  2019    DORIAN  AL052019
-    299      1995 South Carolina August Tropical Storm Jerry  1995     JERRY  AL111995
-    300        1999 South Carolina September Hurricane Floyd  1999     FLOYD  AL081999
-    301                                2020 Hurricane Isaias  2020    ISAIAS  AL092020
-    303                     2020 TS Marco - Hurricane  Laura  2020     MARCO  AL142020
-    304                                 2020 Hurricane Sally  2020     SALLY  AL192020
-    305                                 2020 Hurricane Delta  2020     DELTA  AL262020
-    310                          2021 Tropical Cyclone Henri  2021     HENRI  AL082021
-    312                            2021 Tropical Cyclone Ida  2021       IDA  AL092021
+    >>> usgs_flood_storms()
+                                                   usgs_name  year  nhc_name  ... last_updated_by          start_date            end_date
+    usgs_id                                                                   ...
+    8                                                  Wilma  2005     WILMA  ...             NaN 2005-10-20 00:00:00 2005-10-31 00:00:00
+    18                                        Isaac Aug 2012  2012     ISAAC  ...            35.0 2012-08-27 05:00:00 2012-09-02 05:00:00
+    19                                                  Rita  2005      RITA  ...             NaN 2005-09-23 04:00:00 2005-09-25 04:00:00
+    23                                                 Irene  2011     IRENE  ...             NaN 2011-08-26 04:00:00 2011-08-29 04:00:00
+    24                                                 Sandy  2012     SANDY  ...             NaN 2012-10-21 04:00:00 2012-10-30 04:00:00
+    25                                                Gustav  2008    GUSTAV  ...             NaN 2008-08-31 04:00:00 2008-09-03 04:00:00
+    26                                                   Ike  2008       IKE  ...             NaN 2008-09-11 04:00:00 2008-09-12 04:00:00
+    119                                              Joaquin  2015   JOAQUIN  ...             NaN 2015-10-01 04:00:00 2015-10-08 04:00:00
+    131                                              Hermine  2016   HERMINE  ...             NaN 2016-09-01 04:00:00 2016-09-07 04:00:00
+    133                                Isabel September 2003  2003    ISABEL  ...             NaN 2003-09-06 05:00:00 2003-09-30 05:00:00
+    135                                 Matthew October 2016  2016   MATTHEW  ...             NaN 2016-10-03 04:00:00 2016-10-30 04:00:00
+    180                                      Harvey Aug 2017  2017    HARVEY  ...             NaN 2017-08-24 05:00:00 2017-09-24 05:00:00
+    182                                  Irma September 2017  2017      IRMA  ...            35.0 2017-09-03 05:00:00 2017-09-30 05:00:00
+    189                                 Maria September 2017  2017     MARIA  ...             1.0 2017-09-17 04:00:00 2017-10-02 04:00:00
+    190                                  Jose September 2017  2017      JOSE  ...             1.0 2017-09-18 04:00:00 2017-09-25 04:00:00
+    196                                    Nate October 2017  2017      NATE  ...            35.0 2017-10-05 05:00:00 2017-10-14 05:00:00
+    281                                     Lane August 2018  2018      LANE  ...            35.0 2018-08-22 05:00:00 2018-09-15 05:00:00
+    282                                      Gordon Sep 2018  2018    GORDON  ...            35.0 2018-09-04 05:00:00 2018-10-04 05:00:00
+    283                                    Florence Sep 2018  2018  FLORENCE  ...            35.0 2018-09-07 05:00:00 2018-10-07 05:00:00
+    284                                       Isaac Sep 2018  2018     ISAAC  ...             3.0 2018-09-11 04:00:00 2018-09-18 04:00:00
+    287                                     Michael Oct 2018  2018   MICHAEL  ...             3.0 2018-10-08 04:00:00 2018-10-15 04:00:00
+    291                                2019 Hurricane Dorian  2019    DORIAN  ...            36.0 2019-08-28 04:00:00 2019-09-20 04:00:00
+    299      1995 South Carolina August Tropical Storm Jerry  1995     JERRY  ...           864.0 1995-08-01 05:00:00 1995-08-31 05:00:00
+    300        1999 South Carolina September Hurricane Floyd  1999     FLOYD  ...           864.0 1999-09-01 05:00:00 1999-09-30 05:00:00
+    301                                2020 Hurricane Isaias  2020    ISAIAS  ...           864.0 2020-07-31 05:00:00 2020-08-07 05:00:00
+    303                     2020 TS Marco - Hurricane  Laura  2020     MARCO  ...           864.0 2020-08-22 05:00:00 2020-08-30 05:00:00
+    304                                 2020 Hurricane Sally  2020     SALLY  ...           864.0 2020-09-13 05:00:00 2020-09-20 05:00:00
+    305                                 2020 Hurricane Delta  2020     DELTA  ...           864.0 2020-10-06 05:00:00 2020-10-13 05:00:00
+    310                          2021 Tropical Cyclone Henri  2021     HENRI  ...           864.0 2021-08-20 05:00:00 2021-09-03 05:00:00
+    312                            2021 Tropical Cyclone Ida  2021       IDA  ...           864.0 2021-08-27 05:00:00 2021-09-03 05:00:00
     """
 
-    events = usgs_highwatermark_events(year=year, event_type=EventType.HURRICANE)
+    events = usgs_flood_events(year=year, event_type=EventType.HURRICANE)
 
     events.rename(columns={'name': 'usgs_name'}, inplace=True)
     events['nhc_name'] = None
@@ -756,12 +769,13 @@ def usgs_highwatermark_storms(year: int = None) -> DataFrame:
             storms_matching = storms[
                 storms['name'].str.contains(storm_name, flags=re.IGNORECASE)
                 & (storms['year'] == event['year'])
-            ]
+                ]
 
             for nhc_code, storm in storms_matching.iterrows():
                 events.at[event_id, 'nhc_name'] = storm['name']
                 events.at[event_id, 'nhc_code'] = storm.name
 
     return events.loc[
-        ~pandas.isna(events['nhc_code']), ['usgs_name', 'year', 'nhc_name', 'nhc_code']
+        ~pandas.isna(events['nhc_code']),
+        ['usgs_name', 'year', 'nhc_name', 'nhc_code', *events.columns[2:-2], ],
     ]
