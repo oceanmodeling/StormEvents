@@ -303,10 +303,10 @@ def read_atcf_line(line: str) -> Dict[str, Any]:
 
     record['datetime'] = parse_date(f'{line[2]}{minutes}')
 
-    # Add forecast period to base datetime
+    # Add forecast period to base datetime (wjp: not required..)
     forecast_hours = int(line[5])
-    if forecast_hours != 0:
-        record['datetime'] += timedelta(hours=forecast_hours)
+    #if forecast_hours != 0:
+    #    record['datetime'] += timedelta(hours=forecast_hours)
 
     latitude = line[6]
     if 'N' in latitude:
