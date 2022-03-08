@@ -394,7 +394,7 @@ class HighWaterMarksQuery:
 
     @us_states.setter
     def us_states(self, us_states: List[str]):
-        self.__us_states = typepigeon.convert_value(us_states, List[str])
+        self.__us_states = typepigeon.convert_value(us_states, [str])
 
     @property
     def us_counties(self) -> List[str]:
@@ -402,7 +402,7 @@ class HighWaterMarksQuery:
 
     @us_counties.setter
     def us_counties(self, us_counties: List[str]):
-        self.__us_counties = typepigeon.convert_value(us_counties, List[str])
+        self.__us_counties = typepigeon.convert_value(us_counties, [str])
 
     @property
     def hwm_quality(self) -> List[HighWaterMarkQuality]:
