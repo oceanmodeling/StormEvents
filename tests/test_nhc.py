@@ -66,7 +66,9 @@ def test_vortex_track():
     ]
 
     for track in tracks:
-        track.write(output_directory / f'{track.name}{track.year}.fort.22', overwrite=True)
+        track.write(
+            output_directory / f'{track.name.lower()}{track.year}.fort.22', overwrite=True
+        )
 
     check_reference_directory(output_directory, reference_directory)
 

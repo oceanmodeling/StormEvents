@@ -119,8 +119,8 @@ def test_storm_event_time_interval():
 
 
 def test_storm_event_track(florence2018, ida2021):
-    reference_directory = REFERENCE_DIRECTORY / 'test_track'
-    output_directory = OUTPUT_DIRECTORY / 'test_track'
+    reference_directory = REFERENCE_DIRECTORY / 'test_storm_event_track'
+    output_directory = OUTPUT_DIRECTORY / 'test_storm_event_track'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
@@ -138,8 +138,8 @@ def test_storm_event_track(florence2018, ida2021):
     sys.version_info < (3, 10), reason='floating point differences before python 3.10',
 )
 def test_storm_event_high_water_marks(florence2018):
-    reference_directory = REFERENCE_DIRECTORY / 'test_high_water_marks'
-    output_directory = OUTPUT_DIRECTORY / 'test_high_water_marks'
+    reference_directory = REFERENCE_DIRECTORY / 'test_storm_event_high_water_marks'
+    output_directory = OUTPUT_DIRECTORY / 'test_storm_event_high_water_marks'
 
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
