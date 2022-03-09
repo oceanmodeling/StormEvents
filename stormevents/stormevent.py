@@ -267,16 +267,19 @@ class StormEvent:
         if end_date is None:
             end_date = self.end_date
 
-        return VortexTrack.from_storm_name(
-            name=self.name,
-            year=self.year,
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=file_deck,
-            mode=mode,
-            record_type=record_type,
-            filename=filename,
-        )
+        if filename is not None:
+            track = VortexTrack.from_file(filename)
+        else:
+            track = VortexTrack.from_storm_name(
+                name=self.name,
+                year=self.year,
+                start_date=start_date,
+                end_date=end_date,
+                file_deck=file_deck,
+                mode=mode,
+                record_type=record_type,
+            )
+        return track
 
     @property
     def flood_event(self) -> StormFloodEvent:

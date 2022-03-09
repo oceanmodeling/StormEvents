@@ -1,5 +1,5 @@
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from dateutil.parser import parse as parse_date
 import pytest
@@ -108,8 +108,8 @@ def test_vortex_track_from_file():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    track_1 = VortexTrack.from_fort22(fort22=input_directory / 'irma2017_fort.22',)
-    track_2 = VortexTrack.from_atcf_file(atcf=input_directory / 'atcf.trk',)
+    track_1 = VortexTrack.from_file(input_directory / 'irma2017_fort.22')
+    track_2 = VortexTrack.from_file(input_directory / 'BT02008.dat')
 
     assert track_1.nhc_code == 'AL112017'
     assert track_1.name == 'IRMA'
@@ -191,10 +191,10 @@ def test_vortex_track_no_internet():
     with pytest.raises((ConnectionError, SocketBlockedError)):
         VortexTrack(storm='al062018', start_date='20180911', end_date=None)
 
-    track_1 = VortexTrack.from_fort22(input_directory / 'fort.22')
+    track_1 = VortexTrack.from_file(input_directory / 'fort.22')
     track_1.write(output_directory / 'vortex_1.22', overwrite=True)
 
-    track_2 = VortexTrack.from_fort22(track_1.filename)
+    track_2 = VortexTrack.from_file(track_1.filename)
     track_2.write(output_directory / 'vortex_2.22', overwrite=True)
 
     track_3 = copy(track_1)

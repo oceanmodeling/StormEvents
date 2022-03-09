@@ -136,7 +136,7 @@ If you have an ATCF or `fort.22` file, use the corresponding methods:
 ```python
 from stormevents.nhc import VortexTrack
 
-VortexTrack.from_atcf_file('tests/data/input/test_from_atcf/atcf.trk')
+VortexTrack.from_file('tests/data/input/test_from_atcf/atcf.trk')
 ```
 
 ```
