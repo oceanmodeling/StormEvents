@@ -424,7 +424,9 @@ def read_atcf(
     ]
 
     for float_field in float_fields:
-        data.loc[data[float_field].str.len() == 0, float_field] = 'NaN'
+        data.loc[
+            (data[float_field].str.len() == 0) | pandas.isna(data[float_field]), float_field
+        ] = 'NaN'
 
     data[float_fields] = data[float_fields].astype(float, copy=False)
 
