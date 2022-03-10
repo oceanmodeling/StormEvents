@@ -50,19 +50,21 @@ def test_vortex_track():
         output_directory.mkdir(parents=True, exist_ok=True)
 
     storms = [
-        'michael2018',
-        'florence2018',
-        'irma2017',
-        'maria2017',
-        'harvey2017',
-        'sandy2012',
-        'irene2011',
-        'ike2008',
-        'isabel2003',
+        ('michael', 2018),
+        ('florence', 2018),
+        ('irma', 2017),
+        ('maria', 2017),
+        ('harvey', 2017),
+        ('sandy', 2012),
+        ('irene', 2011),
+        ('ike', 2008),
+        ('isabel', 2003),
     ]
 
     for storm in storms:
-        track = VortexTrack(storm, file_deck='a', start_date=timedelta(days=-1))
+        track = VortexTrack.from_storm_name(
+            *storm, start_date=timedelta(days=-1), file_deck='a'
+        )
         track.to_file(
             output_directory / f'{track.name.lower()}{track.year}.fort.22', overwrite=True
         )
