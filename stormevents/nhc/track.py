@@ -87,10 +87,6 @@ class VortexTrack:
         self.__invalid_storm_name = False
         self.__location_hash = None
 
-        self.file_deck = file_deck
-        self.mode = mode
-        self.record_type = record_type
-
         if isinstance(storm, DataFrame):
             self.unfiltered_data = storm
         elif isinstance(storm, (str, PathLike, pathlib.Path)):
@@ -101,6 +97,10 @@ class VortexTrack:
                     self.nhc_code = storm
                 except ValueError:
                     raise
+
+        self.file_deck = file_deck
+        self.mode = mode
+        self.record_type = record_type
 
         self.__previous_configuration = self.__configuration
 
@@ -164,13 +164,7 @@ class VortexTrack:
         except:
             pass
 
-        return cls(
-            storm=path,
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=list(ATCF_FileDeck),
-            record_type=list(ATCF_RecordType),
-        )
+        return cls(storm=path, start_date=start_date, end_date=end_date,)
 
     @property
     def name(self) -> str:
@@ -364,7 +358,7 @@ class VortexTrack:
 
     @file_deck.setter
     def file_deck(self, file_deck: ATCF_FileDeck):
-        if file_deck is None:
+        if file_deck is None and self.filename is None:
             file_deck = ATCF_FileDeck.BEST
         elif not isinstance(file_deck, ATCF_FileDeck):
             file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
@@ -421,7 +415,9 @@ class VortexTrack:
 
     @property
     def valid_record_types(self) -> List[ATCF_RecordType]:
-        if self.file_deck == ATCF_FileDeck.ADVISORY:
+        if self.file_deck is None:
+            valid_record_types = [record_type.value for record_type in ATCF_RecordType]
+        elif self.file_deck == ATCF_FileDeck.ADVISORY:
             # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
             # there are more but they may not have enough columns
             valid_record_types = [
