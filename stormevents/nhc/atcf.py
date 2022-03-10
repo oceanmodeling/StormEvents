@@ -430,7 +430,22 @@ def read_atcf(
 
     data[float_fields] = data[float_fields].astype(float, copy=False)
 
-    data.rename(columns=ATCF_FIELDS, inplace=True)
+    data.rename(
+        columns={
+            **{field: value for field, value in ATCF_FIELDS.items() if field in data.columns},
+            **{
+                field: value
+                for field, value in EXTRA_ATCF_FIELDS.items()
+                if field in data.columns
+            },
+            **{
+                field: value
+                for field, value in FORT_22_FIELDS.items()
+                if field in data.columns
+            },
+        },
+        inplace=True,
+    )
 
     return GeoDataFrame(
         data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude'],)

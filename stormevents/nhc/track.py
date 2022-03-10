@@ -28,6 +28,7 @@ from stormevents.nhc.atcf import (
     ATCF_Mode,
     ATCF_RecordType,
     atcf_url,
+    EXTRA_ATCF_FIELDS,
     get_atcf_entry,
     read_atcf,
 )
@@ -163,14 +164,7 @@ class VortexTrack:
         except:
             pass
 
-        return cls(
-            storm=path,
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=None,
-            mode=None,
-            record_type=None,
-        )
+        return cls(storm=path, start_date=start_date, end_date=end_date,)
 
     @property
     def name(self) -> str:
@@ -493,7 +487,7 @@ class VortexTrack:
             & (self.unfiltered_data['datetime'] <= self.end_date)
         ]
 
-    def write(self, path: PathLike, overwrite: bool = False):
+    def to_file(self, path: PathLike, overwrite: bool = False):
         """
         write track to file path
 
@@ -505,11 +499,12 @@ class VortexTrack:
             path = pathlib.Path(path)
         if overwrite or not path.exists():
             if path.suffix == '.dat':
-                self.atcf.to_csv(path, index=False, header=False)
-            if path.suffix == '.22':
-                self.fort_22.to_csv(path, index=False, header=False)
+                data = self.atcf
+            elif path.suffix == '.22':
+                data = self.fort_22
             else:
                 raise NotImplementedError(f'writing to `*{path.suffix}` not supported')
+            data.to_csv(path, index=False, header=False)
         else:
             logging.warning(f'skipping existing file "{path}"')
 
@@ -523,7 +518,7 @@ class VortexTrack:
         :return: dataframe of CSV lines in ATCF format
         """
 
-        atcf = self.data.copy()
+        atcf = DataFrame(self.data.drop(columns='geometry'), copy=True)
 
         atcf.loc[:, ['longitude', 'latitude']] = atcf.loc[:, ['longitude', 'latitude']] * 10
 
@@ -623,6 +618,10 @@ class VortexTrack:
         """
 
         fort22 = self.atcf
+        fort22.drop(
+            columns=[field for field in EXTRA_ATCF_FIELDS.values() if field in fort22.columns],
+            inplace=True,
+        )
         fort22['record_number'] = self.__record_numbers
 
         return fort22
@@ -758,7 +757,7 @@ class VortexTrack:
 
     def wind_swaths(self, wind_speed: int, segments: int = 91) -> Dict[str, Polygon]:
         """
-        extract the wind swath of the BestTrackForcing class object as a Polygon object
+        extract wind swaths (per record type) of the track as polygons
 
         :param wind_speed: wind speed in knots (one of ``34``, ``50``, or ``64``)
         :param segments: number of discretization points per quadrant (default = ``91``)

@@ -49,7 +49,7 @@ def test_vortex_track():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    tracks = [
+    storms = [
         'michael2018',
         'florence2018',
         'irma2017',
@@ -61,12 +61,9 @@ def test_vortex_track():
         'isabel2003',
     ]
 
-    tracks = [
-        VortexTrack(storm, file_deck='a', start_date=timedelta(days=-1)) for storm in tracks
-    ]
-
-    for track in tracks:
-        track.write(
+    for storm in storms:
+        track = VortexTrack(storm, file_deck='a', start_date=timedelta(days=-1))
+        track.to_file(
             output_directory / f'{track.name.lower()}{track.year}.fort.22', overwrite=True
         )
 
@@ -116,8 +113,8 @@ def test_vortex_track_from_file():
     assert track_2.nhc_code == 'BT02008'
     assert track_2.name == 'WRT00001'
 
-    track_1.write(output_directory / 'irma2017_fort.22', overwrite=True)
-    track_2.write(output_directory / 'fromatcf_fort.22', overwrite=True)
+    track_1.to_file(output_directory / 'irma2017_fort.22', overwrite=True)
+    track_2.to_file(output_directory / 'fromatcf_fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 
@@ -134,7 +131,7 @@ def test_vortex_track_recompute_velocity():
     track.data.at[5, 'longitude'] -= 0.1
     track.data.at[5, 'latitude'] += 0.1
 
-    track.write(output_directory / 'irma2017_fort.22', overwrite=True)
+    track.to_file(output_directory / 'irma2017_fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 
@@ -169,7 +166,7 @@ def test_vortex_track_file_decks():
                 record_type=record_type,
             )
 
-            track.write(
+            track.to_file(
                 output_directory / f'{file_deck}-deck_{record_type}.22', overwrite=True
             )
 
@@ -192,13 +189,13 @@ def test_vortex_track_no_internet():
         VortexTrack(storm='al062018', start_date='20180911', end_date=None)
 
     track_1 = VortexTrack.from_file(input_directory / 'fort.22')
-    track_1.write(output_directory / 'vortex_1.22', overwrite=True)
+    track_1.to_file(output_directory / 'vortex_1.22', overwrite=True)
 
     track_2 = VortexTrack.from_file(track_1.filename)
-    track_2.write(output_directory / 'vortex_2.22', overwrite=True)
+    track_2.to_file(output_directory / 'vortex_2.22', overwrite=True)
 
     track_3 = copy(track_1)
-    track_3.write(output_directory / 'vortex_3.22', overwrite=True)
+    track_3.to_file(output_directory / 'vortex_3.22', overwrite=True)
 
     assert track_1 == track_2
     assert track_1 == track_3

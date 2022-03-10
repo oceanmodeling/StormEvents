@@ -159,7 +159,7 @@ VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-19 
 from stormevents.nhc import VortexTrack
 
 track = VortexTrack.from_storm_name('florence', 2018)
-track.write('fort.22')
+track.to_file('fort.22')
 ```
 
 #### high-water mark (HWM) surveys provided by the United States Geological Survey (USGS)
