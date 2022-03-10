@@ -164,7 +164,13 @@ class VortexTrack:
         except:
             pass
 
-        return cls(storm=path, start_date=start_date, end_date=end_date,)
+        return cls(
+            storm=path,
+            start_date=start_date,
+            end_date=end_date,
+            file_deck=list(ATCF_FileDeck),
+            record_type=list(ATCF_RecordType),
+        )
 
     @property
     def name(self) -> str:
