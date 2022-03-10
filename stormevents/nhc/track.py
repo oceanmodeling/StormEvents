@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 from functools import partial
+import gzip
 import io
 import logging
-import os
 from os import PathLike
 import pathlib
+import re
 from typing import Any, Dict, List, Union
+from urllib.request import urlopen
 
 import numpy
 import pandas
@@ -25,9 +27,8 @@ from stormevents.nhc.atcf import (
     ATCF_FileDeck,
     ATCF_Mode,
     ATCF_RecordType,
+    atcf_url,
     get_atcf_entry,
-    get_atcf_file,
-    normalize_atcf_value,
     read_atcf,
 )
 from stormevents.nhc.storms import nhc_storms, nhc_storms_archive
@@ -47,7 +48,6 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
         record_type: ATCF_RecordType = None,
-        filename: PathLike = None,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -56,7 +56,6 @@ class VortexTrack:
         :param file_deck: ATCF file deck; one of `a`, `b`, `f`
         :param mode: ATCF mode; either `historical` or `realtime`
         :param record_type: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
-        :param filename: file path to `fort.22`
 
         >>> VortexTrack('AL112017')
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
@@ -87,26 +86,20 @@ class VortexTrack:
         self.__invalid_storm_name = False
         self.__location_hash = None
 
-        self.filename = filename
         self.file_deck = file_deck
         self.mode = mode
         self.record_type = record_type
 
         if isinstance(storm, DataFrame):
             self.unfiltered_data = storm
-        elif isinstance(storm, io.BytesIO):
-            self.__remote_atcf = storm
         elif isinstance(storm, (str, PathLike, pathlib.Path)):
-            if os.path.exists(storm):
-                self.__filename = storm
+            if pathlib.Path(storm).exists():
+                self.filename = storm
             else:
                 try:
                     self.nhc_code = storm
                 except ValueError:
-                    if pathlib.Path(storm).exists():
-                        self.filename = storm
-                    else:
-                        raise
+                    raise
 
         self.__previous_configuration = self.__configuration
 
@@ -124,7 +117,6 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
         record_type: str = None,
-        filename: PathLike = None,
     ) -> 'VortexTrack':
         """
         :param name: storm name
@@ -134,7 +126,6 @@ class VortexTrack:
         :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
         :param mode: ATCF mode; either ``historical`` or ``realtime``
         :param record_type: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
-        :param filename: file path to ``fort.22``
 
         >>> VortexTrack.from_storm_name('irma', 2017)
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
@@ -150,61 +141,35 @@ class VortexTrack:
             file_deck=file_deck,
             mode=mode,
             record_type=record_type,
-            filename=filename,
         )
 
     @classmethod
-    def from_fort22(
-        cls, fort22: PathLike, start_date: datetime = None, end_date: datetime = None,
+    def from_file(
+        cls, path: PathLike, start_date: datetime = None, end_date: datetime = None,
     ) -> 'VortexTrack':
         """
-        :param fort22: file path to ``fort.22``
+        :param path: file path to ATCF data
         :param start_date: start date of track
         :param end_date: end date of track
 
-        >>> VortexTrack.from_fort22('tests/data/input/test_from_fort22/irma2017_fort.22')
-        VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-19 00:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_from_fort22/irma2017_fort.22'))
+        >>> VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/irma2017_fort.22')
+        VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-19 00:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_vortex_track_from_file/irma2017_fort.22'))
+        >>> VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/BT02008.dat')
+        VortexTrack('BT02008', Timestamp('2008-10-16 17:06:00'), Timestamp('2008-10-20 20:06:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_vortex_track_from_file/BT02008.dat'))
         """
 
-        filename = None
-        if pathlib.Path(fort22).exists():
-            filename = fort22
+        try:
+            path = pathlib.Path(path)
+        except:
+            pass
 
         return cls(
-            storm=read_atcf(fort22),
+            storm=path,
             start_date=start_date,
             end_date=end_date,
             file_deck=None,
             mode=None,
             record_type=None,
-            filename=filename,
-        )
-
-    @classmethod
-    def from_atcf_file(
-        cls, atcf: PathLike, start_date: datetime = None, end_date: datetime = None,
-    ) -> 'VortexTrack':
-        """
-        :param atcf: file path to ATCF data
-        :param start_date: start date of track
-        :param end_date: end date of track
-
-        >>> VortexTrack.from_atcf_file('tests/data/input/test_from_atcf/atcf.trk')
-        VortexTrack('BT02008', Timestamp('2008-10-16 17:06:00'), Timestamp('2008-10-20 20:06:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_from_atcf/florence2018_atcf.trk'))
-        """
-
-        filename = None
-        if pathlib.Path(atcf).exists():
-            filename = atcf
-
-        return cls(
-            storm=atcf,
-            start_date=start_date,
-            end_date=end_date,
-            file_deck=None,
-            mode=None,
-            record_type=None,
-            filename=filename,
         )
 
     @property
@@ -491,7 +456,7 @@ class VortexTrack:
         :return: track data for the given parameters as a data frame
 
         >>> track = VortexTrack('AL112017')
-        >>> track.high_water_marks
+        >>> track.data
             basin storm_number record_type            datetime  ...   direction     speed    name                    geometry
         0      AL           11        BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
         1      AL           11        BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
@@ -507,7 +472,7 @@ class VortexTrack:
         [173 rows x 22 columns]
 
         >>> track = VortexTrack('AL112017', file_deck='a')
-        >>> track.high_water_marks
+        >>> track.data
               basin storm_number record_type            datetime  ...   direction      speed    name                    geometry
         0        AL           11        CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
         1        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)
@@ -539,121 +504,128 @@ class VortexTrack:
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)
         if overwrite or not path.exists():
+            if path.suffix == '.dat':
+                self.atcf.to_csv(path, index=False, header=False)
             if path.suffix == '.22':
-                content = self.fort_22
+                self.fort_22.to_csv(path, index=False, header=False)
             else:
-                raise NotImplementedError(
-                    'writing to files other than `*.22` not yet implemented'
-                )
-            with open(path, 'w') as f:
-                f.write(content)
+                raise NotImplementedError(f'writing to `*{path.suffix}` not supported')
         else:
             logging.warning(f'skipping existing file "{path}"')
 
     @property
-    def fort_22(self) -> str:
-        record_numbers = self.__record_numbers
-        lines = []
+    def atcf(self) -> DataFrame:
+        """
+        https://www.nrlmry.navy.mil/atcf_web/docs/database/new/abrdeck.html
 
-        dataframe = self.data
+        BASIN,CY,YYYYMMDDHH,TECHNUM/MIN,TECH,TAU,LatN/S,LonE/W,VMAX,MSLP,TY,RAD,WINDCODE,RAD1,RAD2,RAD3,RAD4,RADP,RRP,MRD,GUSTS,EYE,SUBREGION,MAXSEAS,INITIALS,DIR,SPEED,STORMNAME,DEPTH,SEAS,SEASCODE,SEAS1,SEAS2,SEAS3,SEAS4,USERDEFINED,userdata
 
-        for column in dataframe.select_dtypes(include=['float']):
-            if column not in ['latitude', 'longitude']:
-                dataframe.loc[:, column] = (
-                    dataframe[column].round(0).astype('Int64', copy=False)
-                )
+        :return: dataframe of CSV lines in ATCF format
+        """
 
-        for index, (_, record) in enumerate(dataframe.iterrows()):
-            line = []
+        atcf = self.data.copy()
 
-            line.extend(
-                [
-                    f'{record["basin"]:<2}',
-                    f'{record["storm_number"]:>3}',
-                    f'{record["datetime"]:%Y%m%d%H}'.rjust(11),
-                    f'{"":3}',
-                    f'{record["record_type"]:>5}',
-                    f'{normalize_atcf_value((record["datetime"] - self.start_date) / timedelta(hours=1), to_type=int):>4}',
-                ]
-            )
+        atcf.loc[:, ['longitude', 'latitude']] = atcf.loc[:, ['longitude', 'latitude']] * 10
 
-            latitude = normalize_atcf_value(
-                record['latitude'] / 0.1, to_type=int, round_digits=1
-            )
-            if latitude >= 0:
-                line.append(f'{latitude:>4}N')
-            else:
-                line.append(f'{latitude * -.1:>4}S')
+        float_columns = atcf.select_dtypes(include=['float']).columns
+        integer_na_value = -99999
+        for column in float_columns:
+            atcf.loc[pandas.isna(atcf[column]), column] = integer_na_value
+            atcf.loc[:, column] = atcf.loc[:, column].round(0).astype(int)
 
-            longitude = normalize_atcf_value(
-                record['longitude'] / 0.1, to_type=int, round_digits=1
-            )
-            if longitude >= 0:
-                line.append(f'{longitude:>5}E')
-            else:
-                line.append(f'{longitude * -1:>5}W')
+        atcf['basin'] = atcf['basin'].str.pad(2)
+        atcf['storm_number'] = atcf['storm_number'].astype('string').str.pad(3)
+        atcf['datetime'] = atcf['datetime'].dt.strftime('%Y%m%d%H').str.pad(11)
+        atcf['record_type_number'] = atcf['record_type_number'].str.pad(3)
+        atcf['record_type'] = atcf['record_type'].str.pad(5)
+        atcf['forecast_hours'] = atcf['forecast_hours'].astype('string').str.pad(4)
 
-            line.extend(
-                [
-                    f'{normalize_atcf_value(record["max_sustained_wind_speed"], to_type=int, round_digits=0):>4}',
-                    f'{normalize_atcf_value(record["central_pressure"], to_type=int, round_digits=0):>5}',
-                    f'{record["development_level"]:>3}',
-                    f'{normalize_atcf_value(record["isotach"], to_type=int, round_digits=0):>4}',
-                    f'{record["quadrant"]:>4}',
-                    f'{normalize_atcf_value(record["radius_for_NEQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(record["radius_for_SEQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(record["radius_for_SWQ"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(record["radius_for_NWQ"], to_type=int, round_digits=0):>5}',
-                ]
-            )
+        atcf['latitude'] = atcf['latitude'].astype('string')
+        atcf.loc[~atcf['latitude'].str.contains('-'), 'latitude'] = (
+            atcf.loc[~atcf['latitude'].str.contains('-'), 'latitude'] + 'N'
+        )
+        atcf.loc[atcf['latitude'].str.contains('-'), 'latitude'] = (
+            atcf.loc[atcf['latitude'].str.contains('-'), 'latitude'] + 'S'
+        )
+        atcf['latitude'] = atcf['latitude'].str.strip('-').str.pad(4)
 
-            if record['background_pressure'] is None:
-                record['background_pressure'] = self.data['background_pressure'].iloc[
-                    index - 1
-                ]
+        atcf['longitude'] = atcf['longitude'].astype('string')
+        atcf.loc[~atcf['longitude'].str.contains('-'), 'longitude'] = (
+            atcf.loc[~atcf['longitude'].str.contains('-'), 'longitude'] + 'E'
+        )
+        atcf.loc[atcf['longitude'].str.contains('-'), 'longitude'] = (
+            atcf.loc[atcf['longitude'].str.contains('-'), 'longitude'] + 'W'
+        )
+        atcf['longitude'] = atcf['longitude'].str.strip('-').str.pad(5)
 
-            try:
-                if (
-                    not pandas.isna(record['central_pressure'])
-                    and record['background_pressure'] <= record['central_pressure']
-                ):
-                    if 1013 > record['central_pressure']:
-                        background_pressure = 1013
-                    else:
-                        background_pressure = normalize_atcf_value(
-                            record['central_pressure'] + 1, to_type=int, round_digits=0,
-                        )
-                else:
-                    background_pressure = normalize_atcf_value(
-                        record['background_pressure'], to_type=int, round_digits=0,
-                    )
-            except:
-                background_pressure = normalize_atcf_value(
-                    record['background_pressure'], to_type=int, round_digits=0,
-                )
-            line.append(f'{background_pressure:>5}')
+        atcf['max_sustained_wind_speed'] = (
+            atcf['max_sustained_wind_speed'].astype('string').str.pad(5)
+        )
+        atcf['central_pressure'] = atcf['central_pressure'].astype('string').str.pad(5)
+        atcf['development_level'] = atcf['development_level'].str.pad(3)
+        atcf['isotach_radius'] = atcf['isotach_radius'].astype('string').str.pad(4)
+        atcf['isotach_quadrant_code'] = atcf['isotach_quadrant_code'].str.pad(4)
+        atcf['isotach_radius_for_NEQ'] = (
+            atcf['isotach_radius_for_NEQ'].astype('string').str.pad(5)
+        )
+        atcf['isotach_radius_for_SEQ'] = (
+            atcf['isotach_radius_for_SEQ'].astype('string').str.pad(5)
+        )
+        atcf['isotach_radius_for_NWQ'] = (
+            atcf['isotach_radius_for_NWQ'].astype('string').str.pad(5)
+        )
+        atcf['isotach_radius_for_SWQ'] = (
+            atcf['isotach_radius_for_SWQ'].astype('string').str.pad(5)
+        )
 
-            line.extend(
-                [
-                    f'{normalize_atcf_value(record["radius_of_last_closed_isobar"], to_type=int, round_digits=0):>5}',
-                    f'{normalize_atcf_value(record["radius_of_maximum_winds"], to_type=int, round_digits=0):>4}',
-                    f'{"":>5}',  # gust
-                    f'{"":>4}',  # eye
-                    f'{"":>4}',  # subregion
-                    f'{"":>4}',  # maxseas
-                    f'{"":>4}',  # initials
-                    f'{record["direction"]:>3}',
-                    f'{record["speed"]:>4}',
-                    f'{record["name"]:^12}',
-                ]
-            )
+        atcf['background_pressure'].fillna(method='ffill', inplace=True)
+        atcf.loc[
+            ~pandas.isna(self.data['central_pressure'])
+            & (self.data['background_pressure'] <= self.data['central_pressure'])
+            & (self.data['central_pressure'] < 1013),
+            'background_pressure',
+        ] = '1013'
+        atcf.loc[
+            ~pandas.isna(self.data['central_pressure'])
+            & (self.data['background_pressure'] <= self.data['central_pressure'])
+            & (self.data['central_pressure'] < 1013),
+            'background_pressure',
+        ] = (self.data['central_pressure'] + 1)
+        atcf['background_pressure'] = atcf['background_pressure'].astype('string').str.pad(5)
 
-            # from this point forwards it's all aswip
-            line.append(f'{record_numbers[index]:>4}')
+        atcf['radius_of_last_closed_isobar'] = (
+            atcf['radius_of_last_closed_isobar'].astype('string').str.pad(5)
+        )
+        atcf['radius_of_maximum_winds'] = (
+            atcf['radius_of_maximum_winds'].astype('string').str.pad(4)
+        )
+        atcf['gust_speed'] = atcf['gust_speed'].astype('string').str.pad(5)
+        atcf['eye_diameter'] = atcf['eye_diameter'].astype('string').str.pad(4)
+        atcf['subregion_code'] = atcf['subregion_code'].str.pad(4)
+        atcf['maximum_wave_height'] = atcf['maximum_wave_height'].astype('string').str.pad(4)
+        atcf['forecaster_initials'] = atcf['forecaster_initials'].str.pad(4)
 
-            lines.append(','.join(line))
+        atcf['direction'] = atcf['direction'].astype('string').str.pad(3)
+        atcf['speed'] = atcf['speed'].astype('string').str.pad(4)
+        atcf['name'] = atcf['name'].astype('string').str.pad(12, side='both')
 
-        return '\n'.join(lines)
+        for column in atcf.select_dtypes(include=['string']).columns:
+            atcf[column] = atcf[column].str.replace(re.compile(str(integer_na_value)), '')
+
+        return atcf
+
+    @property
+    def fort_22(self) -> DataFrame:
+        """
+        https://wiki.adcirc.org/wiki/Fort.22_file
+
+        :return: `fort.22` representation of the current track
+        """
+
+        fort22 = self.atcf
+        fort22['record_number'] = self.__record_numbers
+
+        return fort22
 
     @property
     def linestring(self) -> MultiLineString:
@@ -708,14 +680,14 @@ class VortexTrack:
         """
 
         # collect the attributes needed from the forcing to generate swath
-        data = self.data[self.data['isotach'] == wind_speed]
+        data = self.data[self.data['isotach_radius'] == wind_speed]
 
         # enumerate quadrants
         quadrant_names = [
-            'radius_for_NEQ',
-            'radius_for_NWQ',
-            'radius_for_SWQ',
-            'radius_for_SEQ',
+            'isotach_radius_for_NEQ',
+            'isotach_radius_for_NWQ',
+            'isotach_radius_for_SWQ',
+            'isotach_radius_for_SEQ',
         ]
 
         # convert quadrant radii from nautical miles to meters
@@ -822,28 +794,6 @@ class VortexTrack:
         return self.data['datetime'].diff().sum()
 
     @property
-    def remote_atcf(self) -> io.BytesIO:
-        """
-        :return: ATCF file from server
-        """
-
-        configuration = {
-            'storm_id': self.nhc_code,
-            'file_deck': self.file_deck,
-            'mode': self.mode,
-            'filename': self.filename,
-        }
-
-        if (
-            self.nhc_code is not None
-            and self.__remote_atcf is None
-            or configuration != self.__previous_configuration
-        ):
-            self.__remote_atcf = get_atcf_file(self.nhc_code, self.file_deck, self.mode)
-
-        return self.__remote_atcf
-
-    @property
     def unfiltered_data(self) -> DataFrame:
         """
         :return: data frame containing all track data for the specified storm and file deck
@@ -864,7 +814,12 @@ class VortexTrack:
                 record_types = (
                     self.valid_record_types if self.record_type is None else [self.record_type]
                 )
-                atcf_file = self.remote_atcf
+                url = atcf_url(self.nhc_code, self.file_deck, self.mode)
+                atcf_file = io.BytesIO()
+                atcf_file.write(urlopen(url).read())
+                atcf_file.seek(0)
+                if url.endswith('.gz'):
+                    atcf_file = gzip.GzipFile(fileobj=atcf_file, mode='rb')
 
             dataframe = read_atcf(atcf_file, record_types=record_types)
             dataframe.sort_values(['datetime', 'record_type'], inplace=True)
@@ -963,14 +918,16 @@ class VortexTrack:
         return len(self.data)
 
     def __copy__(self) -> 'VortexTrack':
-        return self.__class__(
+        instance = self.__class__(
             storm=self.unfiltered_data.copy(),
             start_date=self.start_date,
             end_date=self.end_date,
             file_deck=self.file_deck,
             record_type=self.record_type,
-            filename=self.filename,
         )
+        if self.filename is not None:
+            instance.filename = self.filename
+        return instance
 
     def __eq__(self, other: 'VortexTrack') -> bool:
         return self.data.equals(other.data)

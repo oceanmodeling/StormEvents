@@ -339,7 +339,7 @@ class HighWaterMarksQuery:
         :param still_water: HWM still water filter
 
         >>> query = HighWaterMarksQuery(182)
-        >>> query.high_water_marks
+        >>> query.data
                  latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
         hwm_id                                                         ...
         22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
@@ -355,7 +355,7 @@ class HighWaterMarksQuery:
         25159   30.097514 -81.794375  Irma September 2017   Seed line  ...       HWM 1    []      NaN  POINT (-81.79438 30.09751)
         [221 rows x 52 columns]
         >>> query.quality = 'EXCELLENT', 'GOOD'
-        >>> query.high_water_marks
+        >>> query.data
                  latitude  longitude            eventName hwmTypeName  ...   hwm_label files siteZone                    geometry
         hwm_id                                                         ...
         22636   32.007730 -81.238270  Irma September 2017   Seed line  ...        HWM1    []      NaN  POINT (-81.23827 32.00773)
@@ -476,7 +476,7 @@ class HighWaterMarksQuery:
         :returns: data frame of data for the current parameters
 
         >>> query = HighWaterMarksQuery(23)
-        >>> query.high_water_marks
+        >>> query.data
                  latitude  longitude eventName                      hwmTypeName  ... approval_id hwm_uncertainty uncertainty                    geometry
         hwm_id                                                                   ...
         14699   38.917360 -75.947890     Irene                           Debris  ...         NaN             NaN         NaN  POINT (-75.94789 38.91736)

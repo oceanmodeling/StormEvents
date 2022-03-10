@@ -169,7 +169,7 @@ def test_storm_event_coops_product_within_isotach(florence2018):
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
 
     assert null_data['t'].sizes == {}
-    assert tidal_data.sizes == {'t': 241, 'nos_id': 9}
+    assert tidal_data.sizes == {'nos_id': 22, 't': 241}
 
 
 def test_storm_event_coops_product_within_region(florence2018):
@@ -195,4 +195,4 @@ def test_storm_event_coops_product_within_region(florence2018):
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
 
     assert null_data['t'].sizes == {}
-    assert tidal_data.sizes == {'t': 1, 'nos_id': 8}
+    assert tidal_data.sizes == {'nos_id': 64, 't': 1}

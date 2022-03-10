@@ -1,18 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 import ftplib
-import gzip
 import io
 import itertools
-import logging
 from os import PathLike
-import socket
-from typing import Any, Dict, Iterable, List, TextIO, Union
+from pathlib import Path
+from typing import Any, Iterable, List, TextIO, Union
 
-from dateutil.parser import parse as parse_date
 import geopandas
 from geopandas import GeoDataFrame
-import numpy
 import pandas
 from pandas import DataFrame, Series
 import typepigeon
@@ -23,6 +19,116 @@ ATCF_RECORD_START_YEAR = 1850
 
 # suppress `SettingWithCopyWarning`
 pandas.options.mode.chained_assignment = None
+
+# https://www.nrlmry.navy.mil/atcf_web/docs/database/new/abrdeck.html
+ATCF_FIELDS = {
+    # BASIN - basin, e.g. WP, IO, SH, CP, EP, AL, SL
+    'BASIN': 'basin',
+    # CY - annual cyclone number: 1 through 99
+    'CY': 'storm_number',
+    # YYYYMMDDHH - Warning Date-Time-Group: 0000010100 through 9999123123. (note, 4 digit year)
+    'YYYYMMDDHH': 'datetime',
+    # TECHNUM/MIN - objective technique sorting number, minutes for best track: 00 - 99
+    'TECHNUM/MIN': 'record_type_number',
+    # TECH - acronym for each objective technique or CARQ or WRNG, BEST for best track.
+    'TECH': 'record_type',
+    # TAU - forecast period: -24 through 240 hours, 0 for best-track, negative taus used for CARQ and WRNG records.
+    'TAU': 'forecast_hours',
+    # LatN/S - Latitude (tenths of degrees) for the DTG: 0 through 900, N/S is the hemispheric index.
+    'LatN/S': 'latitude',
+    # LonE/W - Longitude (tenths of degrees) for the DTG: 0 through 1800, E/W is the hemispheric index.
+    'LonE/W': 'longitude',
+    # VMAX - Maximum sustained wind speed in knots: 0 through 300.
+    'VMAX': 'max_sustained_wind_speed',
+    # MSLP - Minimum sea level pressure, 1 through 1100 MB.
+    'MSLP': 'central_pressure',
+    # TY - Level of tc development: DB - disturbance, TD - tropical depression, TS - tropical storm, TY - typhoon, ST - super typhoon, TC - tropical cyclone, HU - hurricane, SD - subtropical depression, SS - subtropical storm, EX - extratropical systems, IN - inland, DS - dissipating, LO - low, WV - tropical wave, ET - extrapolated, XX - unknown.
+    'TY': 'development_level',
+    # RAD - Wind intensity (kts) for the radii defined in this record: 34, 50, 64.
+    'RAD': 'isotach_radius',
+    # WINDCODE - Radius code: AAA - full circle, QQQ - quadrant (NNQ, NEQ, EEQ, SEQ, SSQ, SWQ, WWQ, NWQ)
+    'WINDCODE': 'isotach_quadrant_code',
+    # RAD1 - If full circle, radius of specified wind intensity, If semicircle or quadrant, radius of specified wind intensity of circle portion specified in radius code. 0 - 1200 nm.
+    'RAD1': 'isotach_radius_for_NEQ',
+    # RAD2 - If full circle this field not used, If semicicle, radius (nm) of specified wind intensity for semicircle not specified in radius code, If quadrant, radius (nm) of specified wind intensity for 2nd quadrant (counting clockwise from quadrant specified in radius code). 0 through 1200 nm.
+    'RAD2': 'isotach_radius_for_SEQ',
+    # RAD3 - If full circle or semicircle this field not used, If quadrant, radius (nm) of specified wind intensity for 3rd quadrant (counting clockwise from quadrant specified in radius code). 0 through 1200 nm.
+    'RAD3': 'isotach_radius_for_NWQ',
+    # RAD4 - If full circle or semicircle this field not used, If quadrant, radius (nm) of specified wind intensity for 4th quadrant (counting clockwise from quadrant specified in radius code). 0 through 1200 nm.
+    'RAD4': 'isotach_radius_for_SWQ',
+    # RADP - pressure in millibars of the last closed isobar, 900 - 1050 mb.
+    'RADP': 'background_pressure',
+    # RRP - radius of the last closed isobar in nm, 0 - 9999 nm.
+    'RRP': 'radius_of_last_closed_isobar',
+    # MRD - radius of max winds, 0 - 999 nm.
+    'MRD': 'radius_of_maximum_winds',
+    # GUSTS - gusts, 0 through 995 kts.
+    'GUSTS': 'gust_speed',
+    # EYE - eye diameter, 0 through 999 nm.
+    'EYE': 'eye_diameter',
+    # SUBREGION - subregion code: A - Arabian Sea, B - Bay of Bengal, C - Central Pacific, E - Eastern Pacific, L - Atlantic, P - South Pacific (135E - 120W), Q - South Atlantic, S - South IO (20E - 135E), W - Western Pacific
+    'SUBREGION': 'subregion_code',
+    # MAXSEAS - max seas: 0 through 999 ft.
+    'MAXSEAS': 'maximum_wave_height',
+    # INITIALS - Forecaster's initials, used for tau 0 WRNG, up to 3 chars.
+    'INITIALS': 'forecaster_initials',
+    # DIR - storm direction in compass coordinates, 0 - 359 degrees.
+    'DIR': 'direction',
+    # SPEED - storm speed, 0 - 999 kts.
+    'SPEED': 'speed',
+    # STORMNAME - literal storm name, NONAME or INVEST. TCcyx used pre-1999, where: cy = Annual cyclone number 01 through 99, x = Subregion code: W, A, B, S, P, C, E, L, Q.
+    'STORMNAME': 'name',
+    # user data section as indicated by USERDEFINED parameter.
+    'USERDEFINED': 'extra_values',
+}
+
+FORT_22_FIELDS = {
+    # Time Record number in column 29. There can be multiple lines for a given time record depending on the number of isotachs reported in the ATCF File
+    'RECORD': 'record_number',
+    # number of isotachs reported in the ATCF file for the corresponding Time record.
+    'ISOTACHS': 'num_isotachs',
+    # Columns 31-34 indicate the selection of radii for that particular isotach. 0 indicates do not use this radius, and 1 indicates use this radius and corresponding wind speed.
+    'ISOTACHSEL1': 'isotach_select_1',
+    'ISOTACHSEL2': 'isotach_select_2',
+    'ISOTACHSEL3': 'isotach_select_3',
+    'ISOTACHSEL4': 'isotach_select_4',
+    # Columns 35-38 are the designated Rmax values computed for each of the quadrants selected for each particular isotach.
+    'RMAXQUADRANT1': 'radius_of_maximum_winds_quadrant_1',
+    'RMAXQUADRANT2': 'radius_of_maximum_winds_quadrant_2',
+    'RMAXQUADRANT3': 'radius_of_maximum_winds_quadrant_3',
+    'RMAXQUADRANT4': 'radius_of_maximum_winds_quadrant_4',
+    # Column 39 is the Holland B parameter computed using the formulas outlines in the Holland paper, and implemented using the aswip program.
+    'HOLLANDB': 'holland_b',
+    # Column 40-43 is the quadrant-varying Holland B parameter
+    'HOLLANDB1': 'holland_b_quadrant_1',
+    'HOLLANDB2': 'holland_b_quadrant_2',
+    'HOLLANDB3': 'holland_b_quadrant_3',
+    'HOLLANDB4': 'holland_b_quadrant_4',
+    # Column 44-47 are the quadrant-varying Vmax calculated at the top of the planetary boundary (a wind reduction factor is applied to reduce the wind speed at the boundary to the 10-m surface)
+    'VMAX1': 'max_sustained_wind_speed_1',
+    'VMAX2': 'max_sustained_wind_speed_2',
+    'VMAX3': 'max_sustained_wind_speed_3',
+    'VMAX4': 'max_sustained_wind_speed_4',
+}
+
+EXTRA_ATCF_FIELDS = {
+    # DEPTH - system depth, D-deep, M-medium, S-shallow, X-unknown
+    'DEPTH': 'depth_code',
+    # SEAS - Wave height for radii defined in SEAS1-SEAS4, 0-99 ft.
+    'SEAS': 'isowave',
+    # SEASCODE - Radius code: AAA - full circle,  QQQ - quadrant (NNQ, NEQ, EEQ, SEQ, SSQ, SWQ, WWQ, NWQ)
+    'SEASCODE': 'isowave_quadrant_code',
+    # SEAS1 - first quadrant seas radius as defined by SEASCODE, 0 through 999 nm.
+    'SEAS1': 'isowave_radius_for_NEQ',
+    # SEAS2 - second quadrant seas radius as defined by SEASCODE, 0 through 999 nm.
+    'SEAS2': 'isowave_radius_for_SEQ',
+    # SEAS3 - third quadrant seas radius as defined by SEASCODE, 0 through 999 nm.
+    'SEAS3': 'isowave_radius_for_NWQ',
+    # SEAS4 - fourth quadrant seas radius as defined by SEASCODE, 0 through 999 nm.
+    'SEAS4': 'isowave_radius_for_SWQ',
+    # user data section as indicated by USERDEFINED parameter.
+    'USERDEFINED': 'extra_values',
+}
 
 
 def atcf_files(
@@ -192,26 +298,6 @@ def atcf_url(
     return url
 
 
-def get_atcf_file(
-    nhc_code: str, file_deck: ATCF_FileDeck = None, mode: ATCF_Mode = None
-) -> io.BytesIO:
-    url = atcf_url(file_deck=file_deck, nhc_code=nhc_code, mode=mode).replace('ftp://', "")
-    logging.info(f'Downloading storm data from {url}')
-
-    hostname, filename = url.split('/', 1)
-
-    handle = io.BytesIO()
-
-    try:
-        ftp = ftplib.FTP(hostname, 'anonymous', "")
-        ftp.encoding = 'utf-8'
-        ftp.retrbinary(f'RETR {filename}', handle.write)
-    except socket.gaierror:
-        raise ConnectionError(f'cannot connect to {hostname}')
-
-    return handle
-
-
 def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -> Any:
     if type(value).__name__ == 'Quantity':
         value = value.magnitude
@@ -225,164 +311,127 @@ def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -
 
 
 def read_atcf(
-    atcf: Union[PathLike, io.BytesIO, TextIO], record_types: List[ATCF_RecordType] = None,
+    atcf: Union[PathLike, io.BytesIO, TextIO],
+    record_types: List[ATCF_RecordType] = None,
+    fort_22: bool = False,
 ) -> GeoDataFrame:
+    """
+    read ATCF format
+
+    :param atcf: path or buffered reader
+    :param record_types: allowed record types
+    :param fort_22: whether to parse `fort.22` fields
+    :return: data frame of parsed ATCF data
+    """
+
     if record_types is not None:
         record_types = [
             typepigeon.convert_value(record_type, str) for record_type in record_types
         ]
 
-    if isinstance(atcf, io.BytesIO):
-        # test if Gzip file
-        atcf.seek(0)  # rewind
-        first_two_bytes = atcf.read(2)
-        atcf.seek(0)  # rewind
-        if first_two_bytes == b'\x1f\x8b':
-            atcf = gzip.GzipFile(fileobj=atcf)
-        elif len(first_two_bytes) == 0:
-            raise ValueError('empty file')
-    else:
+    if isinstance(atcf, (str, PathLike, Path)):
+        atcf = open(atcf)
+
+    lines = (str(line, 'UTF-8') if isinstance(line, bytes) else line for line in atcf)
+    lines = (
+        (
+            entry.strip()
+            for entry in line.split(',', maxsplit=len(ATCF_FIELDS) - 1)
+            if ~pandas.isna(line)
+        )
+        for line in lines
+    )
+
+    data = DataFrame.from_records(lines, columns=list(ATCF_FIELDS),).astype(
+        {field: 'string' for field in ATCF_FIELDS}
+    )
+
+    if data['USERDEFINED'].str.contains(',').any():
+        if fort_22:
+            extra_fields = FORT_22_FIELDS
+        else:
+            extra_fields = EXTRA_ATCF_FIELDS
         try:
-            if not isinstance(atcf, TextIO):
-                atcf = open(atcf)
-            atcf = atcf.readlines()
-        except (FileNotFoundError, OSError):
-            # check if the entire track file was passed as a string
-            atcf = str(atcf).splitlines()
-            if len(atcf) == 1:
-                raise
+            lines = (str(line, 'UTF-8') if isinstance(line, bytes) else line for line in atcf)
+            lines = (
+                (
+                    entry.strip()
+                    for entry in line.split(',', maxsplit=len(extra_fields) - 1)
+                    if ~pandas.isna(line)
+                )
+                for line in lines
+            )
+            extra_data = DataFrame.from_records(lines, columns=list(extra_fields),).astype(
+                {field: 'string' for field in extra_fields}
+            )
+            data = pandas.concat([data.iloc[:, :-1], extra_data], axis=1)
+        except ValueError:
+            pass
 
-    records = []
-    for line in atcf:
-        if isinstance(line, bytes):
-            line = line.decode('UTF-8')
-        if record_types is None or line.split(',')[4].strip() in record_types:
-            try:
-                records.append(read_atcf_line(line))
-            except (ValueError, IndexError):
-                pass
+    if record_types is not None:
+        data = data[data['TECH'].isin(record_types)]
+        if len(data) == 0:
+            raise ValueError(f'no ATCF records found matching "{record_types}"')
 
-    if len(records) == 0:
-        raise ValueError(f'no records found with type(s) "{record_types}"')
+    best_track_records = (data['TECH'] == 'BEST') & (
+        data.loc[data['TECH'] == 'BEST', 'TECHNUM/MIN'].str.strip().str.len() > 0
+    )
+    data.loc[best_track_records, 'YYYYMMDDHH'] += data.loc[best_track_records, 'TECHNUM/MIN']
+    data.loc[~best_track_records, 'YYYYMMDDHH'] += '00'
+    data['YYYYMMDDHH'] = pandas.to_datetime(data['YYYYMMDDHH'], format='%Y%m%d%H%M')
 
-    data = DataFrame(records)
+    data.loc[data['LatN/S'].str.endswith('N'), 'LatN/S'] = data['LatN/S'].str.strip('N')
+    data.loc[data['LatN/S'].str.endswith('S'), 'LatN/S'] = '-' + data['LatN/S'].str.strip('S')
 
-    return GeoDataFrame(
-        data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude'])
+    data.loc[data['LonE/W'].str.endswith('E'), 'LonE/W'] = data['LonE/W'].str.strip('E')
+    data.loc[data['LonE/W'].str.endswith('W'), 'LonE/W'] = '-' + data['LonE/W'].str.strip('W')
+
+    data[['LatN/S', 'LonE/W']] = (
+        data[['LatN/S', 'LonE/W']].astype({'LatN/S': float, 'LonE/W': float}, copy=False) / 10
     )
 
-
-def read_atcf_line(line: str) -> Dict[str, Any]:
-    """
-    https://dtcenter.org/metplus-practical-session-guide-july-2019/metplus-practical-session-guide-july-2019/session-5-trkintfeature-relative/met-tool-tc-pairs
-    https://www.nrlmry.navy.mil/atcf_web/docs/database/new/abdeck.txt
-
-    :param line: ATCF line
-    :return: dictionary record of parsed values
-    """
-
-    line = [value.strip() for value in line.split(',')]
-
-    for index, value in enumerate(line):
-        if isinstance(value, str) and r'\n' in value:
-            line[index] = value.replace(r'\n', '')
-
-    record = {
-        'basin': line[0],
-        'storm_number': line[1],
-    }
-
-    record['record_type'] = line[4]
-
-    # computing the actual datetime based on record_type
-    minutes = '00'
-    if record['record_type'] == 'BEST':
-        # Add minutes line to base datetime
-        if len(line[3]) > 0:
-            minutes = line[3]
-
-    record['datetime'] = parse_date(f'{line[2]}{minutes}')
-
-    # Add forecast period to base datetime
-    forecast_hours = int(line[5])
-    if forecast_hours != 0:
-        record['datetime'] += timedelta(hours=forecast_hours)
-
-    latitude = line[6]
-    if 'N' in latitude:
-        latitude = float(latitude.strip('N'))
-    elif 'S' in latitude:
-        latitude = float(latitude.strip('S')) * -1
-    latitude *= 0.1
-    record['latitude'] = latitude
-
-    longitude = line[7]
-    if 'E' in longitude:
-        longitude = float(longitude.strip('E')) * 0.1
-    elif 'W' in longitude:
-        longitude = float(longitude.strip('W')) * -0.1
-    record['longitude'] = longitude
-
-    record.update(
-        {
-            'max_sustained_wind_speed': normalize_atcf_value(line[8], int),
-            'central_pressure': normalize_atcf_value(line[9], int),
-            'development_level': line[10],
-        }
-    )
-
-    try:
-        record['isotach'] = normalize_atcf_value(line[11], int)
-    except ValueError:
-        raise Exception(
+    if pandas.isna(data['RAD']).any():
+        raise ValueError(
             'Error: No radial wind information for this storm; '
             'parametric wind model cannot be built.'
         )
 
-    record.update(
-        {
-            'quadrant': line[12],
-            'radius_for_NEQ': normalize_atcf_value(line[13], int),
-            'radius_for_SEQ': normalize_atcf_value(line[14], int),
-            'radius_for_SWQ': normalize_atcf_value(line[15], int),
-            'radius_for_NWQ': normalize_atcf_value(line[16], int),
-        }
+    float_fields = [
+        field
+        for field in (
+            'VMAX',
+            'MSLP',
+            'RAD',
+            'RAD1',
+            'RAD2',
+            'RAD3',
+            'RAD4',
+            'RADP',
+            'RRP',
+            'MRD',
+            'GUSTS',
+            'EYE',
+            'MAXSEAS',
+            'DIR',
+            'SPEED',
+            'SEAS',
+            'SEAS1',
+            'SEAS2',
+            'SEAS3',
+            'SEAS4',
+        )
+        if field in data.columns
+    ]
+
+    for float_field in float_fields:
+        data.loc[
+            (data[float_field].str.len() == 0) | pandas.isna(data[float_field]), float_field
+        ] = 'NaN'
+
+    data[float_fields] = data[float_fields].astype(float, copy=False)
+
+    data.rename(columns=ATCF_FIELDS, inplace=True)
+
+    return GeoDataFrame(
+        data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude'],)
     )
-
-    if len(line) > 18:
-        record.update(
-            {
-                'background_pressure': normalize_atcf_value(line[17], int),
-                'radius_of_last_closed_isobar': normalize_atcf_value(line[18], int),
-                'radius_of_maximum_winds': normalize_atcf_value(line[19], int),
-            }
-        )
-    else:
-        record.update(
-            {
-                'background_pressure': numpy.nan,
-                'radius_of_last_closed_isobar': numpy.nan,
-                'radius_of_maximum_winds': numpy.nan,
-            }
-        )
-
-    if len(line) > 23:
-        record.update(
-            {
-                'direction': normalize_atcf_value(line[25], int),
-                'speed': normalize_atcf_value(line[26], int),
-            }
-        )
-    else:
-        record.update(
-            {'direction': numpy.nan, 'speed': numpy.nan,}
-        )
-
-    if len(line) > 27:
-        storm_name = line[27]
-    else:
-        storm_name = ''
-
-    record['name'] = storm_name
-
-    return record
