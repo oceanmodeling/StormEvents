@@ -88,15 +88,16 @@ class VortexTrack:
         self.__location_hash = None
 
         if isinstance(storm, DataFrame):
-            self.unfiltered_data = storm
-        elif isinstance(storm, (str, PathLike, pathlib.Path)):
-            if pathlib.Path(storm).exists():
-                self.filename = storm
-            else:
-                try:
-                    self.nhc_code = storm
-                except ValueError:
-                    raise
+            self.__unfiltered_data = storm
+        elif pathlib.Path(storm).exists():
+            self.filename = storm
+        elif isinstance(storm, str):
+            try:
+                self.nhc_code = storm
+            except ValueError:
+                raise
+        else:
+            raise FileNotFoundError(f'file not found "{storm}"')
 
         self.file_deck = file_deck
         self.mode = mode
