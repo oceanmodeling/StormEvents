@@ -625,7 +625,9 @@ class VortexTrack:
             columns=[field for field in EXTRA_ATCF_FIELDS.values() if field in fort22.columns],
             inplace=True,
         )
-        fort22['record_number'] = self.__record_numbers
+        fort22['record_number'] = (
+            (self.data.groupby(['datetime']).ngroup() + 1).astype('string').str.pad(4)
+        )
 
         return fort22
 
@@ -860,13 +862,6 @@ class VortexTrack:
             'record_type': self.record_type,
             'filename': self.filename,
         }
-
-    @property
-    def __record_numbers(self) -> numpy.ndarray:
-        record_numbers = numpy.empty((len(self.data)), dtype=int)
-        for index, record_datetime in enumerate(self.data['datetime'].unique()):
-            record_numbers[self.data['datetime'] == record_datetime] = index + 1
-        return record_numbers
 
     @staticmethod
     def __compute_velocity(data: DataFrame) -> DataFrame:
