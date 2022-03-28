@@ -20,7 +20,7 @@ from tests import (
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
+    sys.version_info < (3, 10), reason='difference in datetime format before Python 3.10',
 )
 def test_usgs_flood_events():
     reference_directory = REFERENCE_DIRECTORY / 'test_usgs_flood_events'
@@ -43,7 +43,7 @@ def test_usgs_flood_events():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
+    sys.version_info < (3, 10), reason='difference in datetime format before Python 3.10',
 )
 def test_usgs_flood_storms():
     reference_directory = REFERENCE_DIRECTORY / 'test_usgs_flood_storms'
@@ -60,7 +60,7 @@ def test_usgs_flood_storms():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
+    sys.version_info < (3, 10), reason='difference in datetime format before Python 3.10',
 )
 def test_usgs_flood_event():
     input_directory = INPUT_DIRECTORY / 'test_usgs_flood_event'

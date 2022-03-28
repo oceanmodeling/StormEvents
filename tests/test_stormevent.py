@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import os
 import sys
 
 import pytest
@@ -134,9 +135,6 @@ def test_storm_event_track(florence2018, ida2021):
     check_reference_directory(output_directory, reference_directory)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
-)
 def test_storm_event_high_water_marks(florence2018):
     reference_directory = REFERENCE_DIRECTORY / 'test_storm_event_high_water_marks'
     output_directory = OUTPUT_DIRECTORY / 'test_storm_event_high_water_marks'
@@ -153,6 +151,14 @@ def test_storm_event_high_water_marks(florence2018):
 
 
 def test_storm_event_coops_product_within_isotach(florence2018):
+    reference_directory = REFERENCE_DIRECTORY / 'test_storm_event_coops_product_within_isotach'
+    output_directory = OUTPUT_DIRECTORY / 'test_storm_event_coops_product_within_isotach'
+    if not output_directory.exists():
+        output_directory.mkdir(parents=True, exist_ok=True)
+    for path in output_directory.iterdir():
+        if path.exists():
+            os.remove(path)
+
     null_data = florence2018.coops_product_within_isotach(
         'water_level', wind_speed=34, end_date=florence2018.start_date + timedelta(minutes=1),
     )
@@ -170,6 +176,10 @@ def test_storm_event_coops_product_within_isotach(florence2018):
 
     assert null_data['t'].sizes == {}
     assert tidal_data.sizes == {'nos_id': 22, 't': 241}
+
+    tidal_data.to_netcdf(output_directory / 'florence2018_water_levels.nc')
+
+    check_reference_directory(output_directory, reference_directory)
 
 
 def test_storm_event_coops_product_within_region(florence2018):

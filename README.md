@@ -262,21 +262,21 @@ coops_stations()
 ```
 
 ```
-        nws_id                          name state removed                     geometry
-nos_id                                                                                 
-1600012  46125                     QREB buoy           NaT   POINT (122.62500 37.75000)
-1611400  NWWH1                    Nawiliwili    HI     NaT  POINT (-159.37500 21.95312)
-1612340  OOUH1                      Honolulu    HI     NaT  POINT (-157.87500 21.31250)
-1612480  MOKH1                      Mokuoloe    HI     NaT  POINT (-157.75000 21.43750)
-1615680  KLIH1       Kahului, Kahului Harbor    HI     NaT  POINT (-156.50000 20.89062)
-...        ...                           ...   ...     ...                          ...
-9759394  MGZP4                      Mayaguez    PR     NaT   POINT (-67.18750 18.21875)
-9759938  MISP4                   Mona Island           NaT   POINT (-67.93750 18.09375)
-9761115  BARA9                       Barbuda           NaT   POINT (-61.81250 17.59375)
-9999530  FRCB6  Bermuda, Ferry Reach Channel           NaT   POINT (-64.68750 32.37500)
-9999531               Calcasieu Test Station    LA     NaT   POINT (-93.31250 29.76562)
+        nws_id                              name state        status                                            removed                     geometry
+nos_id
+1600012  46125                         QREB buoy              active                                               <NA>   POINT (122.62500 37.75000)
+8735180  DILA1                    Dauphin Island    AL        active  2019-07-18 10:00:00,2018-07-30 16:40:00,2017-0...   POINT (-88.06250 30.25000)
+8557380  LWSD1                             Lewes    DE        active  2019-08-01 00:00:00,2018-06-18 00:00:00,2017-0...   POINT (-75.12500 38.78125)
+8465705  NWHC3                         New Haven    CT        active  2019-08-18 14:55:00,2019-08-18 14:54:00,2018-0...   POINT (-72.93750 41.28125)
+9439099  WAUO3                             Wauna    OR        active  2019-08-19 22:59:00,2014-06-20 21:30:00,2013-0...  POINT (-123.43750 46.15625)
+...        ...                               ...   ...           ...                                                ...                          ...
+8448725  MSHM3               Menemsha Harbor, MA    MA  discontinued  2013-09-26 23:59:00,2013-09-26 00:00:00,2012-0...   POINT (-70.75000 41.34375)
+8538886  TPBN4             Tacony-Palmyra Bridge    NJ  discontinued  2013-11-11 00:01:00,2013-11-11 00:00:00,2012-0...   POINT (-75.06250 40.00000)
+9439011  HMDO3                           Hammond    OR  discontinued  2014-08-13 00:00:00,2011-04-12 23:59:00,2011-0...  POINT (-123.93750 46.18750)
+8762372  LABL1  East Bank 1, Norco, B. LaBranche    LA  discontinued  2012-11-05 10:38:00,2012-11-05 10:37:00,2012-1...   POINT (-90.37500 30.04688)
+8530528  CARN4       CARLSTADT, HACKENSACK RIVER    NJ  discontinued            1994-11-12 23:59:00,1994-11-12 00:00:00   POINT (-74.06250 40.81250)
 
-[363 rows x 5 columns]
+[433 rows x 6 columns]
 ```
 
 Additionally, you can use a Shapely `Polygon` or `MultiPolygon` to constrain the stations query to a specific region:

@@ -589,7 +589,9 @@ class VortexTrack:
             & (self.data['central_pressure'] < 1013),
             'background_pressure',
         ] = (self.data['central_pressure'] + 1)
-        atcf['background_pressure'] = atcf['background_pressure'].astype('string').str.pad(5)
+        atcf['background_pressure'] = (
+            atcf['background_pressure'].astype(int).astype('string').str.pad(5)
+        )
 
         atcf['radius_of_last_closed_isobar'] = (
             atcf['radius_of_last_closed_isobar'].astype('string').str.pad(5)

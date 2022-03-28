@@ -6,6 +6,8 @@ https://api.tidesandcurrents.noaa.gov/api/prod/
 from datetime import datetime
 from enum import Enum
 from functools import lru_cache
+import json
+from pathlib import Path
 from typing import Union
 
 import bs4
@@ -14,7 +16,7 @@ import geopandas
 from geopandas import GeoDataFrame
 import numpy
 import pandas
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import requests
 from shapely.geometry import box, MultiPolygon, Polygon
 import typepigeon
@@ -88,9 +90,9 @@ class COOPS_Interval(Enum):
     HILO = 'hilo'  # High/Low tide predictions for all stations.
 
 
-class COOPS_StationType(Enum):
-    CURRENT = 'current'
-    HISTORICAL = 'historical'
+class COOPS_StationStatus(Enum):
+    ACTIVE = 'active'
+    DISCONTINUED = 'discontinued'
 
 
 class COOPS_Station:
@@ -118,31 +120,45 @@ class COOPS_Station:
         COOPS_Station(9414458)
         """
 
-        self.__query = None
-
         stations = coops_stations()
         if id in stations.index:
-            station = stations.loc[id]
+            metadata = stations.loc[id]
         elif id in stations['nws_id'].values:
-            station = stations[stations['nws_id'] == id]
+            metadata = stations[stations['nws_id'] == id]
         elif id in stations['name'].values:
-            station = stations[stations['name'] == id]
+            metadata = stations[stations['name'] == id]
         else:
-            station = None
+            metadata = None
 
-        if station is not None and len(station) > 0:
-            self.removed_date = station['removed']
-
-            if isinstance(station, DataFrame):
-                station = station.iloc[0]
-
-            self.nos_id = station.name
-            self.nws_id = station['nws_id']
-            self.location = station.geometry
-            self.state = station['state']
-            self.name = station['name']
-        else:
+        if metadata is None or len(metadata) == 0:
             raise ValueError(f'station with "{id}" not found')
+
+        removed = metadata['removed']
+        if isinstance(removed, Series):
+            self.__active = pandas.isna(removed).any()
+            removed = pandas.unique(removed.dropna().sort_values(ascending=False))
+        else:
+            self.__active = pandas.isna(removed)
+        self.__removed = removed
+
+        if isinstance(metadata, DataFrame):
+            metadata = metadata.iloc[0]
+
+        self.nos_id = metadata.name
+        self.nws_id = metadata['nws_id']
+        self.location = metadata.geometry
+        self.state = metadata['state']
+        self.name = metadata['name']
+
+        self.__query = None
+
+    @property
+    def current(self) -> bool:
+        return self.__active
+
+    @property
+    def removed(self) -> Series:
+        return self.__removed
 
     @property
     @lru_cache(maxsize=None)
@@ -256,6 +272,10 @@ class COOPS_Station:
                 x=('nos_id', [self.location.x]),
                 y=('nos_id', [self.location.y]),
             )
+        else:
+            data = data.assign_coords(
+                nws_id=('nos_id', []), x=('nos_id', []), y=('nos_id', []),
+            )
 
         return data
 
@@ -333,7 +353,7 @@ class COOPS_Query:
 
     @start_date.setter
     def start_date(self, start_date: datetime):
-        self.__start_date = typepigeon.convert_value(start_date, datetime)
+        self.__start_date = pandas.to_datetime(start_date)
 
     @property
     def end_date(self) -> datetime:
@@ -341,7 +361,7 @@ class COOPS_Query:
 
     @end_date.setter
     def end_date(self, end_date: datetime):
-        self.__end_date = typepigeon.convert_value(end_date, datetime)
+        self.__end_date = pandas.to_datetime(end_date)
 
     @property
     def product(self) -> COOPS_Product:
@@ -446,11 +466,13 @@ class COOPS_Query:
             response = requests.get(self.URL, params=self.query)
             data = response.json()
             fields = ['t', 'v', 's', 'f', 'q']
-            if 'error' in data:
-                self.__error = data['error']['message']
+            if 'error' in data or 'data' not in data:
+                if 'error' in data:
+                    self.__error = data['error']['message']
                 data = DataFrame(columns=fields)
             else:
                 data = DataFrame(data['data'], columns=fields)
+                data[data == ''] = numpy.nan
                 data = data.astype(
                     {'v': numpy.float32, 's': numpy.float32, 'f': 'string', 'q': 'string'},
                     errors='ignore',
@@ -475,96 +497,169 @@ def __coops_stations_html_tables() -> bs4.element.ResultSet:
 
 
 @lru_cache(maxsize=None)
-def coops_stations(station_type: COOPS_StationType = None) -> GeoDataFrame:
+def coops_stations(station_status: COOPS_StationStatus = None) -> GeoDataFrame:
     """
     retrieve a list of CO-OPS stations with associated metadata
 
-    :param station_type: one of ``current`` or ``historical``
+    :param station_status: one of ``active`` or ``discontinued``
     :return: data frame of stations
 
     >>> coops_stations()
-            nws_id                          name state removed                     geometry
+            nws_id                              name state        status                                            removed                     geometry
     nos_id
-    1600012  46125                     QREB buoy           NaT   POINT (122.62500 37.75000)
-    1611400  NWWH1                    Nawiliwili    HI     NaT  POINT (-159.37500 21.95312)
-    1612340  OOUH1                      Honolulu    HI     NaT  POINT (-157.87500 21.31250)
-    1612480  MOKH1                      Mokuoloe    HI     NaT  POINT (-157.75000 21.43750)
-    1615680  KLIH1       Kahului, Kahului Harbor    HI     NaT  POINT (-156.50000 20.89062)
-    ...        ...                           ...   ...     ...                          ...
-    9759394  MGZP4                      Mayaguez    PR     NaT   POINT (-67.18750 18.21875)
-    9759938  MISP4                   Mona Island           NaT   POINT (-67.93750 18.09375)
-    9761115  BARA9                       Barbuda           NaT   POINT (-61.81250 17.59375)
-    9999530  FRCB6  Bermuda, Ferry Reach Channel           NaT   POINT (-64.68750 32.37500)
-    9999531               Calcasieu Test Station    LA     NaT   POINT (-93.31250 29.76562)
-    [363 rows x 5 columns]
+    1600012  46125                         QREB buoy              active                                               <NA>   POINT (122.62500 37.75000)
+    8735180  DILA1                    Dauphin Island    AL        active  2019-07-18 10:00:00,2018-07-30 16:40:00,2017-0...   POINT (-88.06250 30.25000)
+    8557380  LWSD1                             Lewes    DE        active  2019-08-01 00:00:00,2018-06-18 00:00:00,2017-0...   POINT (-75.12500 38.78125)
+    8465705  NWHC3                         New Haven    CT        active  2019-08-18 14:55:00,2019-08-18 14:54:00,2018-0...   POINT (-72.93750 41.28125)
+    9439099  WAUO3                             Wauna    OR        active  2019-08-19 22:59:00,2014-06-20 21:30:00,2013-0...  POINT (-123.43750 46.15625)
+    ...        ...                               ...   ...           ...                                                ...                          ...
+    8448725  MSHM3               Menemsha Harbor, MA    MA  discontinued  2013-09-26 23:59:00,2013-09-26 00:00:00,2012-0...   POINT (-70.75000 41.34375)
+    8538886  TPBN4             Tacony-Palmyra Bridge    NJ  discontinued  2013-11-11 00:01:00,2013-11-11 00:00:00,2012-0...   POINT (-75.06250 40.00000)
+    9439011  HMDO3                           Hammond    OR  discontinued  2014-08-13 00:00:00,2011-04-12 23:59:00,2011-0...  POINT (-123.93750 46.18750)
+    8762372  LABL1  East Bank 1, Norco, B. LaBranche    LA  discontinued  2012-11-05 10:38:00,2012-11-05 10:37:00,2012-1...   POINT (-90.37500 30.04688)
+    8530528  CARN4       CARLSTADT, HACKENSACK RIVER    NJ  discontinued            1994-11-12 23:59:00,1994-11-12 00:00:00   POINT (-74.06250 40.81250)
+    [433 rows x 6 columns]
+    >>> coops_stations(station_status='ACTIVE')
+            nws_id                          name state  status removed                     geometry
+    nos_id
+    1600012  46125                     QREB buoy        active    <NA>   POINT (122.62500 37.75000)
+    1611400  NWWH1                    Nawiliwili    HI  active    <NA>  POINT (-159.37500 21.95312)
+    1612340  OOUH1                      Honolulu    HI  active    <NA>  POINT (-157.87500 21.31250)
+    1612480  MOKH1                      Mokuoloe    HI  active    <NA>  POINT (-157.75000 21.43750)
+    1615680  KLIH1       Kahului, Kahului Harbor    HI  active    <NA>  POINT (-156.50000 20.89062)
+    ...        ...                           ...   ...     ...     ...                          ...
+    9759394  MGZP4                      Mayaguez    PR  active    <NA>   POINT (-67.18750 18.21875)
+    9759938  MISP4                   Mona Island        active    <NA>   POINT (-67.93750 18.09375)
+    9761115  BARA9                       Barbuda        active    <NA>   POINT (-61.81250 17.59375)
+    9999530  FRCB6  Bermuda, Ferry Reach Channel        active    <NA>   POINT (-64.68750 32.37500)
+    9999531               Calcasieu Test Station    LA  active    <NA>   POINT (-93.31250 29.76562)
+    [363 rows x 6 columns]
+    >>> coops_stations(station_status='DISCONTINUED')
+            nws_id                                 name state        status                                            removed                     geometry
+    nos_id
+    8516945  KPTN6                          Kings Point    NY        active  2022-02-23 10:15:00,2018-03-20 13:00:00,2015-1...   POINT (-73.75000 40.81250)
+    8720357  BKBF1                 I-295 Buckman Bridge    FL        active  2022-02-04 17:00:00,2021-02-20 14:45:00,2021-0...   POINT (-81.68750 30.18750)
+    8720226  MSBF1  Southbank Riverwalk, St Johns River    FL        active  2022-02-02 14:00:00,2021-01-16 17:57:00,2020-0...   POINT (-81.68750 30.31250)
+    9063079  MRHO1                           Marblehead    OH        active  2022-02-01 00:00:00,2021-07-15 00:00:00,2019-0...   POINT (-82.75000 41.53125)
+    8724580  KYWF1                             Key West    FL        active  2022-01-31 00:00:00,2020-05-08 09:30:00,2018-0...   POINT (-81.81250 24.54688)
+    ...        ...                                  ...   ...           ...                                                ...                          ...
+    8760551  SPSL1                           South Pass    LA  discontinued  2000-09-26 23:59:00,2000-09-26 00:00:00,1998-1...   POINT (-89.12500 28.98438)
+    9440572  ILWW1              JETTY A, COLUMBIA RIVER    WA  discontinued                                1997-04-11 23:00:00  POINT (-124.06250 46.28125)
+    9415316  RVXC1                            Rio Vista    CA  discontinued            1997-03-04 23:59:00,1997-03-04 00:00:00  POINT (-121.68750 38.15625)
+    9415064  NCHC1           ANTIOCH, SAN JOAQUIN RIVER    CA  discontinued            1997-03-03 23:59:00,1997-03-03 00:00:00  POINT (-121.81250 38.03125)
+    8530528  CARN4          CARLSTADT, HACKENSACK RIVER    NJ  discontinued            1994-11-12 23:59:00,1994-11-12 00:00:00   POINT (-74.06250 40.81250)
+    [396 rows x 6 columns]
     """
-
-    if station_type is None:
-        station_type = COOPS_StationType.CURRENT
-    elif not isinstance(station_type, COOPS_StationType):
-        station_type = typepigeon.convert_value(station_type, COOPS_StationType)
-
-    if station_type == COOPS_StationType.CURRENT:
-        table_id = 'NWSTable'
-        table_index = 0
-    else:
-        table_id = 'HistNWSTable'
-        table_index = 1
 
     tables = __coops_stations_html_tables()
 
-    stations_table = tables[table_index].find('table', {'id': table_id}).find_all('tr')
+    status_tables = {
+        COOPS_StationStatus.ACTIVE: (0, 'NWSTable'),
+        COOPS_StationStatus.DISCONTINUED: (1, 'HistNWSTable'),
+    }
 
-    stations_columns = [field.text for field in stations_table[0].find_all('th')]
-    stations = []
-    for station in stations_table[1:]:
-        stations.append([value.text.strip() for value in station.find_all('td')])
+    dataframes = {}
+    for status, (table_index, table_id) in status_tables.items():
+        table = tables[table_index].find('table', {'id': table_id}).find_all('tr')
 
-    stations = DataFrame(stations, columns=stations_columns)
-    stations.rename(
-        columns={
-            'NOS ID': 'nos_id',
-            'NWS ID': 'nws_id',
-            'Latitude': 'y',
-            'Longitude': 'x',
-            'State': 'state',
-            'Station Name': 'name',
-        },
-        inplace=True,
+        stations_columns = [field.text for field in table[0].find_all('th')]
+        stations = DataFrame(
+            [
+                [value.text.strip() for value in station.find_all('td')]
+                for station in table[1:]
+            ],
+            columns=stations_columns,
+        )
+        stations.rename(
+            columns={
+                'NOS ID': 'nos_id',
+                'NWS ID': 'nws_id',
+                'Latitude': 'y',
+                'Longitude': 'x',
+                'State': 'state',
+                'Station Name': 'name',
+            },
+            inplace=True,
+        )
+        stations = stations.astype(
+            {
+                'nos_id': numpy.int32,
+                'nws_id': 'string',
+                'x': numpy.float16,
+                'y': numpy.float16,
+                'state': 'string',
+                'name': 'string',
+            },
+            copy=False,
+        )
+        stations.set_index('nos_id', inplace=True)
+
+        if status == COOPS_StationStatus.DISCONTINUED:
+            with open(Path(__file__).parent / 'us_states.json') as us_states_file:
+                us_states = json.load(us_states_file)
+
+            for name, abbreviation in us_states.items():
+                stations.loc[stations['state'] == name, 'state'] = abbreviation
+
+            stations.rename(columns={'Removed Date/Time': 'removed'}, inplace=True)
+
+            stations['removed'] = pandas.to_datetime(stations['removed']).astype('string')
+
+            stations = (
+                stations[~pandas.isna(stations['removed'])]
+                .sort_values('removed', ascending=False)
+                .groupby('nos_id')
+                .aggregate(
+                    {
+                        'nws_id': 'first',
+                        'removed': ','.join,
+                        'y': 'first',
+                        'x': 'first',
+                        'state': 'first',
+                        'name': 'first',
+                    }
+                )
+            )
+        else:
+            stations['removed'] = pandas.NA
+
+        stations['status'] = status.value
+        dataframes[status] = stations
+
+    active_stations = dataframes[COOPS_StationStatus.ACTIVE]
+    discontinued_stations = dataframes[COOPS_StationStatus.DISCONTINUED]
+    discontinued_stations.loc[
+        discontinued_stations.index.isin(active_stations.index), 'status'
+    ] = COOPS_StationStatus.ACTIVE.value
+
+    stations = pandas.concat(
+        (
+            active_stations[~active_stations.index.isin(discontinued_stations.index)],
+            discontinued_stations,
+        )
     )
-    stations = stations.astype(
-        {
-            'nos_id': numpy.int32,
-            'nws_id': 'string',
-            'x': numpy.float16,
-            'y': numpy.float16,
-            'state': 'string',
-            'name': 'string',
-        },
-        copy=False,
-    )
-    stations.set_index('nos_id', inplace=True)
+    stations.loc[pandas.isna(stations['status']), 'status'] = COOPS_StationStatus.ACTIVE.value
+    stations.sort_values(['status', 'removed'], na_position='first', inplace=True)
 
-    if station_type == COOPS_StationType.HISTORICAL:
-        stations.rename(columns={'Removed Date/Time': 'removed'}, inplace=True)
-        stations['removed'] = pandas.to_datetime(stations['removed'])
-    else:
-        stations['removed'] = pandas.to_datetime(numpy.nan)
+    if station_status is not None:
+        if isinstance(station_status, COOPS_StationStatus):
+            station_status = station_status.value
+        stations = stations[stations['status'] == station_status]
 
     return GeoDataFrame(
-        stations[['nws_id', 'name', 'state', 'removed']],
+        stations[['nws_id', 'name', 'state', 'status', 'removed']],
         geometry=geopandas.points_from_xy(stations['x'], stations['y']),
     )
 
 
 def coops_stations_within_region(
-    region: Polygon, station_type: COOPS_StationType = None,
+    region: Polygon, station_status: COOPS_StationStatus = None,
 ) -> GeoDataFrame:
     """
     retrieve all stations within the specified region of interest
 
     :param region: polygon or multipolygon denoting region of interest
-    :param station_type: one of ``current`` or ``historical``
+    :param station_status: one of ``active`` or ``discontinued``
     :return: data frame of stations within the specified region
 
     >>> from stormevents.nhc import VortexTrack
@@ -586,15 +681,19 @@ def coops_stations_within_region(
     8670870  FPKG1                       Fort Pulaski    GA     NaT  POINT (-80.87500 32.03125)
     """
 
-    stations = coops_stations(station_type)
+    stations = coops_stations(station_status=station_status)
     return stations[stations.within(region)]
 
 
 def coops_stations_within_bounds(
-    minx: float, miny: float, maxx: float, maxy: float, station_type: COOPS_StationType = None,
+    minx: float,
+    miny: float,
+    maxx: float,
+    maxy: float,
+    station_status: COOPS_StationStatus = None,
 ) -> GeoDataFrame:
     return coops_stations_within_region(
-        region=box(minx=minx, miny=miny, maxx=maxx, maxy=maxy), station_type=station_type
+        region=box(minx=minx, miny=miny, maxx=maxx, maxy=maxy), station_status=station_status
     )
 
 
@@ -607,7 +706,7 @@ def coops_product_within_region(
     units: COOPS_Units = None,
     time_zone: COOPS_TimeZone = None,
     interval: COOPS_Interval = None,
-    station_type: COOPS_StationType = None,
+    station_status: COOPS_StationStatus = None,
 ) -> Dataset:
     """
     retrieve CO-OPS data from within the specified region of interest
@@ -620,7 +719,7 @@ def coops_product_within_region(
     :param units: one of ``metric`` or ``english``
     :param time_zone: station time zone
     :param interval: data time interval
-    :param station_type: either ``current`` or ``historical``
+    :param station_status: either ``active`` or ``discontinued``
     :return: array of data within the specified region
 
     >>> from stormevents.nhc import VortexTrack
@@ -644,7 +743,7 @@ def coops_product_within_region(
         q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
     """
 
-    stations = coops_stations_within_region(region=region, station_type=station_type)
+    stations = coops_stations_within_region(region=region, station_status=station_status)
     station_data = [
         COOPS_Station(station).product(
             product=product,
@@ -657,4 +756,5 @@ def coops_product_within_region(
         )
         for station in stations.index
     ]
+    station_data = [station for station in station_data if len(station['t']) > 0]
     return xarray.combine_nested(station_data, concat_dim='nos_id')
