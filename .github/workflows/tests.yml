@@ -21,10 +21,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.pythonLocation }}
-          key: lint-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
-      - name: install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install ".[development]"
+          key: ${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
+      - name: install flake8
+        run: pip install flake8
       - name: lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
