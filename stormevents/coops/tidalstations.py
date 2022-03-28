@@ -466,8 +466,9 @@ class COOPS_Query:
             response = requests.get(self.URL, params=self.query)
             data = response.json()
             fields = ['t', 'v', 's', 'f', 'q']
-            if 'error' in data:
-                self.__error = data['error']['message']
+            if 'error' in data or 'data' not in data:
+                if 'error' in data:
+                    self.__error = data['error']['message']
                 data = DataFrame(columns=fields)
             else:
                 data = DataFrame(data['data'], columns=fields)
