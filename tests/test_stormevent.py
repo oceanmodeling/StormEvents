@@ -135,9 +135,6 @@ def test_storm_event_track(florence2018, ida2021):
     check_reference_directory(output_directory, reference_directory)
 
 
-@pytest.mark.skipif(
-    sys.version_info <= (3, 6), reason='floating point differences in Python 3.6',
-)
 def test_storm_event_high_water_marks(florence2018):
     reference_directory = REFERENCE_DIRECTORY / 'test_storm_event_high_water_marks'
     output_directory = OUTPUT_DIRECTORY / 'test_storm_event_high_water_marks'
