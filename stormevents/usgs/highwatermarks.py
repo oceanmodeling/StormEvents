@@ -25,6 +25,7 @@ class EventType(Enum):
     HURRICANE = 2
     DROUGHT = 3
     NOREASTER = 4
+    TSUNAMI = 6
 
 
 class EventStatus(Enum):
