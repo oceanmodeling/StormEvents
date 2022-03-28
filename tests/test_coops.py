@@ -1,5 +1,7 @@
 from datetime import datetime
+import sys
 
+import pytest
 from shapely.geometry import box
 
 from stormevents.coops.tidalstations import (
@@ -11,6 +13,9 @@ from stormevents.coops.tidalstations import (
 from tests import check_reference_directory, OUTPUT_DIRECTORY, REFERENCE_DIRECTORY
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 10), reason='floating point differences before python 3.10',
+)
 def test_coops_stations():
     reference_directory = REFERENCE_DIRECTORY / 'test_coops_stations'
     output_directory = OUTPUT_DIRECTORY / 'test_coops_stations'
