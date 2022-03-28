@@ -272,6 +272,10 @@ class COOPS_Station:
                 x=('nos_id', [self.location.x]),
                 y=('nos_id', [self.location.y]),
             )
+        else:
+            data = data.assign_coords(
+                nws_id=('nos_id', []), x=('nos_id', []), y=('nos_id', []),
+            )
 
         return data
 
@@ -467,6 +471,7 @@ class COOPS_Query:
                 data = DataFrame(columns=fields)
             else:
                 data = DataFrame(data['data'], columns=fields)
+                data[data == ''] = numpy.nan
                 data = data.astype(
                     {'v': numpy.float32, 's': numpy.float32, 'f': 'string', 'q': 'string'},
                     errors='ignore',
@@ -750,4 +755,5 @@ def coops_product_within_region(
         )
         for station in stations.index
     ]
+    station_data = [station for station in station_data if len(station['t']) > 0]
     return xarray.combine_nested(station_data, concat_dim='nos_id')
