@@ -5,6 +5,7 @@ import re
 from typing import Dict, List
 
 import pytest
+import xarray
 
 from stormevents.nhc.storms import nhc_storms, nhc_storms_archive
 
@@ -40,28 +41,42 @@ def check_reference_directory(
         else:
             test_filename = test_directory / reference_filename.name
 
-            with open(test_filename) as test_file, open(reference_filename) as reference_file:
-                test_lines = list(test_file.readlines())
-                reference_lines = list(reference_file.readlines())
+            if reference_filename.suffix in ['.h5', '.nc']:
+                reference_filesize = Path(reference_filename).stat().st_size
+                test_filesize = Path(test_filename).stat().st_size
 
-                lines_to_skip = set()
-                for file_mask, line_indices in skip_lines.items():
-                    if (
-                        file_mask in str(test_filename)
-                        or re.match(file_mask, str(test_filename))
-                        and len(test_lines) > 0
-                    ):
-                        try:
-                            lines_to_skip.update(
-                                line_index % len(test_lines) for line_index in line_indices
-                            )
-                        except ZeroDivisionError:
-                            continue
+                assert (
+                    reference_filesize == test_filesize
+                ), f'"{test_filesize}" != "{reference_filesize}"\n{test_filesize - reference_filesize}'
 
-                for line_index in sorted(lines_to_skip, reverse=True):
-                    del test_lines[line_index], reference_lines[line_index]
+                assert xarray.open_dataset(test_filename) == xarray.open_dataset(
+                    reference_filename
+                )
+            else:
+                with open(test_filename) as test_file, open(
+                    reference_filename
+                ) as reference_file:
+                    test_lines = list(test_file.readlines())
+                    reference_lines = list(reference_file.readlines())
 
-                cwd = Path.cwd()
-                assert '\n'.join(test_lines) == '\n'.join(
-                    reference_lines
-                ), f'"{os.path.relpath(test_filename, cwd)}" != "{os.path.relpath(reference_filename, cwd)}"'
+                    lines_to_skip = set()
+                    for file_mask, line_indices in skip_lines.items():
+                        if (
+                            file_mask in str(test_filename)
+                            or re.match(file_mask, str(test_filename))
+                            and len(test_lines) > 0
+                        ):
+                            try:
+                                lines_to_skip.update(
+                                    line_index % len(test_lines) for line_index in line_indices
+                                )
+                            except ZeroDivisionError:
+                                continue
+
+                    for line_index in sorted(lines_to_skip, reverse=True):
+                        del test_lines[line_index], reference_lines[line_index]
+
+                    cwd = Path.cwd()
+                    assert '\n'.join(test_lines) == '\n'.join(
+                        reference_lines
+                    ), f'"{os.path.relpath(test_filename, cwd)}" != "{os.path.relpath(reference_filename, cwd)}"'

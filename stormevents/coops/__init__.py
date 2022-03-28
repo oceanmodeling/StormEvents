@@ -6,7 +6,7 @@ from stormevents.coops.tidalstations import (
     COOPS_Station,
     coops_stations,
     coops_stations_within_region,
-    COOPS_StationType,
+    COOPS_StationStatus,
     COOPS_TidalDatum,
     COOPS_TimeZone,
     COOPS_Units,

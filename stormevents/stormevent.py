@@ -15,7 +15,7 @@ from stormevents.coops.tidalstations import (
     COOPS_Product,
     COOPS_Station,
     coops_stations_within_region,
-    COOPS_StationType,
+    COOPS_StationStatus,
     COOPS_TidalDatum,
     COOPS_TimeZone,
     COOPS_Units,
@@ -314,7 +314,7 @@ class StormEvent:
         self,
         product: COOPS_Product,
         wind_speed: int,
-        station_type: COOPS_StationType = None,
+        station_type: COOPS_StationStatus = None,
         start_date: datetime = None,
         end_date: datetime = None,
         datum: COOPS_TidalDatum = None,
@@ -381,7 +381,7 @@ class StormEvent:
         region: Polygon,
         start_date: datetime = None,
         end_date: datetime = None,
-        station_type: COOPS_StationType = None,
+        station_type: COOPS_StationStatus = None,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -439,7 +439,7 @@ class StormEvent:
                 start=self.start_date, end=self.end_date, relative=end_date
             )
 
-        stations = coops_stations_within_region(region=region, station_type=station_type)
+        stations = coops_stations_within_region(region=region, station_status=station_type)
 
         if len(stations) > 0:
             stations_data = []
