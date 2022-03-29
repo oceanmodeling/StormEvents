@@ -18,8 +18,10 @@ class DeploymentType(Enum):
 
 
 class USGS_Station:
+    # TODO implement sensor interface
     pass
 
 
 class USGS_StationQuery:
+    # TODO implement query interface
     pass
