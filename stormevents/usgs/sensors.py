@@ -1,7 +1,9 @@
 from enum import Enum
+from os import PathLike
 
 import pandas
 from pandas import DataFrame
+import requests
 
 
 class SensorType(Enum):
@@ -52,12 +54,81 @@ class DeploymentType(Enum):
     RAPID_DEPLOYMENT = 9
 
 
-def usgs_sensors() -> DataFrame:
+class USGS_File:
+    def __init__(self, id: int):
+        files = usgs_files()
+        if id not in files:
+            raise FileNotFoundError(self.url)
+
+        self.id = id
+
+    @property
+    def url(self) -> str:
+        return f'https://stn.wim.usgs.gov/STNServices/Files/{id}/item'
+
+    def to_file(self, path: PathLike):
+        response = requests.get(self.url, stream=True)
+        with open(path, 'wb') as output_file:
+            for chunk in response.iter_content(chunk_size=1024):
+                output_file.write(chunk)
+
+
+def usgs_files(file_type: FileType = None, event_id: int = None) -> DataFrame:
     """
-    this function collects all USGS flood events of the given type and status that have high-water mark data
+    this function collects USGS files
+
+    https://stn.wim.usgs.gov/STNServices/Files.json
+
+    :param file_type: file type
+    :param event_id: USGS event ID
+    :return: table of files
+
+    >>> usgs_files()
+                                                   name  ... script_parent
+    file_id                                              ...
+    8075                              AlafiaRv@41_1.JPG  ...           NaN
+    8076                              AlafiaRv@41_2.JPG  ...           NaN
+    8079                        SSS-FL-MIA-001WL-01.JPG  ...           NaN
+    8080                        SSS-FL-MIA-001WL-02.JPG  ...           NaN
+    8081                        SSS-FL-MIA-001WL-03.JPG  ...           NaN
+    ...                                             ...  ...           ...
+    125592   chetco 1 20201019 04-Nov-2020 11-18-17.pdf  ...           NaN
+    125593   chetco 1 20201022 04-Nov-2020 11-17-08.pdf  ...           NaN
+    125594              chetco 21-Dec-2020 10-06-59.pdf  ...           NaN
+    125595                        stn-db-schema (1).pdf  ...           NaN
+    125596                        stn-db-schema (1).pdf  ...           NaN
+    [89421 rows x 19 columns]
+    """
+
+    if event_id is None:
+        url = 'https://stn.wim.usgs.gov/STNServices/Files.json'
+    else:
+        url = f'https://stn.wim.usgs.gov/STNServices/Events/{event_id}/Files.json'
+
+    files = pandas.read_json(url)
+    files.set_index('file_id', inplace=True)
+
+    if file_type is not None:
+        if isinstance(file_type, FileType):
+            file_type = file_type.value
+
+        files = files[files['filetype_id'] == file_type]
+    return files
+
+
+def usgs_sensors(
+    sensor_type: SensorType = None,
+    deployment_type: DeploymentType = None,
+    event_id: int = None,
+) -> DataFrame:
+    """
+    this function collects USGS sensors with the given type and deployment
 
     https://stn.wim.usgs.gov/STNServices/Instruments.json
 
+    :param sensor_type: type of sensor
+    :param deployment_type: deployment type of sensor
+    :param event_id: USGS event ID
     :return: table of sensors
 
     >>> usgs_sensors()
@@ -77,6 +148,22 @@ def usgs_sensors() -> DataFrame:
     [4155 rows x 17 columns]
     """
 
-    sensors = pandas.read_json('https://stn.wim.usgs.gov/STNServices/Instruments.json')
+    if event_id is None:
+        url = 'https://stn.wim.usgs.gov/STNServices/Instruments.json'
+    else:
+        url = f'https://stn.wim.usgs.gov/STNServices/Events/{event_id}/Instruments.json'
+
+    sensors = pandas.read_json(url)
     sensors.set_index('instrument_id', inplace=True)
+
+    if sensor_type is not None:
+        if isinstance(sensor_type, SensorType):
+            sensor_type = sensor_type.value
+        sensors = sensors[sensors['sensor_type_id'] == sensor_type]
+
+    if deployment_type is not None:
+        if isinstance(deployment_type, DeploymentType):
+            deployment_type = deployment_type.value
+        sensors = sensors[sensors['deployment_type_id'] == deployment_type]
+
     return sensors

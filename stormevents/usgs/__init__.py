@@ -4,3 +4,4 @@ from stormevents.usgs.events import (
     usgs_flood_storms,
     USGS_StormEvent,
 )
+from stormevents.usgs.sensors import USGS_File, usgs_files, usgs_sensors

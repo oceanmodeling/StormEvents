@@ -7,7 +7,6 @@ from typing import List
 from geopandas import GeoDataFrame
 import pandas
 from pandas import DataFrame
-import requests
 import typepigeon
 
 from stormevents.nhc import nhc_storms
@@ -18,6 +17,7 @@ from stormevents.usgs.highwatermarks import (
     HighWaterMarksQuery,
     HighWaterMarkType,
 )
+from stormevents.usgs.sensors import usgs_files, usgs_sensors
 
 
 @lru_cache(maxsize=None)
@@ -335,11 +335,7 @@ class USGS_Event:
         [5589 rows x 19 columns]
         """
 
-        files = pandas.read_json(
-            f'https://stn.wim.usgs.gov/STNServices/Events/{self.id}/Files.json'
-        )
-        files.set_index('file_id', inplace=True)
-        return files
+        return usgs_files(event_id=self.id)
 
     @property
     def sensors(self) -> DataFrame:
@@ -366,11 +362,10 @@ class USGS_Event:
         [394 rows x 17 columns]
         """
 
-        sensors = pandas.read_json(
-            f'https://stn.wim.usgs.gov/STNServices/Events/{self.id}/Instruments.json'
-        )
-        sensors.set_index('instrument_id', inplace=True)
-        return sensors
+        return usgs_sensors(event_id=self.id)
+
+    def retrieve_file(self, id: int, path: PathLike):
+        'https://stn.wim.usgs.gov/STNServices/Files/{id}/item'
 
     def high_water_marks(
         self,

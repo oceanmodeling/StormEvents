@@ -165,7 +165,7 @@ class VortexTrack:
         except:
             pass
 
-        return cls(storm=path, start_date=start_date, end_date=end_date,)
+        return cls(storm=path, start_date=start_date, end_date=end_date)
 
     @property
     def name(self) -> str:
@@ -375,9 +375,12 @@ class VortexTrack:
             if self.filename is None:
                 mode = ATCF_Mode.realtime
                 if self.nhc_code is not None:
-                    archive_storms = nhc_storms_archive()
-                    if self.nhc_code.upper() in archive_storms:
-                        mode = ATCF_Mode.historical
+                    try:
+                        archive_storms = nhc_storms_archive()
+                        if self.nhc_code.upper() in archive_storms:
+                            mode = ATCF_Mode.historical
+                    except:
+                        pass
             else:
                 mode = ATCF_Mode.historical
             self.__mode = mode
