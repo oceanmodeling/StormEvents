@@ -121,6 +121,20 @@ def test_vortex_track_from_file():
     check_reference_directory(output_directory, reference_directory)
 
 
+def test_vortex_track_to_file():
+    output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_to_file'
+    reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_to_file'
+
+    if not output_directory.exists():
+        output_directory.mkdir(parents=True, exist_ok=True)
+
+    track = VortexTrack.from_storm_name('florence', 2018)
+    track.to_file(output_directory / 'florence2018.dat', overwrite=True)
+    track.to_file(output_directory / 'florence2018.fort.22', overwrite=True)
+
+    check_reference_directory(output_directory, reference_directory)
+
+
 def test_vortex_track_recompute_velocity():
     output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_recompute_velocity'
     reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_recompute_velocity'
