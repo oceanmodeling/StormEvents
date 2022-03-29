@@ -108,15 +108,29 @@ def test_vortex_track_from_file():
         output_directory.mkdir(parents=True, exist_ok=True)
 
     track_1 = VortexTrack.from_file(input_directory / 'irma2017_fort.22')
-    track_2 = VortexTrack.from_file(input_directory / 'BT02008.dat')
+    track_2 = VortexTrack.from_file(input_directory / 'AL062018.dat')
 
     assert track_1.nhc_code == 'AL112017'
     assert track_1.name == 'IRMA'
-    assert track_2.nhc_code == 'BT02008'
-    assert track_2.name == 'WRT00001'
+    assert track_2.nhc_code == 'AL062018'
+    assert track_2.name == 'FLORENCE'
 
     track_1.to_file(output_directory / 'irma2017_fort.22', overwrite=True)
-    track_2.to_file(output_directory / 'fromatcf_fort.22', overwrite=True)
+    track_2.to_file(output_directory / 'florence2018_fort.22', overwrite=True)
+
+    check_reference_directory(output_directory, reference_directory)
+
+
+def test_vortex_track_to_file():
+    output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_to_file'
+    reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_to_file'
+
+    if not output_directory.exists():
+        output_directory.mkdir(parents=True, exist_ok=True)
+
+    track = VortexTrack.from_storm_name('florence', 2018)
+    track.to_file(output_directory / 'florence2018.dat', overwrite=True)
+    track.to_file(output_directory / 'florence2018.fort.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 

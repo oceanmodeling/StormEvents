@@ -548,7 +548,7 @@ class VortexTrack:
         atcf.loc[atcf['latitude'].str.contains('-'), 'latitude'] = (
             atcf.loc[atcf['latitude'].str.contains('-'), 'latitude'] + 'S'
         )
-        atcf['latitude'] = atcf['latitude'].str.strip('-').str.pad(4)
+        atcf['latitude'] = atcf['latitude'].str.strip('-').str.pad(5)
 
         atcf['longitude'] = atcf['longitude'].astype('string')
         atcf.loc[~atcf['longitude'].str.contains('-'), 'longitude'] = (
@@ -557,7 +557,7 @@ class VortexTrack:
         atcf.loc[atcf['longitude'].str.contains('-'), 'longitude'] = (
             atcf.loc[atcf['longitude'].str.contains('-'), 'longitude'] + 'W'
         )
-        atcf['longitude'] = atcf['longitude'].str.strip('-').str.pad(5)
+        atcf['longitude'] = atcf['longitude'].str.strip('-').str.pad(6)
 
         atcf['max_sustained_wind_speed'] = (
             atcf['max_sustained_wind_speed'].astype('string').str.pad(5)
@@ -602,15 +602,34 @@ class VortexTrack:
         atcf['radius_of_maximum_winds'] = (
             atcf['radius_of_maximum_winds'].astype('string').str.pad(4)
         )
-        atcf['gust_speed'] = atcf['gust_speed'].astype('string').str.pad(5)
+        atcf['gust_speed'] = atcf['gust_speed'].astype('string').str.pad(4)
         atcf['eye_diameter'] = atcf['eye_diameter'].astype('string').str.pad(4)
         atcf['subregion_code'] = atcf['subregion_code'].str.pad(4)
         atcf['maximum_wave_height'] = atcf['maximum_wave_height'].astype('string').str.pad(4)
         atcf['forecaster_initials'] = atcf['forecaster_initials'].str.pad(4)
 
-        atcf['direction'] = atcf['direction'].astype('string').str.pad(3)
+        atcf['direction'] = atcf['direction'].astype('string').str.pad(4)
         atcf['speed'] = atcf['speed'].astype('string').str.pad(4)
-        atcf['name'] = atcf['name'].astype('string').str.pad(12, side='both')
+        atcf['name'] = atcf['name'].astype('string').str.pad(11, side='both')
+
+        if 'depth_code' in atcf.columns:
+            atcf['depth_code'] = atcf['depth_code'].astype('string').str.pad(2)
+            atcf['isowave'] = atcf['isowave'].astype('string').str.pad(3)
+            atcf['isowave_quadrant_code'] = (
+                atcf['isowave_quadrant_code'].astype('string').str.pad(4)
+            )
+            atcf['isowave_radius_for_NEQ'] = (
+                atcf['isowave_radius_for_NEQ'].astype('string').str.pad(5)
+            )
+            atcf['isowave_radius_for_SEQ'] = (
+                atcf['isowave_radius_for_SEQ'].astype('string').str.pad(5)
+            )
+            atcf['isowave_radius_for_NWQ'] = (
+                atcf['isowave_radius_for_NWQ'].astype('string').str.pad(5)
+            )
+            atcf['isowave_radius_for_SWQ'] = (
+                atcf['isowave_radius_for_SWQ'].astype('string').str.pad(5)
+            )
 
         for column in atcf.select_dtypes(include=['string']).columns:
             atcf[column] = atcf[column].str.replace(re.compile(str(integer_na_value)), '')
@@ -625,14 +644,109 @@ class VortexTrack:
         :return: `fort.22` representation of the current track
         """
 
-        fort22 = self.atcf
+        fort22 = DataFrame(self.data.drop(columns='geometry'), copy=True)
+
         fort22.drop(
             columns=[field for field in EXTRA_ATCF_FIELDS.values() if field in fort22.columns],
             inplace=True,
         )
+
+        fort22.loc[:, ['longitude', 'latitude']] = (
+            fort22.loc[:, ['longitude', 'latitude']] * 10
+        )
+
+        float_columns = fort22.select_dtypes(include=['float']).columns
+        integer_na_value = -99999
+        for column in float_columns:
+            fort22.loc[pandas.isna(fort22[column]), column] = integer_na_value
+            fort22.loc[:, column] = fort22.loc[:, column].round(0).astype(int)
+
+        fort22['basin'] = fort22['basin'].str.pad(2)
+        fort22['storm_number'] = fort22['storm_number'].astype('string').str.pad(3)
+        fort22['datetime'] = fort22['datetime'].dt.strftime('%Y%m%d%H').str.pad(11)
+        fort22['record_type_number'] = fort22['record_type_number'].str.pad(3)
+        fort22['record_type'] = fort22['record_type'].str.pad(5)
+        fort22['forecast_hours'] = fort22['forecast_hours'].astype('string').str.pad(4)
+
+        fort22['latitude'] = fort22['latitude'].astype('string')
+        fort22.loc[~fort22['latitude'].str.contains('-'), 'latitude'] = (
+            fort22.loc[~fort22['latitude'].str.contains('-'), 'latitude'] + 'N'
+        )
+        fort22.loc[fort22['latitude'].str.contains('-'), 'latitude'] = (
+            fort22.loc[fort22['latitude'].str.contains('-'), 'latitude'] + 'S'
+        )
+        fort22['latitude'] = fort22['latitude'].str.strip('-').str.pad(4)
+
+        fort22['longitude'] = fort22['longitude'].astype('string')
+        fort22.loc[~fort22['longitude'].str.contains('-'), 'longitude'] = (
+            fort22.loc[~fort22['longitude'].str.contains('-'), 'longitude'] + 'E'
+        )
+        fort22.loc[fort22['longitude'].str.contains('-'), 'longitude'] = (
+            fort22.loc[fort22['longitude'].str.contains('-'), 'longitude'] + 'W'
+        )
+        fort22['longitude'] = fort22['longitude'].str.strip('-').str.pad(5)
+
+        fort22['max_sustained_wind_speed'] = (
+            fort22['max_sustained_wind_speed'].astype('string').str.pad(5)
+        )
+        fort22['central_pressure'] = fort22['central_pressure'].astype('string').str.pad(5)
+        fort22['development_level'] = fort22['development_level'].str.pad(3)
+        fort22['isotach_radius'] = fort22['isotach_radius'].astype('string').str.pad(4)
+        fort22['isotach_quadrant_code'] = fort22['isotach_quadrant_code'].str.pad(4)
+        fort22['isotach_radius_for_NEQ'] = (
+            fort22['isotach_radius_for_NEQ'].astype('string').str.pad(5)
+        )
+        fort22['isotach_radius_for_SEQ'] = (
+            fort22['isotach_radius_for_SEQ'].astype('string').str.pad(5)
+        )
+        fort22['isotach_radius_for_NWQ'] = (
+            fort22['isotach_radius_for_NWQ'].astype('string').str.pad(5)
+        )
+        fort22['isotach_radius_for_SWQ'] = (
+            fort22['isotach_radius_for_SWQ'].astype('string').str.pad(5)
+        )
+
+        fort22['background_pressure'].fillna(method='ffill', inplace=True)
+        fort22.loc[
+            ~pandas.isna(self.data['central_pressure'])
+            & (self.data['background_pressure'] <= self.data['central_pressure'])
+            & (self.data['central_pressure'] < 1013),
+            'background_pressure',
+        ] = '1013'
+        fort22.loc[
+            ~pandas.isna(self.data['central_pressure'])
+            & (self.data['background_pressure'] <= self.data['central_pressure'])
+            & (self.data['central_pressure'] < 1013),
+            'background_pressure',
+        ] = (self.data['central_pressure'] + 1)
+        fort22['background_pressure'] = (
+            fort22['background_pressure'].astype(int).astype('string').str.pad(5)
+        )
+
+        fort22['radius_of_last_closed_isobar'] = (
+            fort22['radius_of_last_closed_isobar'].astype('string').str.pad(5)
+        )
+        fort22['radius_of_maximum_winds'] = (
+            fort22['radius_of_maximum_winds'].astype('string').str.pad(4)
+        )
+        fort22['gust_speed'] = fort22['gust_speed'].astype('string').str.pad(5)
+        fort22['eye_diameter'] = fort22['eye_diameter'].astype('string').str.pad(4)
+        fort22['subregion_code'] = fort22['subregion_code'].str.pad(4)
+        fort22['maximum_wave_height'] = (
+            fort22['maximum_wave_height'].astype('string').str.pad(4)
+        )
+        fort22['forecaster_initials'] = fort22['forecaster_initials'].str.pad(4)
+
+        fort22['direction'] = fort22['direction'].astype('string').str.pad(3)
+        fort22['speed'] = fort22['speed'].astype('string').str.pad(4)
+        fort22['name'] = fort22['name'].astype('string').str.pad(12, side='both')
+
         fort22['record_number'] = (
             (self.data.groupby(['datetime']).ngroup() + 1).astype('string').str.pad(4)
         )
+
+        for column in fort22.select_dtypes(include=['string']).columns:
+            fort22[column] = fort22[column].str.replace(re.compile(str(integer_na_value)), '')
 
         return fort22
 
