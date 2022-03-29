@@ -197,9 +197,9 @@ usgs_id                                                 ...
 ##### retrieve HWM survey data for any flood event
 
 ```python
-from stormevents.usgs import FloodEvent
+from stormevents.usgs import USGS_Event
 
-flood = FloodEvent(182)
+flood = USGS_Event(182)
 flood.high_water_marks()
 ```
 
@@ -222,9 +222,9 @@ hwm_id                                             ...
 ```
 
 ```python
-from stormevents.usgs import FloodEvent
+from stormevents.usgs import USGS_Event
 
-flood = FloodEvent(182)
+flood = USGS_Event(182)
 flood.high_water_marks(quality=['EXCELLENT', 'GOOD'])
 ```
 

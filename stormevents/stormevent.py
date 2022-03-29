@@ -22,7 +22,7 @@ from stormevents.coops.tidalstations import (
 )
 from stormevents.nhc import nhc_storms, VortexTrack
 from stormevents.nhc.atcf import ATCF_FileDeck, ATCF_Mode
-from stormevents.usgs import StormFloodEvent, usgs_flood_storms
+from stormevents.usgs import usgs_flood_storms, USGS_StormEvent
 from stormevents.utilities import relative_to_time_interval, subset_time_interval
 
 
@@ -282,7 +282,7 @@ class StormEvent:
         return track
 
     @property
-    def flood_event(self) -> StormFloodEvent:
+    def flood_event(self) -> USGS_StormEvent:
         """
         :return: USGS high-water marks (HWMs) for this storm event
 
@@ -307,7 +307,7 @@ class StormEvent:
 
         configuration = {'name': self.name, 'year': self.year}
         if self.__high_water_marks is None or configuration != self.__previous_configuration:
-            self.__high_water_marks = StormFloodEvent(name=self.name, year=self.year)
+            self.__high_water_marks = USGS_StormEvent(name=self.name, year=self.year)
         return self.__high_water_marks
 
     def coops_product_within_isotach(

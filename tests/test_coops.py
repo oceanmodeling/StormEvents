@@ -18,17 +18,17 @@ from tests import check_reference_directory, OUTPUT_DIRECTORY, REFERENCE_DIRECTO
     sys.version_info < (3, 7), reason='stations list differences in Python 3.6',
 )
 def test_coops_stations():
-    reference_directory = REFERENCE_DIRECTORY / 'test_coops_stations'
-    output_directory = OUTPUT_DIRECTORY / 'test_coops_stations'
-
-    if not output_directory.exists():
-        output_directory.mkdir(parents=True, exist_ok=True)
-
     stations = coops_stations()
 
-    stations.to_csv(output_directory / 'test_coops_stations.csv')
-
-    check_reference_directory(output_directory, reference_directory)
+    assert len(stations) > 0
+    assert list(stations.columns) == [
+        'nws_id',
+        'name',
+        'state',
+        'status',
+        'removed',
+        'geometry',
+    ]
 
 
 # TODO figure out why retrieved stations are different in Python 3.6

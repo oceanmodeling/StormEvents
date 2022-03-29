@@ -2,15 +2,9 @@ import sys
 
 import pytest
 
-from stormevents.usgs.highwatermarks import (
-    EventStatus,
-    EventType,
-    FloodEvent,
-    HighWaterMarksQuery,
-    StormFloodEvent,
-    usgs_flood_events,
-    usgs_flood_storms,
-)
+from stormevents.usgs import USGS_Event, usgs_flood_events, usgs_flood_storms, USGS_StormEvent
+from stormevents.usgs.base import EventStatus, EventType
+from stormevents.usgs.highwatermarks import HighWaterMarksQuery
 from tests import (
     check_reference_directory,
     INPUT_DIRECTORY,
@@ -70,11 +64,11 @@ def test_usgs_flood_event():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    flood_1 = FloodEvent.from_csv(input_directory / 'florence2018.csv')
-    flood_2 = FloodEvent.from_name('Irma September 2017')
+    flood_1 = USGS_Event.from_csv(input_directory / 'florence2018.csv')
+    flood_2 = USGS_Event.from_name('Irma September 2017')
 
     with pytest.raises(ValueError):
-        StormFloodEvent.from_name('nonexistent')
+        USGS_StormEvent.from_name('nonexistent')
 
     assert flood_2.high_water_marks().shape == (506, 53)
     assert flood_1 != flood_2
