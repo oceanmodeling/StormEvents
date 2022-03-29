@@ -76,6 +76,7 @@ def usgs_sensors() -> DataFrame:
     9505                        1  ...                    NaN
     [4155 rows x 17 columns]
     """
+
     sensors = pandas.read_json('https://stn.wim.usgs.gov/STNServices/Instruments.json')
     sensors.set_index('instrument_id', inplace=True)
     return sensors
