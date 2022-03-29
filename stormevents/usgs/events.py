@@ -335,10 +335,9 @@ class USGS_Event:
         [5589 rows x 19 columns]
         """
 
-        response = requests.get(
+        files = pandas.read_json(
             f'https://stn.wim.usgs.gov/STNServices/Events/{self.id}/Files.json'
         )
-        files = DataFrame.from_records(response.json())
         files.set_index('file_id', inplace=True)
         return files
 
@@ -367,10 +366,9 @@ class USGS_Event:
         [394 rows x 17 columns]
         """
 
-        response = requests.get(
+        sensors = pandas.read_json(
             f'https://stn.wim.usgs.gov/STNServices/Events/{self.id}/Instruments.json'
         )
-        sensors = DataFrame.from_records(response.json())
         sensors.set_index('instrument_id', inplace=True)
         return sensors
 
@@ -444,7 +442,7 @@ class USGS_Event:
         )
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(event_id={repr(self.id)})'
+        return f'{self.__class__.__name__}(id={repr(self.id)})'
 
 
 class USGS_StormEvent(USGS_Event):
