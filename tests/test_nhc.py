@@ -85,7 +85,7 @@ def test_vortex_track_properties():
 
     assert len(track) == 9826
 
-    track.record_type = 'OFCL'
+    track.advisory = 'OFCL'
 
     assert len(track) == 1273
 
@@ -163,28 +163,26 @@ def test_vortex_track_file_decks():
         'a': {
             'start_date': parse_date('2018-09-11 06:00'),
             'end_date': None,
-            'record_types': ['OFCL', 'HWRF', 'HMON', 'CARQ'],
+            'advisories': ['OFCL', 'HWRF', 'HMON', 'CARQ'],
         },
         'b': {
             'start_date': parse_date('2018-09-11 06:00'),
             'end_date': parse_date('2018-09-18 06:00'),
-            'record_types': ['BEST'],
+            'advisories': ['BEST'],
         },
     }
 
     for file_deck, values in file_decks.items():
-        for record_type in values['record_types']:
+        for advisory in values['advisories']:
             track = VortexTrack(
                 'al062018',
                 start_date=values['start_date'],
                 end_date=values['end_date'],
                 file_deck=file_deck,
-                record_type=record_type,
+                advisory=advisory,
             )
 
-            track.to_file(
-                output_directory / f'{file_deck}-deck_{record_type}.22', overwrite=True
-            )
+            track.to_file(output_directory / f'{file_deck}-deck_{advisory}.22', overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 

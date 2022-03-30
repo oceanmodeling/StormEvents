@@ -243,7 +243,7 @@ class StormEvent:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
-        record_type: str = None,
+        advisory: str = None,
         filename: PathLike = None,
     ) -> VortexTrack:
         """
@@ -253,7 +253,7 @@ class StormEvent:
         :param end_date: end date
         :param file_deck: ATCF file deck
         :param mode: ATCF mode
-        :param record_type: ATCF record type
+        :param advisory: ATCF record type
         :param filename: file path to ``fort.22``
         :return: vortex track
 
@@ -277,7 +277,7 @@ class StormEvent:
                 end_date=end_date,
                 file_deck=file_deck,
                 mode=mode,
-                record_type=record_type,
+                advisory=advisory,
             )
         return track
 

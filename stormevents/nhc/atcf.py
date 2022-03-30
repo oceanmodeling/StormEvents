@@ -29,9 +29,9 @@ ATCF_FIELDS = {
     # YYYYMMDDHH - Warning Date-Time-Group: 0000010100 through 9999123123. (note, 4 digit year)
     'YYYYMMDDHH': 'datetime',
     # TECHNUM/MIN - objective technique sorting number, minutes for best track: 00 - 99
-    'TECHNUM/MIN': 'record_type_number',
+    'TECHNUM/MIN': 'advisory_number',
     # TECH - acronym for each objective technique or CARQ or WRNG, BEST for best track.
-    'TECH': 'record_type',
+    'TECH': 'advisory',
     # TAU - forecast period: -24 through 240 hours, 0 for best-track, negative taus used for CARQ and WRNG records.
     'TAU': 'forecast_hours',
     # LatN/S - Latitude (tenths of degrees) for the DTG: 0 through 900, N/S is the hemispheric index.
@@ -203,7 +203,7 @@ class ATCF_Mode(Enum):
     realtime = 'aid_public'
 
 
-class ATCF_RecordType(Enum):
+class ATCF_Advisory(Enum):
     best = 'BEST'
     ofcl = 'OFCL'
     ofcp = 'OFCP'
@@ -312,22 +312,20 @@ def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -
 
 def read_atcf(
     atcf: Union[PathLike, io.BytesIO, TextIO],
-    record_types: List[ATCF_RecordType] = None,
+    advisories: List[ATCF_Advisory] = None,
     fort_22: bool = False,
 ) -> GeoDataFrame:
     """
     read ATCF format
 
     :param atcf: path or buffered reader
-    :param record_types: allowed record types
+    :param advisories: allowed advisory types
     :param fort_22: whether to parse `fort.22` fields
     :return: data frame of parsed ATCF data
     """
 
-    if record_types is not None:
-        record_types = [
-            typepigeon.convert_value(record_type, str) for record_type in record_types
-        ]
+    if advisories is not None:
+        advisories = [typepigeon.convert_value(advisory, str) for advisory in advisories]
 
     if isinstance(atcf, (str, PathLike, Path)):
         atcf = open(atcf)
@@ -368,10 +366,10 @@ def read_atcf(
         except ValueError:
             pass
 
-    if record_types is not None:
-        data = data[data['TECH'].isin(record_types)]
+    if advisories is not None:
+        data = data[data['TECH'].isin(advisories)]
         if len(data) == 0:
-            raise ValueError(f'no ATCF records found matching "{record_types}"')
+            raise ValueError(f'no ATCF records found matching "{advisories}"')
 
     best_track_records = (data['TECH'] == 'BEST') & (
         data.loc[data['TECH'] == 'BEST', 'TECHNUM/MIN'].str.strip().str.len() > 0

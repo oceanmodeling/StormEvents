@@ -192,7 +192,7 @@ def test_storm_event_coops_product_within_region(florence2018):
         start_date=datetime(2018, 9, 13, 23, 59),
         end_date=datetime(2018, 9, 14),
         file_deck='a',
-        record_type='OFCL',
+        advisory='OFCL',
     )
     tidal_data = florence2018.coops_product_within_region(
         'water_level',
