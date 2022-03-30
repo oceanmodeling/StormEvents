@@ -493,38 +493,47 @@ class VortexTrack:
             & (self.unfiltered_data['datetime'] <= self.end_date)
         ]
 
-    def to_file(self, path: PathLike, overwrite: bool = False):
+    def to_file(self, path: PathLike, advisory: ATCF_Advisory = None, overwrite: bool = False):
         """
         write track to file path
 
         :param path: output file path
+        :param advisory: advisory type to write
         :param overwrite: overwrite existing file
         """
 
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)
+
         if overwrite or not path.exists():
             if path.suffix == '.dat':
-                data = self.atcf
+                data = self.atcf(advisory=advisory)
+                data.to_csv(path, index=False, header=False)
             elif path.suffix == '.22':
-                data = self.fort_22
+                data = self.fort_22(advisory=advisory)
+                data.to_csv(path, index=False, header=False)
             else:
                 raise NotImplementedError(f'writing to `*{path.suffix}` not supported')
-            data.to_csv(path, index=False, header=False)
+
         else:
             logging.warning(f'skipping existing file "{path}"')
 
-    @property
-    def atcf(self) -> DataFrame:
+    def atcf(self, advisory: ATCF_Advisory = None) -> DataFrame:
         """
         https://www.nrlmry.navy.mil/atcf_web/docs/database/new/abrdeck.html
 
         BASIN,CY,YYYYMMDDHH,TECHNUM/MIN,TECH,TAU,LatN/S,LonE/W,VMAX,MSLP,TY,RAD,WINDCODE,RAD1,RAD2,RAD3,RAD4,RADP,RRP,MRD,GUSTS,EYE,SUBREGION,MAXSEAS,INITIALS,DIR,SPEED,STORMNAME,DEPTH,SEAS,SEASCODE,SEAS1,SEAS2,SEAS3,SEAS4,USERDEFINED,userdata
 
+        :param advisory: advisory type
         :return: dataframe of CSV lines in ATCF format
         """
 
         atcf = DataFrame(self.data.drop(columns='geometry'), copy=True)
+
+        if advisory is not None:
+            if isinstance(advisory, ATCF_Advisory):
+                advisory = advisory.value
+            atcf = atcf[atcf['advisory'] == advisory]
 
         atcf.loc[:, ['longitude', 'latitude']] = atcf.loc[:, ['longitude', 'latitude']] * 10
 
@@ -636,15 +645,20 @@ class VortexTrack:
 
         return atcf
 
-    @property
-    def fort_22(self) -> DataFrame:
+    def fort_22(self, advisory: ATCF_Advisory = None) -> DataFrame:
         """
         https://wiki.adcirc.org/wiki/Fort.22_file
 
+        :param advisory: advisory type
         :return: `fort.22` representation of the current track
         """
 
         fort22 = DataFrame(self.data.drop(columns='geometry'), copy=True)
+
+        if advisory is not None:
+            if isinstance(advisory, ATCF_Advisory):
+                advisory = advisory.value
+            fort22 = fort22[fort22['advisory'] == advisory]
 
         fort22.drop(
             columns=[field for field in EXTRA_ATCF_FIELDS.values() if field in fort22.columns],

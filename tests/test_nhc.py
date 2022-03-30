@@ -1,7 +1,6 @@
 from copy import copy
 from datetime import timedelta
 
-from dateutil.parser import parse as parse_date
 import pytest
 from pytest_socket import SocketBlockedError
 
@@ -128,9 +127,19 @@ def test_vortex_track_to_file():
     if not output_directory.exists():
         output_directory.mkdir(parents=True, exist_ok=True)
 
-    track = VortexTrack.from_storm_name('florence', 2018)
-    track.to_file(output_directory / 'florence2018.dat', overwrite=True)
-    track.to_file(output_directory / 'florence2018.fort.22', overwrite=True)
+    track_1 = VortexTrack.from_storm_name('florence', 2018)
+    track_1.to_file(output_directory / 'florence2018_best.dat', overwrite=True)
+    track_1.to_file(output_directory / 'florence2018_best.fort.22', overwrite=True)
+
+    track_2 = VortexTrack.from_storm_name('florence', 2018, file_deck='a')
+    track_2.to_file(output_directory / 'florence2018_all.dat', overwrite=True)
+    track_2.to_file(output_directory / 'florence2018_all.fort.22', overwrite=True)
+    track_2.to_file(
+        output_directory / 'florence2018_OFCL.dat', advisory='OFCL', overwrite=True
+    )
+    track_2.to_file(
+        output_directory / 'florence2018_OFCL.fort.22', advisory='OFCL', overwrite=True
+    )
 
     check_reference_directory(output_directory, reference_directory)
 
@@ -161,13 +170,13 @@ def test_vortex_track_file_decks():
 
     file_decks = {
         'a': {
-            'start_date': parse_date('2018-09-11 06:00'),
+            'start_date': '2018-09-11 06:00',
             'end_date': None,
             'advisories': ['OFCL', 'HWRF', 'HMON', 'CARQ'],
         },
         'b': {
-            'start_date': parse_date('2018-09-11 06:00'),
-            'end_date': parse_date('2018-09-18 06:00'),
+            'start_date': '2018-09-11 06:00',
+            'end_date': '2018-09-18 06:00',
             'advisories': ['BEST'],
         },
     }
