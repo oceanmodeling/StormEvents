@@ -160,7 +160,7 @@ def atcf_files(
     if not isinstance(mode, ATCF_Mode):
         mode = typepigeon.convert_value(mode, ATCF_Mode)
 
-    if mode == ATCF_Mode.historical and year is None or isinstance(year, Iterable):
+    if mode == ATCF_Mode.HISTORICAL and year is None or isinstance(year, Iterable):
         if year is None:
             year = range(ATCF_RECORD_START_YEAR, datetime.today().year + 1)
         return list(
@@ -199,17 +199,17 @@ class ATCF_FileDeck(Enum):
 
 
 class ATCF_Mode(Enum):
-    historical = 'ARCHIVE'
-    realtime = 'aid_public'
+    HISTORICAL = 'ARCHIVE'
+    REALTIME = 'aid_public'
 
 
 class ATCF_Advisory(Enum):
-    best = 'BEST'
-    ofcl = 'OFCL'
-    ofcp = 'OFCP'
-    hmon = 'HMON'
-    carq = 'CARQ'
-    hwrf = 'HWRF'
+    BEST = 'BEST'
+    OFCL = 'OFCL'
+    OFCP = 'OFCP'
+    HMON = 'HMON'
+    CARQ = 'CARQ'
+    HWRF = 'HWRF'
 
 
 def get_atcf_entry(
@@ -254,9 +254,9 @@ def atcf_url(
             raise ValueError('NHC storm code not given')
         entry = get_atcf_entry(basin=nhc_code[:2], storm_number=int(nhc_code[2:4]), year=year)
         if entry['source'] == 'ARCHIVE':
-            mode = ATCF_Mode.historical
+            mode = ATCF_Mode.HISTORICAL
         else:
-            mode = ATCF_Mode.realtime
+            mode = ATCF_Mode.REALTIME
 
     if not isinstance(file_deck, ATCF_FileDeck):
         try:
@@ -272,7 +272,7 @@ def atcf_url(
         except ValueError:
             mode = None
 
-    if mode == ATCF_Mode.historical:
+    if mode == ATCF_Mode.HISTORICAL:
         if year is None:
             raise ValueError('NHC storm code not given')
         nhc_dir = f'archive/{year}'

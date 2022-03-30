@@ -373,16 +373,16 @@ class VortexTrack:
 
         if self.__mode is None:
             if self.filename is None:
-                mode = ATCF_Mode.realtime
+                mode = ATCF_Mode.REALTIME
                 if self.nhc_code is not None:
                     try:
                         archive_storms = nhc_storms_archive()
                         if self.nhc_code.upper() in archive_storms:
-                            mode = ATCF_Mode.historical
+                            mode = ATCF_Mode.HISTORICAL
                     except:
                         pass
             else:
-                mode = ATCF_Mode.historical
+                mode = ATCF_Mode.HISTORICAL
             self.__mode = mode
 
         return self.__mode
@@ -400,7 +400,7 @@ class VortexTrack:
         """
 
         if self.file_deck == ATCF_FileDeck.BEST:
-            self.__advisory = ATCF_Advisory.best.value
+            self.__advisory = ATCF_Advisory.BEST.value
 
         return self.__advisory
 
@@ -425,10 +425,10 @@ class VortexTrack:
             # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
             # there are more but they may not have enough columns
             valid_advisories = [
-                entry.value for entry in ATCF_Advisory if entry != ATCF_Advisory.best
+                entry.value for entry in ATCF_Advisory if entry != ATCF_Advisory.BEST
             ]
         elif self.file_deck == ATCF_FileDeck.BEST:
-            valid_advisories = [ATCF_Advisory.best.value]
+            valid_advisories = [ATCF_Advisory.BEST.value]
         elif self.file_deck == ATCF_FileDeck.FIXED:
             valid_advisories = [entry.value for entry in ATCF_Advisory]
         else:
