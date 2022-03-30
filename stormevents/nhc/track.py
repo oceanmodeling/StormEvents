@@ -24,9 +24,9 @@ from shapely.geometry import (
 import typepigeon
 
 from stormevents.nhc.atcf import (
+    ATCF_Advisory,
     ATCF_FileDeck,
     ATCF_Mode,
-    ATCF_RecordType,
     atcf_url,
     EXTRA_ATCF_FIELDS,
     get_atcf_entry,
@@ -48,7 +48,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
-        record_type: ATCF_RecordType = None,
+        advisory: ATCF_Advisory = None,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -56,7 +56,7 @@ class VortexTrack:
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of `a`, `b`, `f`
         :param mode: ATCF mode; either `historical` or `realtime`
-        :param record_type: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
+        :param advisory: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
 
         >>> VortexTrack('AL112017')
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
@@ -82,7 +82,7 @@ class VortexTrack:
         self.__end_date = None
         self.__file_deck = None
         self.__mode = None
-        self.__record_type = None
+        self.__advisory = None
 
         self.__invalid_storm_name = False
         self.__location_hash = None
@@ -101,7 +101,7 @@ class VortexTrack:
 
         self.file_deck = file_deck
         self.mode = mode
-        self.record_type = record_type
+        self.advisory = advisory
 
         self.__previous_configuration = self.__configuration
 
@@ -118,7 +118,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
-        record_type: str = None,
+        advisory: str = None,
     ) -> 'VortexTrack':
         """
         :param name: storm name
@@ -127,7 +127,7 @@ class VortexTrack:
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
         :param mode: ATCF mode; either ``historical`` or ``realtime``
-        :param record_type: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
+        :param advisory: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
 
         >>> VortexTrack.from_storm_name('irma', 2017)
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
@@ -142,7 +142,7 @@ class VortexTrack:
             end_date=end_date,
             file_deck=file_deck,
             mode=mode,
-            record_type=record_type,
+            advisory=advisory,
         )
 
     @classmethod
@@ -373,16 +373,16 @@ class VortexTrack:
 
         if self.__mode is None:
             if self.filename is None:
-                mode = ATCF_Mode.realtime
+                mode = ATCF_Mode.REALTIME
                 if self.nhc_code is not None:
                     try:
                         archive_storms = nhc_storms_archive()
                         if self.nhc_code.upper() in archive_storms:
-                            mode = ATCF_Mode.historical
+                            mode = ATCF_Mode.HISTORICAL
                     except:
                         pass
             else:
-                mode = ATCF_Mode.historical
+                mode = ATCF_Mode.HISTORICAL
             self.__mode = mode
 
         return self.__mode
@@ -394,47 +394,47 @@ class VortexTrack:
         self.__mode = mode
 
     @property
-    def record_type(self) -> str:
+    def advisory(self) -> str:
         """
         :return: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
         """
 
         if self.file_deck == ATCF_FileDeck.BEST:
-            self.__record_type = ATCF_RecordType.best.value
+            self.__advisory = ATCF_Advisory.BEST.value
 
-        return self.__record_type
+        return self.__advisory
 
-    @record_type.setter
-    def record_type(self, record_type: ATCF_RecordType):
+    @advisory.setter
+    def advisory(self, advisory: ATCF_Advisory):
         # e.g. `BEST`, `OFCL`, `HWRF`, etc.
-        if record_type is not None:
-            if not isinstance(record_type, str):
-                record_type = typepigeon.convert_value(record_type, str)
-            record_type = record_type.upper()
-            if record_type not in self.valid_record_types:
+        if advisory is not None:
+            if not isinstance(advisory, str):
+                advisory = typepigeon.convert_value(advisory, str)
+            advisory = advisory.upper()
+            if advisory not in self.__valid_advisories:
                 raise ValueError(
-                    f'invalid advisory "{record_type}"; not one of {self.valid_record_types}'
+                    f'invalid advisory "{advisory}"; not one of {self.__valid_advisories}'
                 )
-        self.__record_type = record_type
+        self.__advisory = advisory
 
     @property
-    def valid_record_types(self) -> List[ATCF_RecordType]:
+    def __valid_advisories(self) -> List[ATCF_Advisory]:
         if self.file_deck is None:
-            valid_record_types = [record_type.value for record_type in ATCF_RecordType]
+            valid_advisories = [advisory.value for advisory in ATCF_Advisory]
         elif self.file_deck == ATCF_FileDeck.ADVISORY:
             # see ftp://ftp.nhc.noaa.gov/atcf/docs/nhc_techlist.dat
             # there are more but they may not have enough columns
-            valid_record_types = [
-                entry.value for entry in ATCF_RecordType if entry != ATCF_RecordType.best
+            valid_advisories = [
+                entry.value for entry in ATCF_Advisory if entry != ATCF_Advisory.BEST
             ]
         elif self.file_deck == ATCF_FileDeck.BEST:
-            valid_record_types = [ATCF_RecordType.best.value]
+            valid_advisories = [ATCF_Advisory.BEST.value]
         elif self.file_deck == ATCF_FileDeck.FIXED:
-            valid_record_types = [entry.value for entry in ATCF_RecordType]
+            valid_advisories = [entry.value for entry in ATCF_Advisory]
         else:
             raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
 
-        return valid_record_types
+        return valid_advisories
 
     @property
     def filename(self) -> pathlib.Path:
@@ -457,34 +457,34 @@ class VortexTrack:
 
         >>> track = VortexTrack('AL112017')
         >>> track.data
-            basin storm_number record_type            datetime  ...   direction     speed    name                    geometry
-        0      AL           11        BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
-        1      AL           11        BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
-        2      AL           11        BEST 2017-08-30 12:00:00  ...  274.424523  6.947623    IRMA  POINT (-29.70000 16.30000)
-        3      AL           11        BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
-        4      AL           11        BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
-        ..    ...          ...         ...                 ...  ...         ...       ...     ...                         ...
-        168    AL           11        BEST 2017-09-12 12:00:00  ...  309.875306  7.262151    IRMA  POINT (-86.90000 33.80000)
-        169    AL           11        BEST 2017-09-12 18:00:00  ...  315.455084  7.247674    IRMA  POINT (-88.10000 34.80000)
-        170    AL           11        BEST 2017-09-13 00:00:00  ...  320.849994  5.315966    IRMA  POINT (-88.90000 35.60000)
-        171    AL           11        BEST 2017-09-13 06:00:00  ...  321.042910  3.973414    IRMA  POINT (-89.50000 36.20000)
-        172    AL           11        BEST 2017-09-13 12:00:00  ...  321.262133  3.961652    IRMA  POINT (-90.10000 36.80000)
+            basin storm_number advisory            datetime  ...   direction     speed    name                    geometry
+        0      AL           11     BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
+        1      AL           11     BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
+        2      AL           11     BEST 2017-08-30 12:00:00  ...  274.424523  6.947623    IRMA  POINT (-29.70000 16.30000)
+        3      AL           11     BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
+        4      AL           11     BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
+        ..    ...          ...      ...                 ...  ...         ...       ...     ...                         ...
+        168    AL           11     BEST 2017-09-12 12:00:00  ...  309.875306  7.262151    IRMA  POINT (-86.90000 33.80000)
+        169    AL           11     BEST 2017-09-12 18:00:00  ...  315.455084  7.247674    IRMA  POINT (-88.10000 34.80000)
+        170    AL           11     BEST 2017-09-13 00:00:00  ...  320.849994  5.315966    IRMA  POINT (-88.90000 35.60000)
+        171    AL           11     BEST 2017-09-13 06:00:00  ...  321.042910  3.973414    IRMA  POINT (-89.50000 36.20000)
+        172    AL           11     BEST 2017-09-13 12:00:00  ...  321.262133  3.961652    IRMA  POINT (-90.10000 36.80000)
         [173 rows x 22 columns]
 
         >>> track = VortexTrack('AL112017', file_deck='a')
         >>> track.data
-              basin storm_number record_type            datetime  ...   direction      speed    name                    geometry
-        0        AL           11        CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
-        1        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)
-        2        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-13.30000 11.50000)
-        3        AL           11        CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-18.40000 11.90000)
-        4        AL           11        CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-16.00000 11.50000)
-        ...     ...          ...         ...                 ...  ...         ...        ...     ...                         ...
-        10739    AL           11        HMON 2017-09-16 09:00:00  ...   52.414833  11.903071          POINT (-84.30000 43.00000)
-        10740    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 41.00000)
-        10741    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-82.00000 39.50000)
-        10742    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 44.00000)
-        10743    AL           11        HMON 2017-09-16 15:00:00  ...  122.402907  22.540200          POINT (-81.90000 39.80000)
+              basin storm_number advisory            datetime  ...   direction      speed    name                    geometry
+        0        AL           11     CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
+        1        AL           11     CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)
+        2        AL           11     CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-13.30000 11.50000)
+        3        AL           11     CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-18.40000 11.90000)
+        4        AL           11     CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-16.00000 11.50000)
+        ...     ...          ...      ...                 ...  ...         ...        ...     ...                         ...
+        10739    AL           11     HMON 2017-09-16 09:00:00  ...   52.414833  11.903071          POINT (-84.30000 43.00000)
+        10740    AL           11     HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 41.00000)
+        10741    AL           11     HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-82.00000 39.50000)
+        10742    AL           11     HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 44.00000)
+        10743    AL           11     HMON 2017-09-16 15:00:00  ...  122.402907  22.540200          POINT (-81.90000 39.80000)
         [10744 rows x 22 columns
         """
 
@@ -493,38 +493,47 @@ class VortexTrack:
             & (self.unfiltered_data['datetime'] <= self.end_date)
         ]
 
-    def to_file(self, path: PathLike, overwrite: bool = False):
+    def to_file(self, path: PathLike, advisory: ATCF_Advisory = None, overwrite: bool = False):
         """
         write track to file path
 
         :param path: output file path
+        :param advisory: advisory type to write
         :param overwrite: overwrite existing file
         """
 
         if not isinstance(path, pathlib.Path):
             path = pathlib.Path(path)
+
         if overwrite or not path.exists():
             if path.suffix == '.dat':
-                data = self.atcf
+                data = self.atcf(advisory=advisory)
+                data.to_csv(path, index=False, header=False)
             elif path.suffix == '.22':
-                data = self.fort_22
+                data = self.fort_22(advisory=advisory)
+                data.to_csv(path, index=False, header=False)
             else:
                 raise NotImplementedError(f'writing to `*{path.suffix}` not supported')
-            data.to_csv(path, index=False, header=False)
+
         else:
             logging.warning(f'skipping existing file "{path}"')
 
-    @property
-    def atcf(self) -> DataFrame:
+    def atcf(self, advisory: ATCF_Advisory = None) -> DataFrame:
         """
         https://www.nrlmry.navy.mil/atcf_web/docs/database/new/abrdeck.html
 
         BASIN,CY,YYYYMMDDHH,TECHNUM/MIN,TECH,TAU,LatN/S,LonE/W,VMAX,MSLP,TY,RAD,WINDCODE,RAD1,RAD2,RAD3,RAD4,RADP,RRP,MRD,GUSTS,EYE,SUBREGION,MAXSEAS,INITIALS,DIR,SPEED,STORMNAME,DEPTH,SEAS,SEASCODE,SEAS1,SEAS2,SEAS3,SEAS4,USERDEFINED,userdata
 
+        :param advisory: advisory type
         :return: dataframe of CSV lines in ATCF format
         """
 
         atcf = DataFrame(self.data.drop(columns='geometry'), copy=True)
+
+        if advisory is not None:
+            if isinstance(advisory, ATCF_Advisory):
+                advisory = advisory.value
+            atcf = atcf[atcf['advisory'] == advisory]
 
         atcf.loc[:, ['longitude', 'latitude']] = atcf.loc[:, ['longitude', 'latitude']] * 10
 
@@ -537,8 +546,8 @@ class VortexTrack:
         atcf['basin'] = atcf['basin'].str.pad(2)
         atcf['storm_number'] = atcf['storm_number'].astype('string').str.pad(3)
         atcf['datetime'] = atcf['datetime'].dt.strftime('%Y%m%d%H').str.pad(11)
-        atcf['record_type_number'] = atcf['record_type_number'].str.pad(3)
-        atcf['record_type'] = atcf['record_type'].str.pad(5)
+        atcf['advisory_number'] = atcf['advisory_number'].str.pad(3)
+        atcf['advisory'] = atcf['advisory'].str.pad(5)
         atcf['forecast_hours'] = atcf['forecast_hours'].astype('string').str.pad(4)
 
         atcf['latitude'] = atcf['latitude'].astype('string')
@@ -610,7 +619,7 @@ class VortexTrack:
 
         atcf['direction'] = atcf['direction'].astype('string').str.pad(4)
         atcf['speed'] = atcf['speed'].astype('string').str.pad(4)
-        atcf['name'] = atcf['name'].astype('string').str.pad(11, side='both')
+        atcf['name'] = atcf['name'].astype('string').str.pad(11)
 
         if 'depth_code' in atcf.columns:
             atcf['depth_code'] = atcf['depth_code'].astype('string').str.pad(2)
@@ -636,15 +645,20 @@ class VortexTrack:
 
         return atcf
 
-    @property
-    def fort_22(self) -> DataFrame:
+    def fort_22(self, advisory: ATCF_Advisory = None) -> DataFrame:
         """
         https://wiki.adcirc.org/wiki/Fort.22_file
 
+        :param advisory: advisory type
         :return: `fort.22` representation of the current track
         """
 
         fort22 = DataFrame(self.data.drop(columns='geometry'), copy=True)
+
+        if advisory is not None:
+            if isinstance(advisory, ATCF_Advisory):
+                advisory = advisory.value
+            fort22 = fort22[fort22['advisory'] == advisory]
 
         fort22.drop(
             columns=[field for field in EXTRA_ATCF_FIELDS.values() if field in fort22.columns],
@@ -664,8 +678,8 @@ class VortexTrack:
         fort22['basin'] = fort22['basin'].str.pad(2)
         fort22['storm_number'] = fort22['storm_number'].astype('string').str.pad(3)
         fort22['datetime'] = fort22['datetime'].dt.strftime('%Y%m%d%H').str.pad(11)
-        fort22['record_type_number'] = fort22['record_type_number'].str.pad(3)
-        fort22['record_type'] = fort22['record_type'].str.pad(5)
+        fort22['advisory_number'] = fort22['advisory_number'].str.pad(3)
+        fort22['advisory'] = fort22['advisory'].str.pad(5)
         fort22['forecast_hours'] = fort22['forecast_hours'].astype('string').str.pad(4)
 
         fort22['latitude'] = fort22['latitude'].astype('string')
@@ -739,7 +753,7 @@ class VortexTrack:
 
         fort22['direction'] = fort22['direction'].astype('string').str.pad(3)
         fort22['speed'] = fort22['speed'].astype('string').str.pad(4)
-        fort22['name'] = fort22['name'].astype('string').str.pad(12, side='both')
+        fort22['name'] = fort22['name'].astype('string').str.pad(12)
 
         fort22['record_number'] = (
             (self.data.groupby(['datetime']).ngroup() + 1).astype('string').str.pad(4)
@@ -757,10 +771,10 @@ class VortexTrack:
         """
 
         linestrings = [
-            self.data[self.data['record_type'] == record_type]
+            self.data[self.data['advisory'] == advisory]
             .sort_values('datetime')['geometry']
             .drop_duplicates()
-            for record_type in pandas.unique(self.data['record_type'])
+            for advisory in pandas.unique(self.data['advisory'])
         ]
 
         linestrings = [
@@ -799,7 +813,7 @@ class VortexTrack:
 
         :param wind_speed: wind speed to extract (in knots)
         :param segments: number of discretization points per quadrant
-        :return: list of isotachs as polygons for each record type
+        :return: list of isotachs as polygons for each advisory type
         """
 
         # collect the attributes needed from the forcing to generate swath
@@ -820,11 +834,11 @@ class VortexTrack:
 
         # generate overall swath based on the desired isotach
         isotachs = {}
-        for record_type in pandas.unique(data['record_type']):
-            record_type_data = data[data['record_type'] == record_type]
+        for advisory in pandas.unique(data['advisory']):
+            advisory_data = data[data['advisory'] == advisory]
 
-            record_type_isotachs = {}
-            for index, row in record_type_data.iterrows():
+            advisory_isotachs = {}
+            for index, row in advisory_data.iterrows():
                 # get the starting angle range for NEQ based on storm direction
                 rotation_angle = 360 - row['direction']
                 start_angle = 0 + rotation_angle
@@ -872,16 +886,16 @@ class VortexTrack:
                     if isinstance(isotach, MultiPolygon):
                         isotach = isotach.buffer(1e-10)
 
-                    record_type_isotachs[row['datetime']] = isotach
+                    advisory_isotachs[row['datetime']] = isotach
 
-            if len(record_type_isotachs) > 0:
-                isotachs[record_type] = record_type_isotachs
+            if len(advisory_isotachs) > 0:
+                isotachs[advisory] = advisory_isotachs
 
         return isotachs
 
     def wind_swaths(self, wind_speed: int, segments: int = 91) -> Dict[str, Polygon]:
         """
-        extract wind swaths (per record type) of the track as polygons
+        extract wind swaths (per advisory type) of the track as polygons
 
         :param wind_speed: wind speed in knots (one of ``34``, ``50``, or ``64``)
         :param segments: number of discretization points per quadrant (default = ``91``)
@@ -892,10 +906,10 @@ class VortexTrack:
             wind_speed in valid_isotach_values
         ), f'isotach must be one of {valid_isotach_values}'
 
-        record_type_isotachs = self.isotachs(wind_speed=wind_speed, segments=segments)
+        advisory_isotachs = self.isotachs(wind_speed=wind_speed, segments=segments)
 
         wind_swaths = {}
-        for record_type, isotachs in record_type_isotachs.items():
+        for advisory, isotachs in advisory_isotachs.items():
             isotachs = list(isotachs.values())
             convex_hulls = []
             for index in range(len(isotachs) - 1):
@@ -904,7 +918,7 @@ class VortexTrack:
                 )
 
             # get the union of polygons
-            wind_swaths[record_type] = ops.unary_union(convex_hulls)
+            wind_swaths[advisory] = ops.unary_union(convex_hulls)
 
         return wind_swaths
 
@@ -931,11 +945,11 @@ class VortexTrack:
             or configuration != self.__previous_configuration
         ):
             if configuration['filename'] is not None:
-                record_types = None if self.record_type is None else [self.record_type]
+                advisories = None if self.advisory is None else [self.advisory]
                 atcf_file = configuration['filename']
             else:
-                record_types = (
-                    self.valid_record_types if self.record_type is None else [self.record_type]
+                advisories = (
+                    self.__valid_advisories if self.advisory is None else [self.advisory]
                 )
                 url = atcf_url(self.nhc_code, self.file_deck, self.mode)
                 atcf_file = io.BytesIO()
@@ -944,8 +958,8 @@ class VortexTrack:
                 if url.endswith('.gz'):
                     atcf_file = gzip.GzipFile(fileobj=atcf_file, mode='rb')
 
-            dataframe = read_atcf(atcf_file, record_types=record_types)
-            dataframe.sort_values(['datetime', 'record_type'], inplace=True)
+            dataframe = read_atcf(atcf_file, advisories=advisories)
+            dataframe.sort_values(['datetime', 'advisory'], inplace=True)
             dataframe.reset_index(inplace=True, drop=True)
 
             self.__unfiltered_data = dataframe
@@ -978,7 +992,7 @@ class VortexTrack:
             'id': self.nhc_code,
             'file_deck': self.file_deck,
             'mode': self.mode,
-            'record_type': self.record_type,
+            'advisory': self.advisory,
             'filename': self.filename,
         }
 
@@ -986,38 +1000,40 @@ class VortexTrack:
     def __compute_velocity(data: DataFrame) -> DataFrame:
         geodetic = Geod(ellps='WGS84')
 
-        for record_type in pandas.unique(data['record_type']):
-            record_data = data.loc[data['record_type'] == record_type]
+        for advisory in pandas.unique(data['advisory']):
+            advisory_data = data.loc[data['advisory'] == advisory]
 
             indices = numpy.array(
                 [
-                    numpy.where(record_data['datetime'] == unique_datetime)[0][0]
-                    for unique_datetime in pandas.unique(record_data['datetime'])
+                    numpy.where(advisory_data['datetime'] == unique_datetime)[0][0]
+                    for unique_datetime in pandas.unique(advisory_data['datetime'])
                 ]
             )
             shifted_indices = numpy.roll(indices, 1)
             shifted_indices[0] = 0
 
-            indices = record_data.index[indices]
-            shifted_indices = record_data.index[shifted_indices]
+            indices = advisory_data.index[indices]
+            shifted_indices = advisory_data.index[shifted_indices]
 
             _, inverse_azimuths, distances = geodetic.inv(
-                record_data.loc[indices, 'longitude'],
-                record_data.loc[indices, 'latitude'],
-                record_data.loc[shifted_indices, 'longitude'],
-                record_data.loc[shifted_indices, 'latitude'],
+                advisory_data.loc[indices, 'longitude'],
+                advisory_data.loc[indices, 'latitude'],
+                advisory_data.loc[shifted_indices, 'longitude'],
+                advisory_data.loc[shifted_indices, 'latitude'],
             )
 
-            intervals = record_data.loc[indices, 'datetime'].diff()
+            intervals = advisory_data.loc[indices, 'datetime'].diff()
             speeds = distances / (intervals / pandas.to_timedelta(1, 's'))
             bearings = pandas.Series(inverse_azimuths % 360, index=speeds.index)
 
             for index in indices:
-                cluster_index = record_data['datetime'] == record_data.loc[index, 'datetime']
-                record_data.loc[cluster_index, 'speed'] = speeds[index]
-                record_data.loc[cluster_index, 'direction'] = bearings[index]
+                cluster_index = (
+                    advisory_data['datetime'] == advisory_data.loc[index, 'datetime']
+                )
+                advisory_data.loc[cluster_index, 'speed'] = speeds[index]
+                advisory_data.loc[cluster_index, 'direction'] = bearings[index]
 
-            data.loc[data['record_type'] == record_type] = record_data
+            data.loc[data['advisory'] == advisory] = advisory_data
 
         data.loc[pandas.isna(data['speed']), 'speed'] = 0
 
@@ -1039,7 +1055,7 @@ class VortexTrack:
             start_date=self.start_date,
             end_date=self.end_date,
             file_deck=self.file_deck,
-            record_type=self.record_type,
+            advisory=self.advisory,
         )
         if self.filename is not None:
             instance.filename = self.filename
@@ -1049,7 +1065,7 @@ class VortexTrack:
         return self.data.equals(other.data)
 
     def __str__(self) -> str:
-        return f'{self.nhc_code} ({" + ".join(pandas.unique(self.data["record_type"]).tolist())}) track with {len(self)} entries, spanning {self.distance:.2f} meters over {self.duration}'
+        return f'{self.nhc_code} ({" + ".join(pandas.unique(self.data["advisory"]).tolist())}) track with {len(self)} entries, spanning {self.distance:.2f} meters over {self.duration}'
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.mode, self.record_type, self.filename])})'
+        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.mode, self.advisory, self.filename])})'
