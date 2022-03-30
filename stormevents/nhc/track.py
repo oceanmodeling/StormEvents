@@ -619,7 +619,7 @@ class VortexTrack:
 
         atcf['direction'] = atcf['direction'].astype('string').str.pad(4)
         atcf['speed'] = atcf['speed'].astype('string').str.pad(4)
-        atcf['name'] = atcf['name'].astype('string').str.pad(11, side='both')
+        atcf['name'] = atcf['name'].astype('string').str.pad(11)
 
         if 'depth_code' in atcf.columns:
             atcf['depth_code'] = atcf['depth_code'].astype('string').str.pad(2)
@@ -753,7 +753,7 @@ class VortexTrack:
 
         fort22['direction'] = fort22['direction'].astype('string').str.pad(3)
         fort22['speed'] = fort22['speed'].astype('string').str.pad(4)
-        fort22['name'] = fort22['name'].astype('string').str.pad(12, side='both')
+        fort22['name'] = fort22['name'].astype('string').str.pad(12)
 
         fort22['record_number'] = (
             (self.data.groupby(['datetime']).ngroup() + 1).astype('string').str.pad(4)
