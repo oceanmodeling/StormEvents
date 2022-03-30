@@ -10,8 +10,7 @@ import json
 from pathlib import Path
 from typing import Union
 
-import bs4
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, element
 import geopandas
 from geopandas import GeoDataFrame
 import numpy
@@ -488,7 +487,7 @@ class COOPS_Query:
 
 
 @lru_cache(maxsize=None)
-def __coops_stations_html_tables() -> bs4.element.ResultSet:
+def __coops_stations_html_tables() -> element.ResultSet:
     response = requests.get(
         'https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current',
     )
