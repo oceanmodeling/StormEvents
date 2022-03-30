@@ -97,6 +97,16 @@ def test_vortex_track_properties():
     assert len(track) == 175
 
 
+def test_vortex_track_forecasts():
+    track = VortexTrack.from_storm_name('florence', 2018, file_deck='a')
+
+    forecasts = track.forecasts
+
+    assert len(forecasts) == 4
+    assert len(forecasts['OFCL']) == 77
+    assert len(forecasts['OFCL']['20180830T120000']) == 13
+
+
 @pytest.mark.disable_socket
 def test_vortex_track_from_file():
     input_directory = INPUT_DIRECTORY / 'test_vortex_track_from_file'

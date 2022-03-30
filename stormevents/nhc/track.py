@@ -923,6 +923,29 @@ class VortexTrack:
         return wind_swaths
 
     @property
+    def forecasts(self) -> Dict[str, Dict[str, DataFrame]]:
+        data = self.data
+
+        forecast_advisories = (
+            advisory for advisory in pandas.unique(data['advisory']) if advisory != 'BEST'
+        )
+
+        forecasts = {}
+        for advisory in forecast_advisories:
+            advisory_data = data[data['advisory'] == advisory]
+
+            initial_times = pandas.unique(advisory_data['datetime'])
+
+            forecasts[advisory] = {}
+            for initial_time in initial_times:
+                forecast_data = advisory_data[advisory_data['datetime'] == initial_time]
+                forecasts[advisory][
+                    f'{pandas.to_datetime(initial_time):%Y%m%dT%H%M%S}'
+                ] = forecast_data.sort_values('forecast_hours')
+
+        return forecasts
+
+    @property
     def duration(self) -> pandas.Timedelta:
         """
         :return: duration of current track
