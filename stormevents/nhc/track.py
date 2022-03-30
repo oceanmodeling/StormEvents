@@ -985,6 +985,25 @@ class VortexTrack:
             dataframe.sort_values(['datetime', 'advisory'], inplace=True)
             dataframe.reset_index(inplace=True, drop=True)
 
+            # fill missing values of MRD and MSLP in the OFCL advisory
+            advisories = pandas.unique(dataframe['advisory'])
+            if 'OFCL' in advisories and 'CARQ' in advisories:
+                is_ofcl = dataframe['advisory'] == 'OFCL'
+                is_carq = dataframe['advisory'] == 'CARQ'
+
+                ofcl_mrd_missing = is_ofcl & pandas.isna(dataframe['radius_of_maximum_winds'])
+                ofcl_mslp_missing = is_ofcl & pandas.isna(dataframe['central_pressure'])
+
+                # fill OFCL maximum wind radius with the first entry from the CARQ advisory
+                dataframe.loc[ofcl_mrd_missing, 'radius_of_maximum_winds'] = dataframe.loc[
+                    is_carq, 'radius_of_maximum_winds'
+                ].iloc[0]
+
+                # fill OFCL central pressure (at sea level) with the first entry from the CARQ advisory
+                dataframe.loc[ofcl_mslp_missing, 'central_pressure'] = dataframe.loc[
+                    is_carq, 'central_pressure'
+                ].iloc[0]
+
             self.__unfiltered_data = dataframe
             self.__previous_configuration = configuration
 
