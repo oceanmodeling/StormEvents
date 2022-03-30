@@ -923,7 +923,7 @@ class VortexTrack:
         return wind_swaths
 
     @property
-    def forecasts(self) -> Dict[str, Dict[datetime, DataFrame]]:
+    def forecasts(self) -> Dict[str, List[DataFrame]]:
         data = self.data
 
         forecast_advisories = (
@@ -936,10 +936,10 @@ class VortexTrack:
 
             initial_times = pandas.unique(advisory_data['datetime'])
 
-            forecasts[advisory] = {}
+            forecasts[advisory] = []
             for initial_time in initial_times:
                 forecast_data = advisory_data[advisory_data['datetime'] == initial_time]
-                forecasts[advisory][initial_time] = forecast_data.sort_values('forecast_hours')
+                forecasts[advisory].append(forecast_data.sort_values('forecast_hours'))
 
         return forecasts
 
