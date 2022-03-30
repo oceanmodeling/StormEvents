@@ -5,8 +5,8 @@ from stormevents.nhc.atcf import ATCF_FileDeck, atcf_files, ATCF_Mode, atcf_url,
 
 def test_atcf_url():
     url_1 = atcf_url(nhc_code='AL062018')
-    url_2 = atcf_url(mode='current', file_deck='a')
-    url_3 = atcf_url(mode='historical', file_deck='a', year=2018)
+    url_2 = atcf_url(mode='CURRENT', file_deck='a')
+    url_3 = atcf_url(mode='HISTORICAL', file_deck='a', year=2018)
 
     assert url_1 == 'ftp://ftp.nhc.noaa.gov/atcf/archive/2018/aal062018.dat.gz'
     assert url_2 == 'ftp://ftp.nhc.noaa.gov/atcf/aid_public/'
