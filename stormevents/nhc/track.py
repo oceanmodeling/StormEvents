@@ -178,7 +178,12 @@ class VortexTrack:
         """
 
         if self.__name is None:
-            name = self.data['name'].value_counts()[:].index.tolist()[0]
+            # get the most frequently-used storm name in the data
+            names = self.data['name'].value_counts()
+            if len(names) > 0:
+                name = names.index[0]
+            else:
+                name = ''
 
             if name.strip() == '':
                 storms = nhc_storms(year=self.year)
