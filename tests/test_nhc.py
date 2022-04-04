@@ -61,9 +61,7 @@ def test_vortex_track():
     ]
 
     for storm in storms:
-        track = VortexTrack.from_storm_name(
-            *storm, start_date=timedelta(days=-1), file_deck='a'
-        )
+        track = VortexTrack.from_storm_name(*storm, file_deck='b')
         track.to_file(
             output_directory / f'{track.name.lower()}{track.year}.fort.22', overwrite=True
         )

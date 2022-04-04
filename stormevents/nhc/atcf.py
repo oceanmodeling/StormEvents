@@ -340,11 +340,19 @@ def read_atcf(
         for line in lines
     )
 
-    data = DataFrame.from_records(lines, columns=list(ATCF_FIELDS),).astype(
-        {field: 'string' for field in ATCF_FIELDS}
+    data = DataFrame.from_records(lines)
+    data.rename(
+        columns={index: list(ATCF_FIELDS)[index] for index in range(len(data.columns))},
+        inplace=True,
+    )
+    for column in ATCF_FIELDS:
+        if column not in data.columns:
+            data[column] = ''
+    data.astype(
+        {field: 'string' for field in data.columns}, copy=False,
     )
 
-    if data['USERDEFINED'].str.contains(',').any():
+    if 'USERDEFINED' in data and data['USERDEFINED'].str.contains(',').any():
         if fort_22:
             extra_fields = FORT_22_FIELDS
         else:
@@ -366,7 +374,7 @@ def read_atcf(
         except ValueError:
             pass
 
-    if advisories is not None:
+    if advisories is not None and len(advisories) > 0:
         data = data[data['TECH'].isin(advisories)]
         if len(data) == 0:
             raise ValueError(f'no ATCF records found matching "{advisories}"')

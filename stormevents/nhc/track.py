@@ -653,114 +653,23 @@ class VortexTrack:
         :return: `fort.22` representation of the current track
         """
 
-        fort22 = DataFrame(self.data.drop(columns='geometry'), copy=True)
-
-        if advisory is not None:
-            if isinstance(advisory, ATCF_Advisory):
-                advisory = advisory.value
-            fort22 = fort22[fort22['advisory'] == advisory]
+        fort22 = self.atcf(advisory=advisory)
 
         fort22.drop(
             columns=[field for field in EXTRA_ATCF_FIELDS.values() if field in fort22.columns],
             inplace=True,
         )
 
-        fort22.loc[:, ['longitude', 'latitude']] = (
-            fort22.loc[:, ['longitude', 'latitude']] * 10
-        )
-
-        float_columns = fort22.select_dtypes(include=['float']).columns
-        integer_na_value = -99999
-        for column in float_columns:
-            fort22.loc[pandas.isna(fort22[column]), column] = integer_na_value
-            fort22.loc[:, column] = fort22.loc[:, column].round(0).astype(int)
-
-        fort22['basin'] = fort22['basin'].str.pad(2)
-        fort22['storm_number'] = fort22['storm_number'].astype('string').str.pad(3)
-        fort22['datetime'] = fort22['datetime'].dt.strftime('%Y%m%d%H').str.pad(11)
-        fort22['advisory_number'] = fort22['advisory_number'].str.pad(3)
-        fort22['advisory'] = fort22['advisory'].str.pad(5)
-        fort22['forecast_hours'] = fort22['forecast_hours'].astype('string').str.pad(4)
-
-        fort22['latitude'] = fort22['latitude'].astype('string')
-        fort22.loc[~fort22['latitude'].str.contains('-'), 'latitude'] = (
-            fort22.loc[~fort22['latitude'].str.contains('-'), 'latitude'] + 'N'
-        )
-        fort22.loc[fort22['latitude'].str.contains('-'), 'latitude'] = (
-            fort22.loc[fort22['latitude'].str.contains('-'), 'latitude'] + 'S'
-        )
-        fort22['latitude'] = fort22['latitude'].str.strip('-').str.pad(4)
-
-        fort22['longitude'] = fort22['longitude'].astype('string')
-        fort22.loc[~fort22['longitude'].str.contains('-'), 'longitude'] = (
-            fort22.loc[~fort22['longitude'].str.contains('-'), 'longitude'] + 'E'
-        )
-        fort22.loc[fort22['longitude'].str.contains('-'), 'longitude'] = (
-            fort22.loc[fort22['longitude'].str.contains('-'), 'longitude'] + 'W'
-        )
-        fort22['longitude'] = fort22['longitude'].str.strip('-').str.pad(5)
-
-        fort22['max_sustained_wind_speed'] = (
-            fort22['max_sustained_wind_speed'].astype('string').str.pad(5)
-        )
-        fort22['central_pressure'] = fort22['central_pressure'].astype('string').str.pad(5)
-        fort22['development_level'] = fort22['development_level'].str.pad(3)
-        fort22['isotach_radius'] = fort22['isotach_radius'].astype('string').str.pad(4)
-        fort22['isotach_quadrant_code'] = fort22['isotach_quadrant_code'].str.pad(4)
-        fort22['isotach_radius_for_NEQ'] = (
-            fort22['isotach_radius_for_NEQ'].astype('string').str.pad(5)
-        )
-        fort22['isotach_radius_for_SEQ'] = (
-            fort22['isotach_radius_for_SEQ'].astype('string').str.pad(5)
-        )
-        fort22['isotach_radius_for_NWQ'] = (
-            fort22['isotach_radius_for_NWQ'].astype('string').str.pad(5)
-        )
-        fort22['isotach_radius_for_SWQ'] = (
-            fort22['isotach_radius_for_SWQ'].astype('string').str.pad(5)
-        )
-
-        fort22['background_pressure'].fillna(method='ffill', inplace=True)
-        fort22.loc[
-            ~pandas.isna(self.data['central_pressure'])
-            & (self.data['background_pressure'] <= self.data['central_pressure'])
-            & (self.data['central_pressure'] < 1013),
-            'background_pressure',
-        ] = '1013'
-        fort22.loc[
-            ~pandas.isna(self.data['central_pressure'])
-            & (self.data['background_pressure'] <= self.data['central_pressure'])
-            & (self.data['central_pressure'] < 1013),
-            'background_pressure',
-        ] = (self.data['central_pressure'] + 1)
-        fort22['background_pressure'] = (
-            fort22['background_pressure'].astype(int).astype('string').str.pad(5)
-        )
-
-        fort22['radius_of_last_closed_isobar'] = (
-            fort22['radius_of_last_closed_isobar'].astype('string').str.pad(5)
-        )
-        fort22['radius_of_maximum_winds'] = (
-            fort22['radius_of_maximum_winds'].astype('string').str.pad(4)
-        )
-        fort22['gust_speed'] = fort22['gust_speed'].astype('string').str.pad(5)
-        fort22['eye_diameter'] = fort22['eye_diameter'].astype('string').str.pad(4)
-        fort22['subregion_code'] = fort22['subregion_code'].str.pad(4)
-        fort22['maximum_wave_height'] = (
-            fort22['maximum_wave_height'].astype('string').str.pad(4)
-        )
-        fort22['forecaster_initials'] = fort22['forecaster_initials'].str.pad(4)
-
-        fort22['direction'] = fort22['direction'].astype('string').str.pad(3)
-        fort22['speed'] = fort22['speed'].astype('string').str.pad(4)
-        fort22['name'] = fort22['name'].astype('string').str.pad(12)
+        fort22['longitude'] = fort22['longitude'].str.strip().str.pad(4)
+        fort22['latitude'] = fort22['latitude'].str.strip().str.pad(5)
+        fort22['gust_speed'] = fort22['gust_speed'].str.strip().str.pad(5)
+        fort22['direction'] = fort22['direction'].str.strip().str.pad(3)
+        fort22['name'] = fort22['name'].str.strip().str.pad(12)
+        fort22.loc[fort22['name'] == '', 'name'] = self.name
 
         fort22['record_number'] = (
             (self.data.groupby(['datetime']).ngroup() + 1).astype('string').str.pad(4)
         )
-
-        for column in fort22.select_dtypes(include=['string']).columns:
-            fort22[column] = fort22[column].str.replace(re.compile(str(integer_na_value)), '')
 
         return fort22
 
@@ -924,26 +833,7 @@ class VortexTrack:
 
     @property
     def forecasts(self) -> Dict[str, Dict[str, DataFrame]]:
-        data = self.data
-
-        forecast_advisories = (
-            advisory for advisory in pandas.unique(data['advisory']) if advisory != 'BEST'
-        )
-
-        forecasts = {}
-        for advisory in forecast_advisories:
-            advisory_data = data[data['advisory'] == advisory]
-
-            initial_times = pandas.unique(advisory_data['datetime'])
-
-            forecasts[advisory] = {}
-            for initial_time in initial_times:
-                forecast_data = advisory_data[advisory_data['datetime'] == initial_time]
-                forecasts[advisory][
-                    f'{pandas.to_datetime(initial_time):%Y%m%dT%H%M%S}'
-                ] = forecast_data.sort_values('forecast_hours')
-
-        return forecasts
+        return separate_forecasts(self.data)
 
     @property
     def duration(self) -> pandas.Timedelta:
@@ -968,7 +858,7 @@ class VortexTrack:
             or configuration != self.__previous_configuration
         ):
             if configuration['filename'] is not None:
-                advisories = None if self.advisory is None else [self.advisory]
+                advisories = [] if self.advisory is None else [self.advisory]
                 atcf_file = configuration['filename']
             else:
                 advisories = (
@@ -981,28 +871,62 @@ class VortexTrack:
                 if url.endswith('.gz'):
                     atcf_file = gzip.GzipFile(fileobj=atcf_file, mode='rb')
 
-            dataframe = read_atcf(atcf_file, advisories=advisories)
+            advisories_to_remove = []
+            if 'OFCL' in advisories and 'CARQ' not in advisories:
+                advisories_to_remove.append('CARQ')
+
+            dataframe = read_atcf(atcf_file, advisories=advisories + advisories_to_remove)
             dataframe.sort_values(['datetime', 'advisory'], inplace=True)
             dataframe.reset_index(inplace=True, drop=True)
 
             # fill missing values of MRD and MSLP in the OFCL advisory
-            advisories = pandas.unique(dataframe['advisory'])
-            if 'OFCL' in advisories and 'CARQ' in advisories:
-                is_ofcl = dataframe['advisory'] == 'OFCL'
-                is_carq = dataframe['advisory'] == 'CARQ'
+            if 'OFCL' in advisories:
+                forecasts = separate_forecasts(dataframe)
 
-                ofcl_mrd_missing = is_ofcl & pandas.isna(dataframe['radius_of_maximum_winds'])
-                ofcl_mslp_missing = is_ofcl & pandas.isna(dataframe['central_pressure'])
+                ofcl_forecasts = forecasts['OFCL']
+                carq_forecasts = forecasts['CARQ']
 
-                # fill OFCL maximum wind radius with the first entry from the CARQ advisory
-                dataframe.loc[ofcl_mrd_missing, 'radius_of_maximum_winds'] = dataframe.loc[
-                    is_carq, 'radius_of_maximum_winds'
-                ].iloc[0]
+                for initial_time, forecast in ofcl_forecasts.items():
+                    if initial_time in carq_forecasts:
+                        carq_forecast = carq_forecasts[initial_time]
+                    else:
+                        carq_forecast = carq_forecasts[list(carq_forecasts)[0]]
 
-                # fill OFCL central pressure (at sea level) with the first entry from the CARQ advisory
-                dataframe.loc[ofcl_mslp_missing, 'central_pressure'] = dataframe.loc[
-                    is_carq, 'central_pressure'
-                ].iloc[0]
+                    relation = HollandBRelation()
+                    holland_b = relation.holland_b(
+                        max_sustained_wind_speed=carq_forecast['max_sustained_wind_speed'],
+                        background_pressure=carq_forecast['background_pressure'],
+                        central_pressure=carq_forecast['central_pressure'],
+                    )
+
+                    holland_b[holland_b == numpy.inf] = numpy.nan
+                    holland_b = numpy.nanmean(holland_b)
+
+                    mrd_missing = pandas.isna(forecast['radius_of_maximum_winds'])
+                    mslp_missing = pandas.isna(forecast['central_pressure'])
+                    radp_missing = pandas.isna(forecast['background_pressure'])
+
+                    # fill OFCL maximum wind radius with the first entry from the CARQ advisory
+                    forecast.loc[mrd_missing, 'radius_of_maximum_winds'] = carq_forecast[
+                        'radius_of_maximum_winds'
+                    ].iloc[0]
+
+                    # fill OFCL background pressure with the first entry from the CARQ advisory central pressure (at sea level)
+                    forecast.loc[radp_missing, 'background_pressure'] = carq_forecast[
+                        'central_pressure'
+                    ].iloc[0]
+
+                    # fill OFCL central pressure (at sea level) with the 3rd hour entry, preserving Holland B
+                    forecast.loc[mslp_missing, 'central_pressure'] = relation.central_pressure(
+                        max_sustained_wind_speed=forecast.loc[
+                            mslp_missing, 'max_sustained_wind_speed'
+                        ],
+                        background_pressure=forecast.loc[mslp_missing, 'background_pressure'],
+                        holland_b=holland_b,
+                    )
+
+            if len(advisories_to_remove) > 0:
+                dataframe = dataframe[~dataframe['advisory'].isin(advisories_to_remove)]
 
             self.__unfiltered_data = dataframe
             self.__previous_configuration = configuration
@@ -1111,3 +1035,55 @@ class VortexTrack:
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.mode, self.advisory, self.filename])})'
+
+
+class HollandBRelation:
+    def __init__(self, rho: float = None):
+        if rho is None:
+            rho = 1.15
+        self.rho = rho
+
+    def holland_b(
+        self,
+        max_sustained_wind_speed: float,
+        background_pressure: float,
+        central_pressure: float,
+    ) -> float:
+        return ((max_sustained_wind_speed ** 2) * self.rho * numpy.exp(1)) / (
+            background_pressure - central_pressure
+        )
+
+    def central_pressure(
+        self, max_sustained_wind_speed: float, background_pressure: float, holland_b: float,
+    ) -> float:
+        return (
+            -(max_sustained_wind_speed ** 2) * self.rho * numpy.exp(1)
+        ) / holland_b + background_pressure
+
+    def max_sustained_wind_speed(
+        self, holland_b: float, background_pressure: float, central_pressure: float,
+    ) -> float:
+        return numpy.sqrt(
+            holland_b * (background_pressure - central_pressure) / (self.rho * numpy.exp(1))
+        )
+
+
+def separate_forecasts(data: DataFrame):
+    forecast_advisories = (
+        advisory for advisory in pandas.unique(data['advisory']) if advisory != 'BEST'
+    )
+
+    forecasts = {}
+    for advisory in forecast_advisories:
+        advisory_data = data[data['advisory'] == advisory]
+
+        initial_times = pandas.unique(advisory_data['datetime'])
+
+        forecasts[advisory] = {}
+        for initial_time in initial_times:
+            forecast_data = advisory_data[advisory_data['datetime'] == initial_time]
+            forecasts[advisory][
+                f'{pandas.to_datetime(initial_time):%Y%m%dT%H%M%S}'
+            ] = forecast_data.sort_values('forecast_hours')
+
+    return forecasts
