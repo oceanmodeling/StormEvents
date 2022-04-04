@@ -527,11 +527,11 @@ class VortexTrack:
         :return: dataframe of CSV lines in ATCF format
         """
 
-        atcf = self.data.drop(columns='geometry').copy(deep=True)
+        atcf = self.data.copy(deep=True)
         atcf.loc[atcf['advisory'] != 'BEST', 'datetime'] = atcf.loc[
             atcf['advisory'] != 'BEST', 'track_start_time'
         ]
-        atcf.drop(columns='track_start_time', inplace=True)
+        atcf.drop(columns=['geometry', 'track_start_time'], inplace=True)
 
         if advisory is not None:
             if isinstance(advisory, ATCF_Advisory):
@@ -924,10 +924,48 @@ class VortexTrack:
 
             dataframe = dataframe[
                 [
-                    *dataframe.columns[:3],
-                    *dataframe.columns[4:-1],
-                    'advisory_number',
-                    'track_start_time',
+                    column
+                    for column in [
+                        'basin',
+                        'storm_number',
+                        'datetime',
+                        'advisory',
+                        'latitude',
+                        'longitude',
+                        'max_sustained_wind_speed',
+                        'central_pressure',
+                        'development_level',
+                        'isotach_radius',
+                        'isotach_quadrant_code',
+                        'isotach_radius_for_NEQ',
+                        'isotach_radius_for_SEQ',
+                        'isotach_radius_for_NWQ',
+                        'isotach_radius_for_SWQ',
+                        'background_pressure',
+                        'radius_of_last_closed_isobar',
+                        'radius_of_maximum_winds',
+                        'gust_speed',
+                        'eye_diameter',
+                        'subregion_code',
+                        'maximum_wave_height',
+                        'forecaster_initials',
+                        'direction',
+                        'speed',
+                        'name',
+                        'depth_code',
+                        'isowave',
+                        'isowave_quadrant_code',
+                        'isowave_radius_for_NEQ',
+                        'isowave_radius_for_SEQ',
+                        'isowave_radius_for_NWQ',
+                        'isowave_radius_for_SWQ',
+                        'extra_values',
+                        'geometry',
+                        'track_start_time',
+                        'forecast_hours',
+                        'advisory_number',
+                    ]
+                    if column in dataframe.columns
                 ]
             ]
 
