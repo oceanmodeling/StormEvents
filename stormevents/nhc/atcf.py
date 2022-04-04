@@ -5,7 +5,7 @@ import io
 import itertools
 from os import PathLike
 from pathlib import Path
-from typing import Any, Iterable, List, TextIO, Union
+from typing import Iterable, List, TextIO, Union
 
 import geopandas
 from geopandas import GeoDataFrame
@@ -298,18 +298,6 @@ def atcf_url(
     return url
 
 
-def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -> Any:
-    if type(value).__name__ == 'Quantity':
-        value = value.magnitude
-    if not (value is None or pandas.isna(value) or value == ''):
-        if round_digits is not None and issubclass(to_type, (int, float)):
-            if isinstance(value, str):
-                value = float(value)
-            value = round(value, round_digits)
-        value = typepigeon.convert_value(value, to_type)
-    return value
-
-
 def read_atcf(
     atcf: Union[PathLike, io.BytesIO, TextIO],
     advisories: List[ATCF_Advisory] = None,
@@ -347,7 +335,7 @@ def read_atcf(
     )
     for column in ATCF_FIELDS:
         if column not in data.columns:
-            data[column] = ''
+            data[column] = pandas.NA
     data.astype(
         {field: 'string' for field in data.columns}, copy=False,
     )

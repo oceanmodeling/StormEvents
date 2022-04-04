@@ -14,13 +14,7 @@ import pandas
 from pandas import DataFrame
 from pyproj import Geod
 from shapely import ops
-from shapely.geometry import (
-    GeometryCollection,
-    LineString,
-    MultiLineString,
-    MultiPolygon,
-    Polygon,
-)
+from shapely.geometry import LineString, MultiPolygon, Polygon
 import typepigeon
 
 from stormevents.nhc.atcf import (
@@ -48,7 +42,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
-        advisory: ATCF_Advisory = None,
+        advisories: List[ATCF_Advisory] = None,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -56,7 +50,7 @@ class VortexTrack:
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of `a`, `b`, `f`
         :param mode: ATCF mode; either `historical` or `realtime`
-        :param advisory: ATCF advisory type; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
+        :param advisories: ATCF advisory types; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
 
         >>> VortexTrack('AL112017')
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
@@ -72,7 +66,7 @@ class VortexTrack:
         VortexTrack('AL112017', Timestamp('2017-08-27 06:00:00'), Timestamp('2017-09-16 15:00:00'), <ATCF_FileDeck.ADVISORY: 'a'>, <ATCF_Mode.historical: 'ARCHIVE'>, None, None)
         """
 
-        self.__unfiltered_data = None
+        self.__raw_data = None
         self.__filename = None
 
         self.__remote_atcf = None
@@ -82,13 +76,18 @@ class VortexTrack:
         self.__end_date = None
         self.__file_deck = None
         self.__mode = None
-        self.__advisory = None
+        self.__advisories = None
 
+        self.__advisories_to_remove = []
         self.__invalid_storm_name = False
         self.__location_hash = None
+        self.__linestrings = None
+        self.__distances = None
+        self.__isotachs = None
+        self.__wind_swaths = None
 
         if isinstance(storm, DataFrame):
-            self.__unfiltered_data = storm
+            self.__raw_data = storm
         elif pathlib.Path(storm).exists():
             self.filename = storm
         elif isinstance(storm, str):
@@ -101,7 +100,7 @@ class VortexTrack:
 
         self.file_deck = file_deck
         self.mode = mode
-        self.advisory = advisory
+        self.advisories = advisories
 
         self.__previous_configuration = self.__configuration
 
@@ -118,7 +117,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
-        advisory: str = None,
+        advisories: [ATCF_Advisory] = None,
     ) -> 'VortexTrack':
         """
         :param name: storm name
@@ -127,7 +126,7 @@ class VortexTrack:
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
         :param mode: ATCF mode; either ``historical`` or ``realtime``
-        :param advisory: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
+        :param advisories: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
 
         >>> VortexTrack.from_storm_name('irma', 2017)
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
@@ -142,7 +141,7 @@ class VortexTrack:
             end_date=end_date,
             file_deck=file_deck,
             mode=mode,
-            advisory=advisory,
+            advisories=advisories,
         )
 
     @classmethod
@@ -242,19 +241,19 @@ class VortexTrack:
         """
 
         if self.__nhc_code is None and not self.__invalid_storm_name:
-            if self.__unfiltered_data is not None:
+            if self.__raw_data is not None:
                 nhc_code = (
-                    f'{self.__unfiltered_data["basin"].iloc[-1]}'
-                    f'{self.__unfiltered_data["storm_number"].iloc[-1]}'
-                    f'{self.__unfiltered_data["datetime"].iloc[-1].year}'
+                    f'{self.__raw_data["basin"].iloc[-1]}'
+                    f'{self.__raw_data["storm_number"].iloc[-1]}'
+                    f'{self.__raw_data["datetime"].iloc[-1].year}'
                 )
                 try:
                     self.nhc_code = nhc_code
                 except ValueError:
                     try:
                         nhc_code = get_atcf_entry(
-                            storm_name=self.__unfiltered_data['name'].tolist()[-1],
-                            year=self.__unfiltered_data['datetime'].tolist()[-1].year,
+                            storm_name=self.__raw_data['name'].tolist()[-1],
+                            year=self.__raw_data['datetime'].tolist()[-1].year,
                         ).name
                         self.nhc_code = nhc_code
                     except ValueError:
@@ -300,13 +299,13 @@ class VortexTrack:
 
     @start_date.setter
     def start_date(self, start_date: datetime):
-        data_start = self.unfiltered_data['datetime'].iloc[0]
+        data_start = self.raw_data['datetime'].iloc[0]
 
         if start_date is None:
             start_date = data_start
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_end = self.unfiltered_data['datetime'].iloc[-1]
+            data_end = self.raw_data['datetime'].iloc[-1]
             start_date, _ = subset_time_interval(
                 start=data_start, end=data_end, subset_start=start_date,
             )
@@ -339,13 +338,13 @@ class VortexTrack:
 
     @end_date.setter
     def end_date(self, end_date: datetime):
-        data_end = self.unfiltered_data['datetime'].iloc[-1]
+        data_end = self.raw_data['datetime'].iloc[-1]
 
         if end_date is None:
             end_date = data_end
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_start = self.unfiltered_data['datetime'].iloc[0]
+            data_start = self.raw_data['datetime'].iloc[0]
             _, end_date = subset_time_interval(
                 start=data_start, end=data_end, subset_end=end_date,
             )
@@ -399,28 +398,25 @@ class VortexTrack:
         self.__mode = mode
 
     @property
-    def advisory(self) -> str:
+    def advisories(self) -> List[ATCF_Advisory]:
         """
-        :return: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
+        :return: ATCF advisory types; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
         """
 
         if self.file_deck == ATCF_FileDeck.BEST:
-            self.__advisory = ATCF_Advisory.BEST.value
+            self.__advisories = [ATCF_Advisory.BEST]
 
-        return self.__advisory
+        return self.__advisories
 
-    @advisory.setter
-    def advisory(self, advisory: ATCF_Advisory):
+    @advisories.setter
+    def advisories(self, advisories: List[ATCF_Advisory]):
         # e.g. `BEST`, `OFCL`, `HWRF`, etc.
-        if advisory is not None:
-            if not isinstance(advisory, str):
-                advisory = typepigeon.convert_value(advisory, str)
-            advisory = advisory.upper()
-            if advisory not in self.__valid_advisories:
-                raise ValueError(
-                    f'invalid advisory "{advisory}"; not one of {self.__valid_advisories}'
-                )
-        self.__advisory = advisory
+        if advisories is None:
+            advisories = self.__valid_advisories
+        else:
+            advisories = typepigeon.convert_value(advisories, [str])
+            advisories = [advisory.upper() for advisory in advisories]
+        self.__advisories = advisories
 
     @property
     def __valid_advisories(self) -> List[ATCF_Advisory]:
@@ -493,9 +489,9 @@ class VortexTrack:
         [10744 rows x 22 columns
         """
 
-        return self.unfiltered_data.loc[
-            (self.unfiltered_data['datetime'] >= self.start_date)
-            & (self.unfiltered_data['datetime'] <= self.end_date)
+        return self.raw_data.loc[
+            (self.raw_data['datetime'] >= self.start_date)
+            & (self.raw_data['datetime'] <= self.end_date)
         ]
 
     def to_file(self, path: PathLike, advisory: ATCF_Advisory = None, overwrite: bool = False):
@@ -533,7 +529,11 @@ class VortexTrack:
         :return: dataframe of CSV lines in ATCF format
         """
 
-        atcf = DataFrame(self.data.drop(columns='geometry'), copy=True)
+        atcf = self.data.drop(columns='geometry').copy(deep=True)
+        atcf.loc[atcf['advisory'] != 'BEST', 'datetime'] = atcf.loc[
+            atcf['advisory'] != 'BEST', 'track_start_time'
+        ]
+        atcf.drop(columns='track_start_time', inplace=True)
 
         if advisory is not None:
             if isinstance(advisory, ATCF_Advisory):
@@ -679,45 +679,65 @@ class VortexTrack:
         return fort22
 
     @property
-    def linestring(self) -> MultiLineString:
+    def linestrings(self) -> Dict[str, Dict[str, LineString]]:
         """
         :return: spatial linestring of current track
         """
 
-        linestrings = [
-            self.data[self.data['advisory'] == advisory]
-            .sort_values('datetime')['geometry']
-            .drop_duplicates()
-            for advisory in pandas.unique(self.data['advisory'])
-        ]
+        configuration = self.__configuration
 
-        linestrings = [
-            LineString(linestring.tolist())
-            for linestring in linestrings
-            if len(linestring) > 1
-        ]
+        # only proceed if the configuration has changed
+        if (
+            self.__linestrings is None
+            or len(self.__linestrings) == 0
+            or configuration != self.__previous_configuration
+        ):
+            tracks = self.tracks
 
-        if len(linestrings) > 0:
-            geometry = MultiLineString(linestrings)
-        else:
-            geometry = GeometryCollection(linestrings)
+            linestrings = {}
+            for advisory, advisory_tracks in tracks.items():
+                linestrings[advisory] = {}
+                for track_start_time, track in advisory_tracks.items():
+                    geometries = track['geometry'].drop_duplicates()
+                    if len(geometries) > 1:
+                        linestrings[advisory][track_start_time] = LineString(
+                            geometries.to_list()
+                        )
 
-        return geometry
+            self.__linestrings = linestrings
+
+        return self.__linestrings
 
     @property
-    def distance(self) -> float:
+    def distances(self) -> Dict[str, Dict[str, float]]:
         """
-        :return: length, in meters, of the track over the default WGS84 that comes with pyPROJ
+        :return: length, in meters, of the track over WGS84 (``EPSG:4326``)
         """
 
-        geodetic = Geod(ellps='WGS84')
-        _, _, distances = geodetic.inv(
-            self.data['longitude'].iloc[:-1],
-            self.data['latitude'].iloc[:-1],
-            self.data['longitude'].iloc[1:],
-            self.data['latitude'].iloc[1:],
-        )
-        return numpy.sum(distances)
+        configuration = self.__configuration
+
+        # only proceed if the configuration has changed
+        if (
+            self.__distances is None
+            or len(self.__distances) == 0
+            or configuration != self.__previous_configuration
+        ):
+            geodetic = Geod(ellps='WGS84')
+
+            linestrings = self.linestrings
+
+            distances = {}
+            for advisory, advisory_tracks in linestrings.items():
+                distances[advisory] = {}
+
+                for track_start_time, linestring in advisory_tracks.items():
+                    x, y = linestring.xy
+                    _, _, track_distances = geodetic.inv(x[:-1], y[:-1], x[1:], y[1:],)
+                    distances[advisory][track_start_time] = numpy.sum(track_distances)
+
+            self.__distances = distances
+
+        return self.__distances
 
     def isotachs(
         self, wind_speed: float, segments: int = 91
@@ -730,82 +750,92 @@ class VortexTrack:
         :return: list of isotachs as polygons for each advisory type
         """
 
-        # collect the attributes needed from the forcing to generate swath
-        data = self.data[self.data['isotach_radius'] == wind_speed]
+        configuration = self.__configuration
 
-        # enumerate quadrants
-        quadrant_names = [
-            'isotach_radius_for_NEQ',
-            'isotach_radius_for_NWQ',
-            'isotach_radius_for_SWQ',
-            'isotach_radius_for_SEQ',
-        ]
+        # only proceed if the configuration has changed
+        if (
+            self.__isotachs is None
+            or len(self.__isotachs) == 0
+            or configuration != self.__previous_configuration
+        ):
+            # collect the attributes needed from the forcing to generate swath
+            data = self.data[self.data['isotach_radius'] == wind_speed]
 
-        # convert quadrant radii from nautical miles to meters
-        data[quadrant_names] *= 1852.0
+            # enumerate quadrants
+            quadrant_names = [
+                'isotach_radius_for_NEQ',
+                'isotach_radius_for_NWQ',
+                'isotach_radius_for_SWQ',
+                'isotach_radius_for_SEQ',
+            ]
 
-        geodetic = Geod(ellps='WGS84')
+            # convert quadrant radii from nautical miles to meters
+            data[quadrant_names] *= 1852.0
 
-        # generate overall swath based on the desired isotach
-        isotachs = {}
-        for advisory in pandas.unique(data['advisory']):
-            advisory_data = data[data['advisory'] == advisory]
+            geodetic = Geod(ellps='WGS84')
 
-            advisory_isotachs = {}
-            for index, row in advisory_data.iterrows():
-                # get the starting angle range for NEQ based on storm direction
-                rotation_angle = 360 - row['direction']
-                start_angle = 0 + rotation_angle
-                end_angle = 90 + rotation_angle
+            # generate overall swath based on the desired isotach
+            isotachs = {}
+            for advisory in pandas.unique(data['advisory']):
+                advisory_data = data[data['advisory'] == advisory]
 
-                # append quadrants in counter-clockwise direction from NEQ
-                quadrants = []
-                for quadrant_name in quadrant_names:
-                    # skip if quadrant radius is zero
-                    if row[quadrant_name] > 1:
-                        # enter the angle range for this quadrant
-                        theta = numpy.linspace(start_angle, end_angle, segments)
+                advisory_isotachs = {}
+                for index, row in advisory_data.iterrows():
+                    # get the starting angle range for NEQ based on storm direction
+                    rotation_angle = 360 - row['direction']
+                    start_angle = 0 + rotation_angle
+                    end_angle = 90 + rotation_angle
 
-                        # move angle to next quadrant
-                        start_angle = start_angle + 90
-                        end_angle = end_angle + 90
+                    # append quadrants in counter-clockwise direction from NEQ
+                    quadrants = []
+                    for quadrant_name in quadrant_names:
+                        # skip if quadrant radius is zero
+                        if row[quadrant_name] > 1:
+                            # enter the angle range for this quadrant
+                            theta = numpy.linspace(start_angle, end_angle, segments)
 
-                        # make the coordinate list for this quadrant using forward geodetic (origin,angle,dist)
-                        vectorized_forward_geodetic = numpy.vectorize(
-                            partial(
-                                geodetic.fwd,
-                                lons=row['longitude'],
-                                lats=row['latitude'],
-                                dist=row[quadrant_name],
+                            # move angle to next quadrant
+                            start_angle = start_angle + 90
+                            end_angle = end_angle + 90
+
+                            # make the coordinate list for this quadrant using forward geodetic (origin,angle,dist)
+                            vectorized_forward_geodetic = numpy.vectorize(
+                                partial(
+                                    geodetic.fwd,
+                                    lons=row['longitude'],
+                                    lats=row['latitude'],
+                                    dist=row[quadrant_name],
+                                )
                             )
-                        )
-                        x, y, reverse_azimuth = vectorized_forward_geodetic(az=theta)
-                        vertices = numpy.stack([x, y], axis=1)
+                            x, y, reverse_azimuth = vectorized_forward_geodetic(az=theta)
+                            vertices = numpy.stack([x, y], axis=1)
 
-                        # insert center point at beginning and end of list
-                        vertices = numpy.concatenate(
-                            [
-                                row[['longitude', 'latitude']].values[None, :],
-                                vertices,
-                                row[['longitude', 'latitude']].values[None, :],
-                            ],
-                            axis=0,
-                        )
+                            # insert center point at beginning and end of list
+                            vertices = numpy.concatenate(
+                                [
+                                    row[['longitude', 'latitude']].values[None, :],
+                                    vertices,
+                                    row[['longitude', 'latitude']].values[None, :],
+                                ],
+                                axis=0,
+                            )
 
-                        quadrants.append(Polygon(vertices))
+                            quadrants.append(Polygon(vertices))
 
-                if len(quadrants) > 0:
-                    isotach = ops.unary_union(quadrants)
+                    if len(quadrants) > 0:
+                        isotach = ops.unary_union(quadrants)
 
-                    if isinstance(isotach, MultiPolygon):
-                        isotach = isotach.buffer(1e-10)
+                        if isinstance(isotach, MultiPolygon):
+                            isotach = isotach.buffer(1e-10)
 
-                    advisory_isotachs[row['datetime']] = isotach
+                        advisory_isotachs[row['datetime']] = isotach
 
-            if len(advisory_isotachs) > 0:
-                isotachs[advisory] = advisory_isotachs
+                if len(advisory_isotachs) > 0:
+                    isotachs[advisory] = advisory_isotachs
 
-        return isotachs
+            self.__isotachs = isotachs
+
+        return self.__isotachs
 
     def wind_swaths(self, wind_speed: int, segments: int = 91) -> Dict[str, Polygon]:
         """
@@ -815,30 +845,43 @@ class VortexTrack:
         :param segments: number of discretization points per quadrant (default = ``91``)
         """
 
-        valid_isotach_values = [34, 50, 64]
-        assert (
-            wind_speed in valid_isotach_values
-        ), f'isotach must be one of {valid_isotach_values}'
+        configuration = self.__configuration
 
-        advisory_isotachs = self.isotachs(wind_speed=wind_speed, segments=segments)
+        # only proceed if the configuration has changed
+        if (
+            self.__wind_swaths is None
+            or len(self.__wind_swaths) == 0
+            or configuration != self.__previous_configuration
+        ):
+            valid_isotach_values = [34, 50, 64]
+            assert (
+                wind_speed in valid_isotach_values
+            ), f'isotach must be one of {valid_isotach_values}'
 
-        wind_swaths = {}
-        for advisory, isotachs in advisory_isotachs.items():
-            isotachs = list(isotachs.values())
-            convex_hulls = []
-            for index in range(len(isotachs) - 1):
-                convex_hulls.append(
-                    ops.unary_union([isotachs[index], isotachs[index + 1]]).convex_hull
-                )
+            advisory_isotachs = self.isotachs(wind_speed=wind_speed, segments=segments)
 
-            # get the union of polygons
-            wind_swaths[advisory] = ops.unary_union(convex_hulls)
+            wind_swaths = {}
+            for advisory, isotachs in advisory_isotachs.items():
+                isotachs = list(isotachs.values())
+                convex_hulls = []
+                for index in range(len(isotachs) - 1):
+                    convex_hulls.append(
+                        ops.unary_union([isotachs[index], isotachs[index + 1]]).convex_hull
+                    )
 
-        return wind_swaths
+                # get the union of polygons
+                wind_swaths[advisory] = ops.unary_union(convex_hulls)
+
+            self.__wind_swaths = wind_swaths
+
+        return self.__wind_swaths
 
     @property
-    def forecasts(self) -> Dict[str, Dict[str, DataFrame]]:
-        return separate_forecasts(self.data)
+    def tracks(self) -> Dict[str, Dict[str, DataFrame]]:
+        """
+        :return: individual tracks sorted into advisories and initial times
+        """
+        return separate_tracks(self.data)
 
     @property
     def duration(self) -> pandas.Timedelta:
@@ -849,26 +892,23 @@ class VortexTrack:
         return self.data['datetime'].diff().sum()
 
     @property
-    def unfiltered_data(self) -> DataFrame:
+    def raw_data(self) -> DataFrame:
         """
-        :return: data frame containing all track data for the specified storm and file deck
+        :return: data frame containing all track data for the specified storm and file deck; NOTE: datetimes for forecasts represent the initial datetime of the forecast, not the datetime of the record
         """
 
         configuration = self.__configuration
 
-        # only download new file if the configuration has changed since the last download
+        # only proceed if the configuration has changed
         if (
-            self.__unfiltered_data is None
-            or len(self.__unfiltered_data) == 0
+            self.__raw_data is None
+            or len(self.__raw_data) == 0
             or configuration != self.__previous_configuration
         ):
+            advisories = self.advisories
             if configuration['filename'] is not None:
-                advisories = [] if self.advisory is None else [self.advisory]
                 atcf_file = configuration['filename']
             else:
-                advisories = (
-                    self.__valid_advisories if self.advisory is None else [self.advisory]
-                )
                 url = atcf_url(self.nhc_code, self.file_deck, self.mode)
                 atcf_file = io.BytesIO()
                 atcf_file.write(urlopen(url).read())
@@ -876,26 +916,67 @@ class VortexTrack:
                 if url.endswith('.gz'):
                     atcf_file = gzip.GzipFile(fileobj=atcf_file, mode='rb')
 
-            advisories_to_remove = []
             if 'OFCL' in advisories and 'CARQ' not in advisories:
-                advisories_to_remove.append('CARQ')
+                self.__advisories_to_remove.append(ATCF_Advisory.CARQ)
 
-            dataframe = read_atcf(atcf_file, advisories=advisories + advisories_to_remove)
+            dataframe = read_atcf(
+                atcf_file, advisories=advisories + self.__advisories_to_remove
+            )
             dataframe.sort_values(['datetime', 'advisory'], inplace=True)
             dataframe.reset_index(inplace=True, drop=True)
 
-            # fill missing values of MRD and MSLP in the OFCL advisory
-            if 'OFCL' in advisories:
-                forecasts = separate_forecasts(dataframe)
+            dataframe['track_start_time'] = dataframe['datetime'].copy()
+            if ATCF_Advisory.BEST in self.advisories:
+                dataframe.loc[dataframe['advisory'] == 'BEST', 'track_start_time'] = (
+                    dataframe.loc[dataframe['advisory'] == 'BEST', 'datetime']
+                    .sort_values()
+                    .iloc[0]
+                )
 
-                ofcl_forecasts = forecasts['OFCL']
-                carq_forecasts = forecasts['CARQ']
+            dataframe.loc[dataframe['advisory'] != 'BEST', 'datetime'] += pandas.to_timedelta(
+                dataframe.loc[dataframe['advisory'] != 'BEST', 'forecast_hours'].astype(int),
+                unit='hours',
+            )
 
-                for initial_time, forecast in ofcl_forecasts.items():
-                    if initial_time in carq_forecasts:
-                        carq_forecast = carq_forecasts[initial_time]
+            dataframe = dataframe[
+                [*dataframe.columns[:3], 'track_start_time', *dataframe.columns[3:-1]]
+            ]
+
+            self.raw_data = dataframe
+            self.__previous_configuration = configuration
+
+        # if location values have changed, recompute velocity
+        location_hash = pandas.util.hash_pandas_object(self.__raw_data['geometry'])
+
+        if self.__location_hash is None or len(location_hash) != len(self.__location_hash):
+            updated_locations = ~self.__raw_data.index.isnull()
+        else:
+            updated_locations = location_hash != self.__location_hash
+        updated_locations |= pandas.isna(self.__raw_data['speed'])
+
+        if updated_locations.any():
+            self.__raw_data.loc[updated_locations] = self.__compute_velocity(
+                self.__raw_data[updated_locations]
+            )
+            self.__location_hash = location_hash
+
+        return self.__raw_data
+
+    @raw_data.setter
+    def raw_data(self, dataframe: DataFrame):
+        # fill missing values of MRD and MSLP in the OFCL advisory
+        if 'OFCL' in self.advisories:
+            tracks = separate_tracks(dataframe)
+
+            if 'OFCL' in tracks:
+                ofcl_tracks = tracks['OFCL']
+                carq_tracks = tracks['CARQ']
+
+                for initial_time, forecast in ofcl_tracks.items():
+                    if initial_time in carq_tracks:
+                        carq_forecast = carq_tracks[initial_time]
                     else:
-                        carq_forecast = carq_forecasts[list(carq_forecasts)[0]]
+                        carq_forecast = carq_tracks[list(carq_tracks)[0]]
 
                     relation = HollandBRelation()
                     holland_b = relation.holland_b(
@@ -930,32 +1011,15 @@ class VortexTrack:
                         holland_b=holland_b,
                     )
 
-            if len(advisories_to_remove) > 0:
-                dataframe = dataframe[~dataframe['advisory'].isin(advisories_to_remove)]
+        if len(self.__advisories_to_remove) > 0:
+            dataframe = dataframe[
+                ~dataframe['advisory'].isin(
+                    [value.value for value in self.__advisories_to_remove]
+                )
+            ]
+            self.__advisories_to_remove = []
 
-            self.__unfiltered_data = dataframe
-            self.__previous_configuration = configuration
-
-        # if location values have changed, recompute velocity
-        location_hash = pandas.util.hash_pandas_object(self.__unfiltered_data['geometry'])
-
-        if self.__location_hash is None or len(location_hash) != len(self.__location_hash):
-            updated_locations = ~self.__unfiltered_data.index.isnull()
-        else:
-            updated_locations = location_hash != self.__location_hash
-        updated_locations |= pandas.isna(self.__unfiltered_data['speed'])
-
-        if updated_locations.any():
-            self.__unfiltered_data.loc[updated_locations] = self.__compute_velocity(
-                self.__unfiltered_data[updated_locations]
-            )
-            self.__location_hash = location_hash
-
-        return self.__unfiltered_data
-
-    @unfiltered_data.setter
-    def unfiltered_data(self, dataframe: DataFrame):
-        self.__unfiltered_data = dataframe
+        self.__raw_data = dataframe
 
     @property
     def __configuration(self) -> Dict[str, Any]:
@@ -963,7 +1027,7 @@ class VortexTrack:
             'id': self.nhc_code,
             'file_deck': self.file_deck,
             'mode': self.mode,
-            'advisory': self.advisory,
+            'advisories': self.advisories,
             'filename': self.filename,
         }
 
@@ -1012,7 +1076,7 @@ class VortexTrack:
 
     @property
     def __file_end_date(self):
-        unique_dates = numpy.unique(self.unfiltered_data['datetime'])
+        unique_dates = numpy.unique(self.raw_data['datetime'])
         for date in unique_dates:
             if date >= numpy.datetime64(self.end_date):
                 return date
@@ -1022,11 +1086,11 @@ class VortexTrack:
 
     def __copy__(self) -> 'VortexTrack':
         instance = self.__class__(
-            storm=self.unfiltered_data.copy(),
+            storm=self.raw_data.copy(),
             start_date=self.start_date,
             end_date=self.end_date,
             file_deck=self.file_deck,
-            advisory=self.advisory,
+            advisories=self.advisories,
         )
         if self.filename is not None:
             instance.filename = self.filename
@@ -1036,10 +1100,10 @@ class VortexTrack:
         return self.data.equals(other.data)
 
     def __str__(self) -> str:
-        return f'{self.nhc_code} ({" + ".join(pandas.unique(self.data["advisory"]).tolist())}) track with {len(self)} entries, spanning {self.distance:.2f} meters over {self.duration}'
+        return f'{self.nhc_code} ({" + ".join(pandas.unique(self.data["advisory"]).tolist())}) track with {len(self)} entries, spanning {self.distances:.2f} meters over {self.duration}'
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.mode, self.advisory, self.filename])})'
+        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.mode, self.advisories, self.filename])})'
 
 
 class HollandBRelation:
@@ -1073,22 +1137,32 @@ class HollandBRelation:
         )
 
 
-def separate_forecasts(data: DataFrame):
-    forecast_advisories = (
-        advisory for advisory in pandas.unique(data['advisory']) if advisory != 'BEST'
-    )
+def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
+    """
+    separate the given track data frame into advisories and tracks (forecasts / hindcasts)
 
-    forecasts = {}
-    for advisory in forecast_advisories:
+    :param data: data frame of track
+    :return: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast)
+    """
+
+    tracks = {}
+    for advisory in pandas.unique(data['advisory']):
         advisory_data = data[data['advisory'] == advisory]
 
-        initial_times = pandas.unique(advisory_data['datetime'])
+        if advisory == 'BEST':
+            advisory_data = advisory_data.sort_values('datetime')
 
-        forecasts[advisory] = {}
-        for initial_time in initial_times:
-            forecast_data = advisory_data[advisory_data['datetime'] == initial_time]
-            forecasts[advisory][
-                f'{pandas.to_datetime(initial_time):%Y%m%dT%H%M%S}'
-            ] = forecast_data.sort_values('forecast_hours')
+        track_start_times = advisory_data['track_start_time']
 
-    return forecasts
+        tracks[advisory] = {}
+        for initial_time in track_start_times:
+            if advisory == 'BEST':
+                track_data = advisory_data
+            else:
+                track_data = advisory_data[
+                    advisory_data['datetime'] == initial_time
+                ].sort_values('forecast_hours')
+
+            tracks[advisory][f'{pandas.to_datetime(initial_time):%Y%m%dT%H%M%S}'] = track_data
+
+    return tracks

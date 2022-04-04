@@ -1,12 +1,13 @@
 from datetime import datetime
 from functools import lru_cache
 from os import PathLike
+from typing import List
 
 import pandas
 from shapely import ops
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
-import typepigeon
+from shapely.ops import shape as shapely_shape
 import xarray
 from xarray import Dataset
 
@@ -21,7 +22,7 @@ from stormevents.coops.tidalstations import (
     COOPS_Units,
 )
 from stormevents.nhc import nhc_storms, VortexTrack
-from stormevents.nhc.atcf import ATCF_FileDeck, ATCF_Mode
+from stormevents.nhc.atcf import ATCF_Advisory, ATCF_FileDeck, ATCF_Mode
 from stormevents.usgs import usgs_flood_storms, USGS_StormEvent
 from stormevents.utilities import relative_to_time_interval, subset_time_interval
 
@@ -236,14 +237,13 @@ class StormEvent:
             data_end = VortexTrack.from_storm_name(self.name, self.year).end_date
         return data_end
 
-    @lru_cache(maxsize=None)
     def track(
         self,
         start_date: datetime = None,
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         mode: ATCF_Mode = None,
-        advisory: str = None,
+        advisories: List[ATCF_Advisory] = None,
         filename: PathLike = None,
     ) -> VortexTrack:
         """
@@ -253,7 +253,7 @@ class StormEvent:
         :param end_date: end date
         :param file_deck: ATCF file deck
         :param mode: ATCF mode
-        :param advisory: ATCF record type
+        :param advisories: ATCF advisory types
         :param filename: file path to ``fort.22``
         :return: vortex track
 
@@ -277,7 +277,7 @@ class StormEvent:
                 end_date=end_date,
                 file_deck=file_deck,
                 mode=mode,
-                advisory=advisory,
+                advisories=advisories,
             )
         return track
 
@@ -403,7 +403,7 @@ class StormEvent:
 
         >>> import shapely
         >>> storm = StormEvent('florence', 2018)
-        >>> region = shapely.geometry.box(*storm.track().linestring.bounds)
+        >>> region = shapely.geometry.box(*storm.track().linestrings.bounds)
         >>> storm.coops_product_within_region('water_level', region=region, start_date='2018-09-12 14:03:00', end_date='2018-09-14')
         <xarray.Dataset>
         Dimensions:  (nos_id: 89, t: 340)
@@ -421,10 +421,7 @@ class StormEvent:
         """
 
         if not isinstance(region, BaseGeometry):
-            try:
-                region = typepigeon.convert_value(region, MultiPolygon)
-            except ValueError:
-                region = typepigeon.convert_value(region, Polygon)
+            region = shapely_shape(region)
 
         if start_date is None:
             start_date = self.start_date
