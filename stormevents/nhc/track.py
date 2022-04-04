@@ -513,7 +513,6 @@ class VortexTrack:
                 data.to_csv(path, index=False, header=False)
             else:
                 raise NotImplementedError(f'writing to `*{path.suffix}` not supported')
-
         else:
             logging.warning(f'skipping existing file "{path}"')
 
@@ -921,53 +920,6 @@ class VortexTrack:
                 dataframe.loc[dataframe['advisory'] != 'BEST', 'forecast_hours'].astype(int),
                 unit='hours',
             )
-
-            dataframe = dataframe[
-                [
-                    column
-                    for column in [
-                        'basin',
-                        'storm_number',
-                        'datetime',
-                        'advisory',
-                        'latitude',
-                        'longitude',
-                        'max_sustained_wind_speed',
-                        'central_pressure',
-                        'development_level',
-                        'isotach_radius',
-                        'isotach_quadrant_code',
-                        'isotach_radius_for_NEQ',
-                        'isotach_radius_for_SEQ',
-                        'isotach_radius_for_NWQ',
-                        'isotach_radius_for_SWQ',
-                        'background_pressure',
-                        'radius_of_last_closed_isobar',
-                        'radius_of_maximum_winds',
-                        'gust_speed',
-                        'eye_diameter',
-                        'subregion_code',
-                        'maximum_wave_height',
-                        'forecaster_initials',
-                        'direction',
-                        'speed',
-                        'name',
-                        'depth_code',
-                        'isowave',
-                        'isowave_quadrant_code',
-                        'isowave_radius_for_NEQ',
-                        'isowave_radius_for_SEQ',
-                        'isowave_radius_for_NWQ',
-                        'isowave_radius_for_SWQ',
-                        'extra_values',
-                        'geometry',
-                        'track_start_time',
-                        'forecast_hours',
-                        'advisory_number',
-                    ]
-                    if column in dataframe.columns
-                ]
-            ]
 
             self.unfiltered_data = dataframe
             self.__previous_configuration = configuration
