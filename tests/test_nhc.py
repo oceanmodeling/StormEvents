@@ -152,6 +152,14 @@ def test_vortex_track_to_file():
     check_reference_directory(output_directory, reference_directory)
 
 
+def test_vortex_track_distances():
+    track_1 = VortexTrack.from_storm_name('florence', 2018)
+    track_2 = VortexTrack.from_storm_name('florence', 2018, file_deck='a', advisories=['OFCL'])
+
+    assert track_1.distances['BEST']['20180830T060000'] == 8725961.838567913
+    assert track_2.distances['OFCL']['20180831T000000'] == 15490.033837939689
+
+
 def test_vortex_track_recompute_velocity():
     output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_recompute_velocity'
     reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_recompute_velocity'
