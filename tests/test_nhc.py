@@ -69,6 +69,14 @@ def test_vortex_track():
     check_reference_directory(output_directory, reference_directory)
 
 
+def test_vortex_track_isotachs():
+    track_1 = VortexTrack('florence2018')
+    track_2 = VortexTrack('florence2018', file_deck='a')
+
+    # track_1.isotachs(34)
+    track_2.isotachs(34)
+
+
 def test_vortex_track_properties():
     track = VortexTrack('florence2018', file_deck='a')
 

@@ -33,7 +33,7 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     AL962021      INVEST    EX  2021    AL      96  METWATCH 2021-11-07 12:00:00                 NaT
     EP712022  GENESIS001    DB  2022    EP      71   GENESIS 2022-01-20 12:00:00                 NaT
     EP902022      INVEST    LO  2022    EP      90  METWATCH 2022-01-20 12:00:00                 NaT
-    [2729 rows x 8 columns]
+    [2720 rows x 8 columns]
     """
 
     url = 'https://ftp.nhc.noaa.gov/atcf/index/storm_list.txt'

@@ -44,7 +44,7 @@ nhc_storms()
 
 ```
                 name class  year basin  number    source          start_date            end_date
-nhc_code                                                                                        
+nhc_code
 AL021851     UNNAMED    HU  1851    AL       2   ARCHIVE 1851-07-05 12:00:00 1851-07-05 12:00:00
 AL031851     UNNAMED    TS  1851    AL       3   ARCHIVE 1851-07-10 12:00:00 1851-07-10 12:00:00
 AL041851     UNNAMED    HU  1851    AL       4   ARCHIVE 1851-08-16 00:00:00 1851-08-27 18:00:00
@@ -57,7 +57,7 @@ AL962021      INVEST    EX  2021    AL      96  METWATCH 2021-11-07 12:00:00    
 EP712022  GENESIS001    DB  2022    EP      71   GENESIS 2022-01-20 12:00:00                 NaT
 EP902022      INVEST    LO  2022    EP      90  METWATCH 2022-01-20 12:00:00                 NaT
 
-[2729 rows x 8 columns]
+[2720 rows x 8 columns]
 ```
 
 ##### retrieve storm track by NHC code
@@ -70,20 +70,20 @@ track.data
 ```
 
 ```
-    basin storm_number record_type            datetime  ...   direction     speed    name                    geometry
-0      AL           11        BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
-1      AL           11        BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
-2      AL           11        BEST 2017-08-30 12:00:00  ...  274.424523  6.947623    IRMA  POINT (-29.70000 16.30000)
-3      AL           11        BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
-4      AL           11        BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
-..    ...          ...         ...                 ...  ...         ...       ...     ...                         ...
-168    AL           11        BEST 2017-09-12 12:00:00  ...  309.875306  7.262151    IRMA  POINT (-86.90000 33.80000)
-169    AL           11        BEST 2017-09-12 18:00:00  ...  315.455084  7.247674    IRMA  POINT (-88.10000 34.80000)
-170    AL           11        BEST 2017-09-13 00:00:00  ...  320.849994  5.315966    IRMA  POINT (-88.90000 35.60000)
-171    AL           11        BEST 2017-09-13 06:00:00  ...  321.042910  3.973414    IRMA  POINT (-89.50000 36.20000)
-172    AL           11        BEST 2017-09-13 12:00:00  ...  321.262133  3.961652    IRMA  POINT (-90.10000 36.80000)
+    basin storm_number            datetime track_start_time advisory  ... isowave_radius_for_SEQ  isowave_radius_for_NWQ  isowave_radius_for_SWQ  extra_values                    geometry
+0      AL           11 2017-08-30 00:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-26.90000 16.10000)
+1      AL           11 2017-08-30 06:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-28.30000 16.20000)
+2      AL           11 2017-08-30 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-29.70000 16.30000)
+3      AL           11 2017-08-30 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-30.80000 16.30000)
+4      AL           11 2017-08-30 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-30.80000 16.30000)
+..    ...          ...                 ...              ...      ...  ...                    ...                     ...                     ...           ...                         ...
+168    AL           11 2017-09-12 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-86.90000 33.80000)
+169    AL           11 2017-09-12 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-88.10000 34.80000)
+170    AL           11 2017-09-13 00:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-88.90000 35.60000)
+171    AL           11 2017-09-13 06:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-89.50000 36.20000)
+172    AL           11 2017-09-13 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-90.10000 36.80000)
 
-[173 rows x 22 columns]
+[173 rows x 37 columns]
 ```
 
 ##### retrieve storm track by name and year
@@ -97,7 +97,7 @@ VortexTrack.from_storm_name('irma', 2017)
 ```
 
 ```
-VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
 ```
 
 ##### specify storm track file deck
@@ -113,20 +113,20 @@ track.data
 ```
 
 ```
-      basin storm_number record_type            datetime  ...   direction      speed    name                    geometry
-0        AL           11        CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
-1        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)
-2        AL           11        CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-13.30000 11.50000)
-3        AL           11        CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-18.40000 11.90000)
-4        AL           11        CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-16.00000 11.50000)
-...     ...          ...         ...                 ...  ...         ...        ...     ...                         ...
-10739    AL           11        HMON 2017-09-16 09:00:00  ...   52.414833  11.903071          POINT (-84.30000 43.00000)
-10740    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 41.00000)
-10741    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-82.00000 39.50000)
-10742    AL           11        HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 44.00000)
-10743    AL           11        HMON 2017-09-16 15:00:00  ...  122.402907  22.540200          POINT (-81.90000 39.80000)
+      basin storm_number            datetime    track_start_time  ... isowave_radius_for_NWQ isowave_radius_for_SWQ  extra_values                    geometry
+0        AL           11 2017-08-27 06:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-17.40000 11.70000)
+1        AL           11 2017-08-27 12:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-17.90000 11.80000)
+2        AL           11 2017-08-27 18:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-18.40000 11.90000)
+3        AL           11 2017-08-28 00:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-19.00000 12.00000)
+4        AL           11 2017-08-28 06:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-19.50000 12.00000)
+...     ...          ...                 ...                 ...  ...                    ...                    ...           ...                         ...
+10739    AL           11 2017-09-12 00:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-84.40000 31.90000)
+10740    AL           11 2017-09-12 03:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-84.90000 32.40000)
+10741    AL           11 2017-09-12 12:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-86.40000 33.80000)
+10742    AL           11 2017-09-13 00:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-88.20000 35.20000)
+10743    AL           11 2017-09-13 12:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-88.60000 36.40000)
 
-[10744 rows x 22 columns]
+[10434 rows x 37 columns]
 ```
 
 ##### read storm track from file
@@ -136,21 +136,21 @@ If you have an ATCF or `fort.22` file, use the corresponding methods:
 ```python
 from stormevents.nhc import VortexTrack
 
-VortexTrack.from_file('tests/data/input/test_from_atcf/atcf.trk')
+VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/AL062018.dat')
 ```
 
 ```
-VortexTrack('BT02008', Timestamp('2008-10-16 17:06:00'), Timestamp('2008-10-20 20:06:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', 'tests/data/input/test_from_atcf/atcf.trk')
+VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/AL062018.dat'))
 ```
 
 ```python
 from stormevents.nhc import VortexTrack
 
-VortexTrack.from_fort22('tests/data/input/test_from_fort22/irma2017_fort.22')
+VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/irma2017_fort.22')
 ```
 
 ```
-VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-19 00:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', 'tests/data/input/test_from_fort22/irma2017_fort.22')
+VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-12 00:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/irma2017_fort.22'))
 ```
 
 ##### write storm track to `fort.22` file
@@ -177,21 +177,21 @@ usgs_flood_events()
 ```
 
 ```
-                                            name  year  ...          start_date            end_date
-usgs_id                                                 ...
-7                             FEMA 2013 exercise  2013  ... 2013-05-15 04:00:00 2013-05-23 04:00:00
-8                                          Wilma  2005  ... 2005-10-20 00:00:00 2005-10-31 00:00:00
-9                            Midwest Floods 2011  2011  ... 2011-02-01 06:00:00 2011-08-30 05:00:00
-10                          2013 - June PA Flood  2013  ... 2013-06-23 00:00:00 2013-07-01 00:00:00
-11               Colorado 2013 Front Range Flood  2013  ... 2013-09-12 05:00:00 2013-09-24 05:00:00
-...                                          ...   ...  ...                 ...                 ...
-311                   2021 August Flash Flood TN  2021  ... 2021-08-21 05:00:00 2021-08-22 05:00:00
-312                    2021 Tropical Cyclone Ida  2021  ... 2021-08-27 05:00:00 2021-09-03 05:00:00
-313                Chesapeake Bay - October 2021  2021  ... 2021-10-28 04:00:00                 NaT
-314      2021 November Flooding Washington State  2021  ... 2021-11-08 06:00:00 2021-11-19 06:00:00
-315          Washington Coastal Winter 2021-2022  2021  ... 2021-11-01 05:00:00 2022-06-30 05:00:00
+                                            name  year                                        description  ... last_updated_by          start_date            end_date
+usgs_id                                                                                                    ...
+7                             FEMA 2013 exercise  2013                   Ardent/Sentry 2013 FEMA Exercise  ...             NaN 2013-05-15 04:00:00 2013-05-23 04:00:00
+8                                          Wilma  2005  Category 3 in west FL. \nHurricane Wilma was t...  ...             NaN 2005-10-20 00:00:00 2005-10-31 00:00:00
+9                            Midwest Floods 2011  2011  Spring and summer 2011 flooding of the Mississ...  ...            35.0 2011-02-01 06:00:00 2011-08-30 05:00:00
+10                          2013 - June PA Flood  2013           Localized summer rain, small scale event  ...             NaN 2013-06-23 00:00:00 2013-07-01 00:00:00
+11               Colorado 2013 Front Range Flood  2013  A large prolonged precipitation event resulted...  ...            35.0 2013-09-12 05:00:00 2013-09-24 05:00:00
+...                                          ...   ...                                                ...  ...             ...                 ...                 ...
+312                    2021 Tropical Cyclone Ida  2021                                                NaN  ...           864.0 2021-08-27 05:00:00 2021-09-03 05:00:00
+313                Chesapeake Bay - October 2021  2021     Coastal-flooding event in the  Chesapeake Bay.  ...           406.0 2021-10-28 04:00:00                 NaT
+314      2021 November Flooding Washington State  2021                         Atmospheric River Flooding  ...           864.0 2021-11-08 06:00:00 2021-11-19 06:00:00
+315          Washington Coastal Winter 2021-2022  2021                                                NaN  ...           864.0 2021-11-01 05:00:00 2022-06-30 05:00:00
+317        2022 Hunga Tonga-Hunga Haapai tsunami  2022                                                     ...             1.0 2022-01-14 05:00:00 2022-01-18 05:00:00
 
-[292 rows x 11 columns]
+[293 rows x 11 columns]
 ```
 
 ##### retrieve HWM survey data for any flood event
@@ -204,19 +204,19 @@ flood.high_water_marks()
 ```
 
 ```
-         latitude  longitude            eventName  ...                                          hwm_notes siteZone                    geometry
-hwm_id                                             ...                                                                                        
-22602   31.170642 -81.428402  Irma September 2017  ...                                                NaN      NaN  POINT (-81.42840 31.17064)
-22605   31.453850 -81.362853  Irma September 2017  ...                                                NaN      NaN  POINT (-81.36285 31.45385)
-22612   30.720000 -81.549440  Irma September 2017  ...  There is a secondary peak around 5.5 ft, so th...      NaN  POINT (-81.54944 30.72000)
-22636   32.007730 -81.238270  Irma September 2017  ...  Trimble R8 used to establish TBM. Levels ran f...      NaN  POINT (-81.23827 32.00773)
-22653   31.531078 -81.358894  Irma September 2017  ...                                                NaN      NaN  POINT (-81.35889 31.53108)
-...           ...        ...                  ...  ...                                                ...      ...                         ...
-26171   18.470402 -66.246631  Irma September 2017  ...                                                NaN      NaN  POINT (-66.24663 18.47040)
-26173   18.470300 -66.449900  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.44990 18.47030)
-26175   18.463954 -66.140869  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.14087 18.46395)
-26177   18.488720 -66.392160  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.39216 18.48872)
-26179   18.005607 -65.871768  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-65.87177 18.00561)
+         latitude  longitude            eventName hwmTypeName  ... hwm_uncertainty                                          hwm_notes siteZone                    geometry
+hwm_id                                                         ...
+22602   31.170642 -81.428402  Irma September 2017      Debris  ...             NaN                                                NaN      NaN  POINT (-81.42840 31.17064)
+22605   31.453850 -81.362853  Irma September 2017   Seed line  ...             0.1                                                NaN      NaN  POINT (-81.36285 31.45385)
+22612   30.720000 -81.549440  Irma September 2017   Seed line  ...             NaN  There is a secondary peak around 5.5 ft, so th...      NaN  POINT (-81.54944 30.72000)
+22636   32.007730 -81.238270  Irma September 2017   Seed line  ...             0.1  Trimble R8 used to establish TBM. Levels ran f...      NaN  POINT (-81.23827 32.00773)
+22653   31.531078 -81.358894  Irma September 2017   Seed line  ...             NaN                                                NaN      NaN  POINT (-81.35889 31.53108)
+...           ...        ...                  ...         ...  ...             ...                                                ...      ...                         ...
+26171   18.470402 -66.246631  Irma September 2017      Debris  ...             0.5                                                NaN      NaN  POINT (-66.24663 18.47040)
+26173   18.470300 -66.449900  Irma September 2017      Debris  ...             0.5                                levels from GNSS BM      NaN  POINT (-66.44990 18.47030)
+26175   18.463954 -66.140869  Irma September 2017      Debris  ...             0.5                                levels from GNSS BM      NaN  POINT (-66.14087 18.46395)
+26177   18.488720 -66.392160  Irma September 2017      Debris  ...             0.5                                levels from GNSS BM      NaN  POINT (-66.39216 18.48872)
+26179   18.005607 -65.871768  Irma September 2017      Debris  ...             0.5                                levels from GNSS BM      NaN  POINT (-65.87177 18.00561)
 
 [506 rows x 53 columns]
 ```
@@ -229,21 +229,21 @@ flood.high_water_marks(quality=['EXCELLENT', 'GOOD'])
 ```
 
 ```
-         latitude  longitude            eventName  ...                                          hwm_notes siteZone                    geometry
-hwm_id                                             ...                                                                                        
-22602   31.170642 -81.428402  Irma September 2017  ...                                                NaN      NaN  POINT (-81.42840 31.17064)
-22605   31.453850 -81.362853  Irma September 2017  ...                                                NaN      NaN  POINT (-81.36285 31.45385)
-22612   30.720000 -81.549440  Irma September 2017  ...  There is a secondary peak around 5.5 ft, so th...      NaN  POINT (-81.54944 30.72000)
-22636   32.007730 -81.238270  Irma September 2017  ...  Trimble R8 used to establish TBM. Levels ran f...      NaN  POINT (-81.23827 32.00773)
-22653   31.531078 -81.358894  Irma September 2017  ...                                                NaN      NaN  POINT (-81.35889 31.53108)
-...           ...        ...                  ...  ...                                                ...      ...                         ...
-26171   18.470402 -66.246631  Irma September 2017  ...                                                NaN      NaN  POINT (-66.24663 18.47040)
-26173   18.470300 -66.449900  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.44990 18.47030)
-26175   18.463954 -66.140869  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.14087 18.46395)
-26177   18.488720 -66.392160  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-66.39216 18.48872)
-26179   18.005607 -65.871768  Irma September 2017  ...                                levels from GNSS BM      NaN  POINT (-65.87177 18.00561)
+         latitude  longitude            eventName hwmTypeName  ...                                          hwm_notes peak_summary_id siteZone                    geometry
+hwm_id                                                         ...
+22605   31.453850 -81.362853  Irma September 2017   Seed line  ...                                                NaN             NaN      NaN  POINT (-81.36285 31.45385)
+22612   30.720000 -81.549440  Irma September 2017   Seed line  ...  There is a secondary peak around 5.5 ft, so th...             NaN      NaN  POINT (-81.54944 30.72000)
+22636   32.007730 -81.238270  Irma September 2017   Seed line  ...  Trimble R8 used to establish TBM. Levels ran f...             NaN      NaN  POINT (-81.23827 32.00773)
+22674   32.030907 -80.900605  Irma September 2017   Seed line  ...                                                NaN          5042.0      NaN  POINT (-80.90061 32.03091)
+22849   30.741940 -81.687780  Irma September 2017      Debris  ...                                                NaN          4834.0      NaN  POINT (-81.68778 30.74194)
+...           ...        ...                  ...         ...  ...                                                ...             ...      ...                         ...
+25150   30.038222 -81.880928  Irma September 2017   Seed line  ...                              GNSS Level II survey.             NaN      NaN  POINT (-81.88093 30.03822)
+25151   30.118110 -81.760220  Irma September 2017   Seed line  ...                             GNSS Level III survey.             NaN      NaN  POINT (-81.76022 30.11811)
+25158   29.720560 -81.506110  Irma September 2017   Seed line  ...                              GNSS Level II survey.             NaN      NaN  POINT (-81.50611 29.72056)
+25159   30.097514 -81.794375  Irma September 2017   Seed line  ...                             GNSS Level III survey.             NaN      NaN  POINT (-81.79438 30.09751)
+25205   29.783890 -81.263060  Irma September 2017   Seed line  ...                              GNSS Level II survey.             NaN      NaN  POINT (-81.26306 29.78389)
 
-[506 rows x 53 columns]
+[277 rows x 53 columns]
 ```
 
 #### data products from the Center for Operational Oceanographic Products and Services (CO-OPS)
@@ -262,21 +262,21 @@ coops_stations()
 ```
 
 ```
-        nws_id                              name state        status                                            removed                     geometry
+        nws_id                         name state        status                                            removed                      geometry
 nos_id
-1600012  46125                         QREB buoy              active                                               <NA>   POINT (122.62500 37.75000)
-8735180  DILA1                    Dauphin Island    AL        active  2019-07-18 10:00:00,2018-07-30 16:40:00,2017-0...   POINT (-88.06250 30.25000)
-8557380  LWSD1                             Lewes    DE        active  2019-08-01 00:00:00,2018-06-18 00:00:00,2017-0...   POINT (-75.12500 38.78125)
-8465705  NWHC3                         New Haven    CT        active  2019-08-18 14:55:00,2019-08-18 14:54:00,2018-0...   POINT (-72.93750 41.28125)
-9439099  WAUO3                             Wauna    OR        active  2019-08-19 22:59:00,2014-06-20 21:30:00,2013-0...  POINT (-123.43750 46.15625)
-...        ...                               ...   ...           ...                                                ...                          ...
-8448725  MSHM3               Menemsha Harbor, MA    MA  discontinued  2013-09-26 23:59:00,2013-09-26 00:00:00,2012-0...   POINT (-70.75000 41.34375)
-8538886  TPBN4             Tacony-Palmyra Bridge    NJ  discontinued  2013-11-11 00:01:00,2013-11-11 00:00:00,2012-0...   POINT (-75.06250 40.00000)
-9439011  HMDO3                           Hammond    OR  discontinued  2014-08-13 00:00:00,2011-04-12 23:59:00,2011-0...  POINT (-123.93750 46.18750)
-8762372  LABL1  East Bank 1, Norco, B. LaBranche    LA  discontinued  2012-11-05 10:38:00,2012-11-05 10:37:00,2012-1...   POINT (-90.37500 30.04688)
-8530528  CARN4       CARLSTADT, HACKENSACK RIVER    NJ  discontinued            1994-11-12 23:59:00,1994-11-12 00:00:00   POINT (-74.06250 40.81250)
+1600012  46125                    QREB buoy              active                                               <NA>    POINT (122.62500 37.75000)
+1619910  SNDP5  Sand Island, Midway Islands              active                                               <NA>   POINT (-177.37500 28.21875)
+1630000  APRP7            Apra Harbor, Guam              active                                               <NA>    POINT (144.62500 13.44531)
+1631428  PGBP7               Pago Bay, Guam              active                                               <NA>    POINT (144.75000 13.42969)
+1770000  NSTP6    Pago Pago, American Samoa              active                                               <NA>  POINT (-170.75000 -14.27344)
+...        ...                          ...   ...           ...                                                ...                           ...
+8423898  FTPN3                   Fort Point    NH  discontinued  2020-04-13 00:00:00,2014-08-05 00:00:00,2012-0...    POINT (-70.68750 43.06250)
+8726667  MCYF1           Mckay Bay Entrance    FL  discontinued  2020-05-20 00:00:00,2019-03-08 00:00:00,2017-0...    POINT (-82.43750 27.90625)
+8772447  FCGT2                     Freeport    TX  discontinued  2020-05-24 18:45:00,2018-10-10 21:50:00,2018-1...    POINT (-95.31250 28.93750)
+9087079  GBWW3                    Green Bay    WI  discontinued  2020-10-28 13:00:00,2007-08-06 23:59:00,2007-0...    POINT (-88.00000 44.53125)
+8770570  SBPT2            Sabine Pass North    TX  discontinued  2021-01-18 00:00:00,2020-09-30 15:45:00,2020-0...    POINT (-93.87500 29.73438)
 
-[433 rows x 6 columns]
+[435 rows x 6 columns]
 ```
 
 Additionally, you can use a Shapely `Polygon` or `MultiPolygon` to constrain the stations query to a specific region:

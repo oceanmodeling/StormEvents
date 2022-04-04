@@ -66,7 +66,7 @@ class VortexTrack:
         VortexTrack('AL112017', Timestamp('2017-08-27 06:00:00'), Timestamp('2017-09-16 15:00:00'), <ATCF_FileDeck.ADVISORY: 'a'>, <ATCF_Mode.historical: 'ARCHIVE'>, None, None)
         """
 
-        self.__raw_data = None
+        self.__unfiltered_data = None
         self.__filename = None
 
         self.__remote_atcf = None
@@ -83,11 +83,9 @@ class VortexTrack:
         self.__location_hash = None
         self.__linestrings = None
         self.__distances = None
-        self.__isotachs = None
-        self.__wind_swaths = None
 
         if isinstance(storm, DataFrame):
-            self.__raw_data = storm
+            self.__unfiltered_data = storm
         elif pathlib.Path(storm).exists():
             self.filename = storm
         elif isinstance(storm, str):
@@ -241,19 +239,19 @@ class VortexTrack:
         """
 
         if self.__nhc_code is None and not self.__invalid_storm_name:
-            if self.__raw_data is not None:
+            if self.__unfiltered_data is not None:
                 nhc_code = (
-                    f'{self.__raw_data["basin"].iloc[-1]}'
-                    f'{self.__raw_data["storm_number"].iloc[-1]}'
-                    f'{self.__raw_data["datetime"].iloc[-1].year}'
+                    f'{self.__unfiltered_data["basin"].iloc[-1]}'
+                    f'{self.__unfiltered_data["storm_number"].iloc[-1]}'
+                    f'{self.__unfiltered_data["datetime"].iloc[-1].year}'
                 )
                 try:
                     self.nhc_code = nhc_code
                 except ValueError:
                     try:
                         nhc_code = get_atcf_entry(
-                            storm_name=self.__raw_data['name'].tolist()[-1],
-                            year=self.__raw_data['datetime'].tolist()[-1].year,
+                            storm_name=self.__unfiltered_data['name'].tolist()[-1],
+                            year=self.__unfiltered_data['datetime'].tolist()[-1].year,
                         ).name
                         self.nhc_code = nhc_code
                     except ValueError:
@@ -299,13 +297,13 @@ class VortexTrack:
 
     @start_date.setter
     def start_date(self, start_date: datetime):
-        data_start = self.raw_data['datetime'].iloc[0]
+        data_start = self.unfiltered_data['datetime'].iloc[0]
 
         if start_date is None:
             start_date = data_start
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_end = self.raw_data['datetime'].iloc[-1]
+            data_end = self.unfiltered_data['datetime'].iloc[-1]
             start_date, _ = subset_time_interval(
                 start=data_start, end=data_end, subset_start=start_date,
             )
@@ -338,13 +336,13 @@ class VortexTrack:
 
     @end_date.setter
     def end_date(self, end_date: datetime):
-        data_end = self.raw_data['datetime'].iloc[-1]
+        data_end = self.unfiltered_data['datetime'].iloc[-1]
 
         if end_date is None:
             end_date = data_end
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_start = self.raw_data['datetime'].iloc[0]
+            data_start = self.unfiltered_data['datetime'].iloc[0]
             _, end_date = subset_time_interval(
                 start=data_start, end=data_end, subset_end=end_date,
             )
@@ -458,40 +456,40 @@ class VortexTrack:
 
         >>> track = VortexTrack('AL112017')
         >>> track.data
-            basin storm_number advisory            datetime  ...   direction     speed    name                    geometry
-        0      AL           11     BEST 2017-08-30 00:00:00  ...    0.000000  0.000000  INVEST  POINT (-26.90000 16.10000)
-        1      AL           11     BEST 2017-08-30 06:00:00  ...  274.421188  6.951105  INVEST  POINT (-28.30000 16.20000)
-        2      AL           11     BEST 2017-08-30 12:00:00  ...  274.424523  6.947623    IRMA  POINT (-29.70000 16.30000)
-        3      AL           11     BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
-        4      AL           11     BEST 2017-08-30 18:00:00  ...  270.154371  5.442611    IRMA  POINT (-30.80000 16.30000)
-        ..    ...          ...      ...                 ...  ...         ...       ...     ...                         ...
-        168    AL           11     BEST 2017-09-12 12:00:00  ...  309.875306  7.262151    IRMA  POINT (-86.90000 33.80000)
-        169    AL           11     BEST 2017-09-12 18:00:00  ...  315.455084  7.247674    IRMA  POINT (-88.10000 34.80000)
-        170    AL           11     BEST 2017-09-13 00:00:00  ...  320.849994  5.315966    IRMA  POINT (-88.90000 35.60000)
-        171    AL           11     BEST 2017-09-13 06:00:00  ...  321.042910  3.973414    IRMA  POINT (-89.50000 36.20000)
-        172    AL           11     BEST 2017-09-13 12:00:00  ...  321.262133  3.961652    IRMA  POINT (-90.10000 36.80000)
-        [173 rows x 22 columns]
+                    basin storm_number            datetime track_start_time advisory  ... isowave_radius_for_SEQ  isowave_radius_for_NWQ  isowave_radius_for_SWQ  extra_values                    geometry
+        0      AL           11 2017-08-30 00:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-26.90000 16.10000)
+        1      AL           11 2017-08-30 06:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-28.30000 16.20000)
+        2      AL           11 2017-08-30 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-29.70000 16.30000)
+        3      AL           11 2017-08-30 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-30.80000 16.30000)
+        4      AL           11 2017-08-30 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-30.80000 16.30000)
+        ..    ...          ...                 ...              ...      ...  ...                    ...                     ...                     ...           ...                         ...
+        168    AL           11 2017-09-12 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-86.90000 33.80000)
+        169    AL           11 2017-09-12 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-88.10000 34.80000)
+        170    AL           11 2017-09-13 00:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-88.90000 35.60000)
+        171    AL           11 2017-09-13 06:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-89.50000 36.20000)
+        172    AL           11 2017-09-13 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-90.10000 36.80000)
+        [173 rows x 37 columns]
 
         >>> track = VortexTrack('AL112017', file_deck='a')
         >>> track.data
-              basin storm_number advisory            datetime  ...   direction      speed    name                    geometry
-        0        AL           11     CARQ 2017-08-27 06:00:00  ...    0.000000   0.000000  INVEST  POINT (-17.40000 11.70000)
-        1        AL           11     CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-17.90000 11.80000)
-        2        AL           11     CARQ 2017-08-27 12:00:00  ...  281.524268   2.574642  INVEST  POINT (-13.30000 11.50000)
-        3        AL           11     CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-18.40000 11.90000)
-        4        AL           11     CARQ 2017-08-27 18:00:00  ...  281.528821   2.573747  INVEST  POINT (-16.00000 11.50000)
-        ...     ...          ...      ...                 ...  ...         ...        ...     ...                         ...
-        10739    AL           11     HMON 2017-09-16 09:00:00  ...   52.414833  11.903071          POINT (-84.30000 43.00000)
-        10740    AL           11     HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 41.00000)
-        10741    AL           11     HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-82.00000 39.50000)
-        10742    AL           11     HMON 2017-09-16 12:00:00  ...    7.196515   6.218772          POINT (-84.30000 44.00000)
-        10743    AL           11     HMON 2017-09-16 15:00:00  ...  122.402907  22.540200          POINT (-81.90000 39.80000)
-        [10744 rows x 22 columns
+                basin storm_number            datetime    track_start_time  ... isowave_radius_for_NWQ isowave_radius_for_SWQ  extra_values                    geometry
+        0        AL           11 2017-08-27 06:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-17.40000 11.70000)
+        1        AL           11 2017-08-27 12:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-17.90000 11.80000)
+        2        AL           11 2017-08-27 18:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-18.40000 11.90000)
+        3        AL           11 2017-08-28 00:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-19.00000 12.00000)
+        4        AL           11 2017-08-28 06:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-19.50000 12.00000)
+        ...     ...          ...                 ...                 ...  ...                    ...                    ...           ...                         ...
+        10739    AL           11 2017-09-12 00:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-84.40000 31.90000)
+        10740    AL           11 2017-09-12 03:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-84.90000 32.40000)
+        10741    AL           11 2017-09-12 12:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-86.40000 33.80000)
+        10742    AL           11 2017-09-13 00:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-88.20000 35.20000)
+        10743    AL           11 2017-09-13 12:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-88.60000 36.40000)
+        [10434 rows x 37 columns]
         """
 
-        return self.raw_data.loc[
-            (self.raw_data['datetime'] >= self.start_date)
-            & (self.raw_data['datetime'] <= self.end_date)
+        return self.unfiltered_data.loc[
+            (self.unfiltered_data['datetime'] >= self.start_date)
+            & (self.unfiltered_data['datetime'] <= self.end_date)
         ]
 
     def to_file(self, path: PathLike, advisory: ATCF_Advisory = None, overwrite: bool = False):
@@ -729,7 +727,6 @@ class VortexTrack:
             distances = {}
             for advisory, advisory_tracks in linestrings.items():
                 distances[advisory] = {}
-
                 for track_start_time, linestring in advisory_tracks.items():
                     x, y = linestring.xy
                     _, _, track_distances = geodetic.inv(x[:-1], y[:-1], x[1:], y[1:],)
@@ -741,46 +738,45 @@ class VortexTrack:
 
     def isotachs(
         self, wind_speed: float, segments: int = 91
-    ) -> Dict[str, Dict[datetime, Polygon]]:
+    ) -> Dict[str, Dict[str, Dict[str, Polygon]]]:
         """
-        calculate the isotach at the given speed at every time in the dataset
+        calculate the isotach at the given wind speed at every time in the dataset
 
         :param wind_speed: wind speed to extract (in knots)
         :param segments: number of discretization points per quadrant
-        :return: list of isotachs as polygons for each advisory type
+        :return: list of isotachs as polygons for each advisory type and individual track
         """
 
-        configuration = self.__configuration
+        valid_isotach_values = [34, 50, 64]
+        assert (
+            wind_speed in valid_isotach_values
+        ), f'isotach must be one of {valid_isotach_values}'
 
-        # only proceed if the configuration has changed
-        if (
-            self.__isotachs is None
-            or len(self.__isotachs) == 0
-            or configuration != self.__previous_configuration
-        ):
-            # collect the attributes needed from the forcing to generate swath
-            data = self.data[self.data['isotach_radius'] == wind_speed]
+        # collect the attributes needed from the forcing to generate swath
+        data = self.data[self.data['isotach_radius'] == wind_speed]
 
-            # enumerate quadrants
-            quadrant_names = [
-                'isotach_radius_for_NEQ',
-                'isotach_radius_for_NWQ',
-                'isotach_radius_for_SWQ',
-                'isotach_radius_for_SEQ',
-            ]
+        # enumerate quadrants
+        quadrant_names = [
+            'isotach_radius_for_NEQ',
+            'isotach_radius_for_NWQ',
+            'isotach_radius_for_SWQ',
+            'isotach_radius_for_SEQ',
+        ]
 
-            # convert quadrant radii from nautical miles to meters
-            data[quadrant_names] *= 1852.0
+        # convert quadrant radii from nautical miles to meters
+        data[quadrant_names] *= 1852.0
 
-            geodetic = Geod(ellps='WGS84')
+        geodetic = Geod(ellps='WGS84')
 
-            # generate overall swath based on the desired isotach
-            isotachs = {}
-            for advisory in pandas.unique(data['advisory']):
-                advisory_data = data[data['advisory'] == advisory]
+        tracks = separate_tracks(data)
 
-                advisory_isotachs = {}
-                for index, row in advisory_data.iterrows():
+        # generate overall swath based on the desired isotach
+        isotachs = {}
+        for advisory, advisory_tracks in tracks.items():
+            isotachs[advisory] = {}
+            for track_start_time, track_data in advisory_tracks.items():
+                isotachs[advisory][track_start_time] = {}
+                for index, row in track_data.iterrows():
                     # get the starting angle range for NEQ based on storm direction
                     rotation_angle = 360 - row['direction']
                     start_angle = 0 + rotation_angle
@@ -828,16 +824,15 @@ class VortexTrack:
                         if isinstance(isotach, MultiPolygon):
                             isotach = isotach.buffer(1e-10)
 
-                        advisory_isotachs[row['datetime']] = isotach
+                        isotachs[advisory][track_start_time][
+                            f'{row["datetime"]}:%Y%m%dT%H%M%S'
+                        ] = isotach
 
-                if len(advisory_isotachs) > 0:
-                    isotachs[advisory] = advisory_isotachs
+        return isotachs
 
-            self.__isotachs = isotachs
-
-        return self.__isotachs
-
-    def wind_swaths(self, wind_speed: int, segments: int = 91) -> Dict[str, Polygon]:
+    def wind_swaths(
+        self, wind_speed: int, segments: int = 91
+    ) -> Dict[str, Dict[str, Polygon]]:
         """
         extract wind swaths (per advisory type) of the track as polygons
 
@@ -845,36 +840,25 @@ class VortexTrack:
         :param segments: number of discretization points per quadrant (default = ``91``)
         """
 
-        configuration = self.__configuration
+        isotachs = self.isotachs(wind_speed=wind_speed, segments=segments)
 
-        # only proceed if the configuration has changed
-        if (
-            self.__wind_swaths is None
-            or len(self.__wind_swaths) == 0
-            or configuration != self.__previous_configuration
-        ):
-            valid_isotach_values = [34, 50, 64]
-            assert (
-                wind_speed in valid_isotach_values
-            ), f'isotach must be one of {valid_isotach_values}'
-
-            advisory_isotachs = self.isotachs(wind_speed=wind_speed, segments=segments)
-
-            wind_swaths = {}
-            for advisory, isotachs in advisory_isotachs.items():
-                isotachs = list(isotachs.values())
+        wind_swaths = {}
+        for advisory, advisory_isotachs in isotachs.items():
+            wind_swaths[advisory] = {}
+            for track_start_time, track_data in advisory_isotachs.items():
+                wind_swaths[advisory][track_start_time] = {}
                 convex_hulls = []
-                for index in range(len(isotachs) - 1):
+                for index in range(len(advisory_isotachs) - 1):
                     convex_hulls.append(
-                        ops.unary_union([isotachs[index], isotachs[index + 1]]).convex_hull
+                        ops.unary_union(
+                            [advisory_isotachs[index], advisory_isotachs[index + 1]]
+                        ).convex_hull
                     )
 
                 # get the union of polygons
-                wind_swaths[advisory] = ops.unary_union(convex_hulls)
+                wind_swaths[advisory][track_start_time] = ops.unary_union(convex_hulls)
 
-            self.__wind_swaths = wind_swaths
-
-        return self.__wind_swaths
+        return wind_swaths
 
     @property
     def tracks(self) -> Dict[str, Dict[str, DataFrame]]:
@@ -892,7 +876,7 @@ class VortexTrack:
         return self.data['datetime'].diff().sum()
 
     @property
-    def raw_data(self) -> DataFrame:
+    def unfiltered_data(self) -> DataFrame:
         """
         :return: data frame containing all track data for the specified storm and file deck; NOTE: datetimes for forecasts represent the initial datetime of the forecast, not the datetime of the record
         """
@@ -901,8 +885,8 @@ class VortexTrack:
 
         # only proceed if the configuration has changed
         if (
-            self.__raw_data is None
-            or len(self.__raw_data) == 0
+            self.__unfiltered_data is None
+            or len(self.__unfiltered_data) == 0
             or configuration != self.__previous_configuration
         ):
             advisories = self.advisories
@@ -939,31 +923,36 @@ class VortexTrack:
             )
 
             dataframe = dataframe[
-                [*dataframe.columns[:3], 'track_start_time', *dataframe.columns[3:-1]]
+                [
+                    *dataframe.columns[:3],
+                    *dataframe.columns[4:-1],
+                    'advisory_number',
+                    'track_start_time',
+                ]
             ]
 
-            self.raw_data = dataframe
+            self.unfiltered_data = dataframe
             self.__previous_configuration = configuration
 
         # if location values have changed, recompute velocity
-        location_hash = pandas.util.hash_pandas_object(self.__raw_data['geometry'])
+        location_hash = pandas.util.hash_pandas_object(self.__unfiltered_data['geometry'])
 
         if self.__location_hash is None or len(location_hash) != len(self.__location_hash):
-            updated_locations = ~self.__raw_data.index.isnull()
+            updated_locations = ~self.__unfiltered_data.index.isnull()
         else:
             updated_locations = location_hash != self.__location_hash
-        updated_locations |= pandas.isna(self.__raw_data['speed'])
+        updated_locations |= pandas.isna(self.__unfiltered_data['speed'])
 
         if updated_locations.any():
-            self.__raw_data.loc[updated_locations] = self.__compute_velocity(
-                self.__raw_data[updated_locations]
+            self.__unfiltered_data.loc[updated_locations] = self.__compute_velocity(
+                self.__unfiltered_data[updated_locations]
             )
             self.__location_hash = location_hash
 
-        return self.__raw_data
+        return self.__unfiltered_data
 
-    @raw_data.setter
-    def raw_data(self, dataframe: DataFrame):
+    @unfiltered_data.setter
+    def unfiltered_data(self, dataframe: DataFrame):
         # fill missing values of MRD and MSLP in the OFCL advisory
         if 'OFCL' in self.advisories:
             tracks = separate_tracks(dataframe)
@@ -1019,7 +1008,7 @@ class VortexTrack:
             ]
             self.__advisories_to_remove = []
 
-        self.__raw_data = dataframe
+        self.__unfiltered_data = dataframe
 
     @property
     def __configuration(self) -> Dict[str, Any]:
@@ -1076,7 +1065,7 @@ class VortexTrack:
 
     @property
     def __file_end_date(self):
-        unique_dates = numpy.unique(self.raw_data['datetime'])
+        unique_dates = numpy.unique(self.unfiltered_data['datetime'])
         for date in unique_dates:
             if date >= numpy.datetime64(self.end_date):
                 return date
@@ -1086,7 +1075,7 @@ class VortexTrack:
 
     def __copy__(self) -> 'VortexTrack':
         instance = self.__class__(
-            storm=self.raw_data.copy(),
+            storm=self.unfiltered_data.copy(),
             start_date=self.start_date,
             end_date=self.end_date,
             file_deck=self.file_deck,
