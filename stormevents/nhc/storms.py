@@ -192,6 +192,8 @@ def nhc_storms_gis_archive(year: int = None) -> pandas.DataFrame:
 
     url = 'http://www.nhc.noaa.gov/gis/archive_wsurge.php'
     response = requests.get(url, params={'year': year})
+    if not response.ok:
+        response.raise_for_status()
     soup = BeautifulSoup(response.content, features='html.parser')
     table = soup.find('table')
 
