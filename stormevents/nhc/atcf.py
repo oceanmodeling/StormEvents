@@ -5,7 +5,7 @@ import io
 import itertools
 from os import PathLike
 from pathlib import Path
-from typing import Any, Iterable, List, TextIO, Union
+from typing import Iterable, List, TextIO, Union
 
 import geopandas
 from geopandas import GeoDataFrame
@@ -298,18 +298,6 @@ def atcf_url(
     return url
 
 
-def normalize_atcf_value(value: Any, to_type: type, round_digits: int = None,) -> Any:
-    if type(value).__name__ == 'Quantity':
-        value = value.magnitude
-    if not (value is None or pandas.isna(value) or value == ''):
-        if round_digits is not None and issubclass(to_type, (int, float)):
-            if isinstance(value, str):
-                value = float(value)
-            value = round(value, round_digits)
-        value = typepigeon.convert_value(value, to_type)
-    return value
-
-
 def read_atcf(
     atcf: Union[PathLike, io.BytesIO, TextIO],
     advisories: List[ATCF_Advisory] = None,
@@ -340,11 +328,19 @@ def read_atcf(
         for line in lines
     )
 
-    data = DataFrame.from_records(lines, columns=list(ATCF_FIELDS),).astype(
-        {field: 'string' for field in ATCF_FIELDS}
+    data = DataFrame.from_records(lines)
+    data.rename(
+        columns={index: list(ATCF_FIELDS)[index] for index in range(len(data.columns))},
+        inplace=True,
+    )
+    for column in ATCF_FIELDS:
+        if column not in data.columns:
+            data[column] = pandas.NA
+    data.astype(
+        {field: 'string' for field in data.columns}, copy=False,
     )
 
-    if data['USERDEFINED'].str.contains(',').any():
+    if 'USERDEFINED' in data and data['USERDEFINED'].str.contains(',').any():
         if fort_22:
             extra_fields = FORT_22_FIELDS
         else:
@@ -366,7 +362,7 @@ def read_atcf(
         except ValueError:
             pass
 
-    if advisories is not None:
+    if advisories is not None and len(advisories) > 0:
         data = data[data['TECH'].isin(advisories)]
         if len(data) == 0:
             raise ValueError(f'no ATCF records found matching "{advisories}"')

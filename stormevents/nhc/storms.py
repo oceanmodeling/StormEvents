@@ -1,7 +1,7 @@
 from datetime import datetime
 from functools import lru_cache
 import re
-from typing import Iterable, List
+from typing import Iterable
 
 from bs4 import BeautifulSoup
 import numpy
@@ -28,12 +28,12 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     AL051851     UNNAMED    TS  1851    AL       5   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
     AL061851     UNNAMED    TS  1851    AL       6   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
     ...              ...   ...   ...   ...     ...       ...                 ...                 ...
+    CP902021      INVEST    LO  2021    CP      90  METWATCH 2021-07-24 12:00:00                 NaT
+    CP912021      INVEST    DB  2021    CP      91  METWATCH 2021-08-07 18:00:00                 NaT
     EP922021      INVEST    DB  2021    EP      92  METWATCH 2021-06-05 06:00:00                 NaT
-    AL952021      INVEST    DB  2021    AL      95  METWATCH 2021-10-28 12:00:00                 NaT
-    AL962021      INVEST    EX  2021    AL      96  METWATCH 2021-11-07 12:00:00                 NaT
     EP712022  GENESIS001    DB  2022    EP      71   GENESIS 2022-01-20 12:00:00                 NaT
     EP902022      INVEST    LO  2022    EP      90  METWATCH 2022-01-20 12:00:00                 NaT
-    [2729 rows x 8 columns]
+    [2714 rows x 8 columns]
     """
 
     url = 'https://ftp.nhc.noaa.gov/atcf/index/storm_list.txt'
@@ -95,19 +95,21 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
         else:
             storms = storms[storms['year'] == int(year)]
 
-    for string_column in ['nhc_code', 'name', 'class', 'source']:
-        storms[string_column] = storms[string_column].str.strip()
-
+    storms['nhc_code'] = storms['nhc_code'].str.strip()
     storms.set_index('nhc_code', inplace=True)
 
-    gis_storms = nhc_storms_gis_archive(year=year)
-    gis_storms = gis_storms.drop(gis_storms[gis_storms.index.isin(storms.index)].index)
-    if len(gis_storms) > 0:
-        gis_storms[['start_date', 'end_date']] = pandas.to_datetime(numpy.nan)
-        storms = pandas.concat([storms, gis_storms[storms.columns]])
+    gis_archive_storms = nhc_storms_gis_archive(year=year)
+    gis_archive_storms = gis_archive_storms.drop(
+        gis_archive_storms[gis_archive_storms.index.isin(storms.index)].index
+    )
+    if len(gis_archive_storms) > 0:
+        gis_archive_storms[['start_date', 'end_date']] = pandas.to_datetime(numpy.nan)
+        storms = pandas.concat([storms, gis_archive_storms[storms.columns]])
 
     for string_column in ['name', 'class', 'source']:
-        storms.loc[storms[string_column].str.len() == 0, string_column] = None
+        storms.loc[storms[string_column].str.len() == 0, string_column] = pandas.NA
+        storms[string_column] = storms[string_column].str.strip()
+        storms[string_column] = storms[string_column].astype('string')
 
     storms.sort_values(['year', 'number', 'basin'], inplace=True)
 
@@ -115,7 +117,7 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
 
 
 @lru_cache(maxsize=None)
-def nhc_storms_archive(year: int = None) -> List[str]:
+def nhc_storms_archive(year: int = None) -> pandas.DataFrame:
     url = 'https://ftp.nhc.noaa.gov/atcf/archive/storm.table'
 
     columns = [
@@ -144,10 +146,37 @@ def nhc_storms_archive(year: int = None) -> List[str]:
 
     storms = pandas.read_csv(url, header=0, names=columns)
 
-    if year is not None:
-        storms = storms[storms['year'] == year]
+    storms = storms[
+        [
+            'nhc_code',
+            'name',
+            'class',
+            'year',
+            'basin',
+            'number',
+            'source',
+            'start_date',
+            'end_date',
+        ]
+    ]
 
-    return storms['nhc_code'].str.strip().to_list()
+    if year is not None:
+        if isinstance(year, Iterable) and not isinstance(year, str):
+            storms = storms[storms['year'].isin(year)]
+        else:
+            storms = storms[storms['year'] == int(year)]
+
+    storms['nhc_code'] = storms['nhc_code'].str.strip()
+    storms.set_index('nhc_code', inplace=True)
+
+    storms.sort_values(['year', 'number', 'basin'], inplace=True)
+
+    for string_column in ['name', 'class', 'source']:
+        storms.loc[storms[string_column].str.len() == 0, string_column] = pandas.NA
+        storms[string_column] = storms[string_column].str.strip()
+        storms[string_column] = storms[string_column].astype('string')
+
+    return storms
 
 
 @lru_cache(maxsize=None)
@@ -227,5 +256,10 @@ def nhc_storms_gis_archive(year: int = None) -> pandas.DataFrame:
     storms['source'] = 'GIS_ARCHIVE'
 
     storms.sort_values(['year', 'basin', 'number'], inplace=True)
+
+    for string_column in ['name', 'class', 'source']:
+        storms.loc[storms[string_column].str.len() == 0, string_column] = pandas.NA
+        storms[string_column] = storms[string_column].str.strip()
+        storms[string_column] = storms[string_column].astype('string')
 
     return storms[['name', 'class', 'year', 'basin', 'number', 'source']]

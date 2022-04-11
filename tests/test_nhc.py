@@ -61,9 +61,7 @@ def test_vortex_track():
     ]
 
     for storm in storms:
-        track = VortexTrack.from_storm_name(
-            *storm, start_date=timedelta(days=-1), file_deck='a'
-        )
+        track = VortexTrack.from_storm_name(*storm, file_deck='b')
         track.to_file(
             output_directory / f'{track.name.lower()}{track.year}.fort.22', overwrite=True
         )
@@ -71,40 +69,48 @@ def test_vortex_track():
     check_reference_directory(output_directory, reference_directory)
 
 
+def test_vortex_track_isotachs():
+    track_1 = VortexTrack('florence2018')
+    track_2 = VortexTrack('florence2018', file_deck='a')
+
+    track_1.isotachs(34)
+    track_2.isotachs(34)
+
+
 def test_vortex_track_properties():
     track = VortexTrack('florence2018', file_deck='a')
 
-    assert len(track) == 10234
+    assert len(track) == 10090
 
     track.start_date = timedelta(days=1)
 
-    assert len(track) == 9877
+    assert len(track) == 10080
 
     track.end_date = timedelta(days=-1)
 
-    assert len(track) == 9826
+    assert len(track) == 9894
 
-    track.advisory = 'OFCL'
+    track.advisories = 'OFCL'
 
-    assert len(track) == 1273
+    assert len(track) == 1249
 
     track.end_date = None
 
-    assert len(track) == 1296
+    assert len(track) == 1289
 
     track.nhc_code = 'AL072018'
 
     assert len(track) == 175
 
 
-def test_vortex_track_forecasts():
+def test_vortex_track_tracks():
     track = VortexTrack.from_storm_name('florence', 2018, file_deck='a')
 
-    forecasts = track.forecasts
+    tracks = track.tracks
 
-    assert len(forecasts) == 4
-    assert len(forecasts['OFCL']) == 77
-    assert len(forecasts['OFCL']['20180830T120000']) == 13
+    assert len(tracks) == 4
+    assert len(tracks['OFCL']) == 77
+    assert len(tracks['OFCL']['20180831T000000']) == 2
 
 
 @pytest.mark.disable_socket
@@ -154,6 +160,15 @@ def test_vortex_track_to_file():
     check_reference_directory(output_directory, reference_directory)
 
 
+@pytest.mark.skip
+def test_vortex_track_distances():
+    track_1 = VortexTrack.from_storm_name('florence', 2018)
+    track_2 = VortexTrack.from_storm_name('florence', 2018, file_deck='a', advisories=['OFCL'])
+
+    assert track_1.distances['BEST']['20180830T060000'] == 8725961.838567913
+    assert track_2.distances['OFCL']['20180831T000000'] == 15490.033837939689
+
+
 def test_vortex_track_recompute_velocity():
     output_directory = OUTPUT_DIRECTORY / 'test_vortex_track_recompute_velocity'
     reference_directory = REFERENCE_DIRECTORY / 'test_vortex_track_recompute_velocity'
@@ -198,7 +213,7 @@ def test_vortex_track_file_decks():
                 start_date=values['start_date'],
                 end_date=values['end_date'],
                 file_deck=file_deck,
-                advisory=advisory,
+                advisories=advisory,
             )
 
             track.to_file(output_directory / f'{file_deck}-deck_{advisory}.22', overwrite=True)
@@ -231,6 +246,6 @@ def test_vortex_track_no_internet():
     track_3.to_file(output_directory / 'vortex_3.22', overwrite=True)
 
     assert track_1 == track_2
-    assert track_1 == track_3
+    assert track_1 != track_3  # these are not the same because of the velocity recalculation
 
     check_reference_directory(output_directory, reference_directory)
