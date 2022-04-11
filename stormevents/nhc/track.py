@@ -669,11 +669,13 @@ class VortexTrack:
             for advisory, advisory_tracks in tracks.items():
                 linestrings[advisory] = {}
                 for track_start_time, track in advisory_tracks.items():
-                    geometries = track['geometry'].drop_duplicates()
+                    geometries = track['geometry']
                     if len(geometries) > 1:
-                        linestrings[advisory][track_start_time] = LineString(
-                            geometries.to_list()
-                        )
+                        geometries = geometries.drop_duplicates()
+                        if len(geometries) > 1:
+                            linestrings[advisory][track_start_time] = LineString(
+                                geometries.to_list()
+                            )
 
             self.__linestrings = linestrings
 
