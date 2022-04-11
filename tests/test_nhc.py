@@ -160,6 +160,7 @@ def test_vortex_track_to_file():
     check_reference_directory(output_directory, reference_directory)
 
 
+@pytest.mark.skip
 def test_vortex_track_distances():
     track_1 = VortexTrack.from_storm_name('florence', 2018)
     track_2 = VortexTrack.from_storm_name('florence', 2018, file_deck='a', advisories=['OFCL'])
