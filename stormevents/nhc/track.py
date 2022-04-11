@@ -7,6 +7,7 @@ from os import PathLike
 import pathlib
 import re
 from typing import Any, Dict, List, Union
+from urllib.error import URLError
 from urllib.request import urlopen
 
 import numpy
@@ -26,7 +27,7 @@ from stormevents.nhc.atcf import (
     get_atcf_entry,
     read_atcf,
 )
-from stormevents.nhc.storms import nhc_storms, nhc_storms_archive
+from stormevents.nhc.storms import nhc_storms
 from stormevents.utilities import subset_time_interval
 
 
@@ -41,7 +42,6 @@ class VortexTrack:
         start_date: datetime = None,
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
-        mode: ATCF_Mode = None,
         advisories: List[ATCF_Advisory] = None,
     ):
         """
@@ -49,21 +49,20 @@ class VortexTrack:
         :param start_date: start date of track
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of `a`, `b`, `f`
-        :param mode: ATCF mode; either `historical` or `realtime`
         :param advisories: ATCF advisory types; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
 
         >>> VortexTrack('AL112017')
-        VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+        VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
 
         >>> VortexTrack('AL112017', start_date='2017-09-04')
-        VortexTrack('AL112017', datetime.datetime(2017, 9, 4, 0, 0), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+        VortexTrack('AL112017', Timestamp('2017-09-04 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
 
         >>> from datetime import timedelta
         >>> VortexTrack('AL112017', start_date=timedelta(days=2), end_date=timedelta(days=-1))
-        VortexTrack('AL112017', Timestamp('2017-09-01 00:00:00'), Timestamp('2017-09-12 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+        VortexTrack('AL112017', Timestamp('2017-09-01 00:00:00'), Timestamp('2017-09-12 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
 
         >>> VortexTrack('AL112017', file_deck='a')
-        VortexTrack('AL112017', Timestamp('2017-08-27 06:00:00'), Timestamp('2017-09-16 15:00:00'), <ATCF_FileDeck.ADVISORY: 'a'>, <ATCF_Mode.historical: 'ARCHIVE'>, None, None)
+        VortexTrack('AL112017', Timestamp('2017-08-27 06:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.ADVISORY: 'a'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], None)
         """
 
         self.__unfiltered_data = None
@@ -75,7 +74,6 @@ class VortexTrack:
         self.__start_date = None
         self.__end_date = None
         self.__file_deck = None
-        self.__mode = None
         self.__advisories = None
 
         self.__advisories_to_remove = []
@@ -96,9 +94,8 @@ class VortexTrack:
         else:
             raise FileNotFoundError(f'file not found "{storm}"')
 
-        self.file_deck = file_deck
-        self.mode = mode
         self.advisories = advisories
+        self.file_deck = file_deck
 
         self.__previous_configuration = self.__configuration
 
@@ -114,7 +111,6 @@ class VortexTrack:
         start_date: datetime = None,
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
-        mode: ATCF_Mode = None,
         advisories: [ATCF_Advisory] = None,
     ) -> 'VortexTrack':
         """
@@ -123,11 +119,10 @@ class VortexTrack:
         :param start_date: start date of track
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
-        :param mode: ATCF mode; either ``historical`` or ``realtime``
         :param advisories: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
 
         >>> VortexTrack.from_storm_name('irma', 2017)
-        VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+        VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
         """
 
         year = int(year)
@@ -138,7 +133,6 @@ class VortexTrack:
             start_date=start_date,
             end_date=end_date,
             file_deck=file_deck,
-            mode=mode,
             advisories=advisories,
         )
 
@@ -151,10 +145,10 @@ class VortexTrack:
         :param start_date: start date of track
         :param end_date: end date of track
 
+        >>> VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/AL062018.dat')
+        VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/AL062018.dat'))
         >>> VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/irma2017_fort.22')
-        VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-19 00:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_vortex_track_from_file/irma2017_fort.22'))
-        >>> VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/BT02008.dat')
-        VortexTrack('BT02008', Timestamp('2008-10-16 17:06:00'), Timestamp('2008-10-20 20:06:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', PosixPath('tests/data/input/test_vortex_track_from_file/BT02008.dat'))
+        VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-12 00:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/irma2017_fort.22'))
         """
 
         try:
@@ -362,38 +356,18 @@ class VortexTrack:
     @file_deck.setter
     def file_deck(self, file_deck: ATCF_FileDeck):
         if file_deck is None and self.filename is None:
-            file_deck = ATCF_FileDeck.BEST
+            if self.advisories is not None or len(self.advisories) > 0:
+                if ATCF_Advisory.BEST in typepigeon.convert_value(
+                    self.advisories, [ATCF_Advisory]
+                ):
+                    file_deck = ATCF_FileDeck.BEST
+                else:
+                    file_deck = ATCF_FileDeck.ADVISORY
+            else:
+                file_deck = ATCF_FileDeck.BEST
         elif not isinstance(file_deck, ATCF_FileDeck):
             file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
         self.__file_deck = file_deck
-
-    @property
-    def mode(self) -> ATCF_Mode:
-        """
-        :return: ATCF mode; either ``historical`` or ``realtime``
-        """
-
-        if self.__mode is None:
-            if self.filename is None:
-                mode = ATCF_Mode.REALTIME
-                if self.nhc_code is not None:
-                    try:
-                        archive_storms = nhc_storms_archive()
-                        if self.nhc_code.upper() in archive_storms:
-                            mode = ATCF_Mode.HISTORICAL
-                    except:
-                        pass
-            else:
-                mode = ATCF_Mode.HISTORICAL
-            self.__mode = mode
-
-        return self.__mode
-
-    @mode.setter
-    def mode(self, mode: ATCF_Mode):
-        if mode is not None and not isinstance(mode, ATCF_Mode):
-            mode = typepigeon.convert_value(mode, ATCF_Mode)
-        self.__mode = mode
 
     @property
     def advisories(self) -> List[ATCF_Advisory]:
@@ -456,35 +430,35 @@ class VortexTrack:
 
         >>> track = VortexTrack('AL112017')
         >>> track.data
-                    basin storm_number            datetime track_start_time advisory  ... isowave_radius_for_SEQ  isowave_radius_for_NWQ  isowave_radius_for_SWQ  extra_values                    geometry
-        0      AL           11 2017-08-30 00:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-26.90000 16.10000)
-        1      AL           11 2017-08-30 06:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-28.30000 16.20000)
-        2      AL           11 2017-08-30 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-29.70000 16.30000)
-        3      AL           11 2017-08-30 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-30.80000 16.30000)
-        4      AL           11 2017-08-30 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-30.80000 16.30000)
-        ..    ...          ...                 ...              ...      ...  ...                    ...                     ...                     ...           ...                         ...
-        168    AL           11 2017-09-12 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-86.90000 33.80000)
-        169    AL           11 2017-09-12 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-88.10000 34.80000)
-        170    AL           11 2017-09-13 00:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-88.90000 35.60000)
-        171    AL           11 2017-09-13 06:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-89.50000 36.20000)
-        172    AL           11 2017-09-13 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-90.10000 36.80000)
-        [173 rows x 37 columns]
+            basin storm_number            datetime advisory_number  ... isowave_radius_for_SWQ extra_values                    geometry  track_start_time
+        0      AL           11 2017-08-30 00:00:00                  ...                    NaN         <NA>  POINT (-26.90000 16.10000)        2017-08-30
+        1      AL           11 2017-08-30 06:00:00                  ...                    NaN         <NA>  POINT (-28.30000 16.20000)        2017-08-30
+        2      AL           11 2017-08-30 12:00:00                  ...                    NaN         <NA>  POINT (-29.70000 16.30000)        2017-08-30
+        3      AL           11 2017-08-30 18:00:00                  ...                    NaN         <NA>  POINT (-30.80000 16.30000)        2017-08-30
+        4      AL           11 2017-08-30 18:00:00                  ...                    NaN         <NA>  POINT (-30.80000 16.30000)        2017-08-30
+        ..    ...          ...                 ...             ...  ...                    ...          ...                         ...               ...
+        168    AL           11 2017-09-12 12:00:00                  ...                    NaN         <NA>  POINT (-86.90000 33.80000)        2017-08-30
+        169    AL           11 2017-09-12 18:00:00                  ...                    NaN         <NA>  POINT (-88.10000 34.80000)        2017-08-30
+        170    AL           11 2017-09-13 00:00:00                  ...                    NaN         <NA>  POINT (-88.90000 35.60000)        2017-08-30
+        171    AL           11 2017-09-13 06:00:00                  ...                    NaN         <NA>  POINT (-89.50000 36.20000)        2017-08-30
+        172    AL           11 2017-09-13 12:00:00                  ...                    NaN         <NA>  POINT (-90.10000 36.80000)        2017-08-30
+        [173 rows x 38 columns]
 
         >>> track = VortexTrack('AL112017', file_deck='a')
         >>> track.data
-                basin storm_number            datetime    track_start_time  ... isowave_radius_for_NWQ isowave_radius_for_SWQ  extra_values                    geometry
-        0        AL           11 2017-08-27 06:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-17.40000 11.70000)
-        1        AL           11 2017-08-27 12:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-17.90000 11.80000)
-        2        AL           11 2017-08-27 18:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-18.40000 11.90000)
-        3        AL           11 2017-08-28 00:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-19.00000 12.00000)
-        4        AL           11 2017-08-28 06:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-19.50000 12.00000)
-        ...     ...          ...                 ...                 ...  ...                    ...                    ...           ...                         ...
-        10739    AL           11 2017-09-12 00:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-84.40000 31.90000)
-        10740    AL           11 2017-09-12 03:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-84.90000 32.40000)
-        10741    AL           11 2017-09-12 12:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-86.40000 33.80000)
-        10742    AL           11 2017-09-13 00:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-88.20000 35.20000)
-        10743    AL           11 2017-09-13 12:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-88.60000 36.40000)
-        [10434 rows x 37 columns]
+              basin storm_number            datetime advisory_number  ... isowave_radius_for_SWQ extra_values                    geometry    track_start_time
+        0        AL           11 2017-08-27 06:00:00              01  ...                    NaN         <NA>  POINT (-17.40000 11.70000) 2017-08-28 06:00:00
+        1        AL           11 2017-08-27 12:00:00              01  ...                    NaN         <NA>  POINT (-17.90000 11.80000) 2017-08-28 06:00:00
+        2        AL           11 2017-08-27 18:00:00              01  ...                    NaN         <NA>  POINT (-18.40000 11.90000) 2017-08-28 06:00:00
+        3        AL           11 2017-08-28 00:00:00              01  ...                    NaN         <NA>  POINT (-19.00000 12.00000) 2017-08-28 06:00:00
+        4        AL           11 2017-08-28 06:00:00              01  ...                    NaN         <NA>  POINT (-19.50000 12.00000) 2017-08-28 06:00:00
+        ...     ...          ...                 ...             ...  ...                    ...          ...                         ...                 ...
+        10739    AL           11 2017-09-12 00:00:00              03  ...                    NaN         <NA>  POINT (-84.40000 31.90000) 2017-09-12 00:00:00
+        10740    AL           11 2017-09-12 03:00:00              03  ...                    NaN         <NA>  POINT (-84.90000 32.40000) 2017-09-12 00:00:00
+        10741    AL           11 2017-09-12 12:00:00              03  ...                    NaN         <NA>  POINT (-86.40000 33.80000) 2017-09-12 00:00:00
+        10742    AL           11 2017-09-13 00:00:00              03  ...                    NaN         <NA>  POINT (-88.20000 35.20000) 2017-09-12 00:00:00
+        10743    AL           11 2017-09-13 12:00:00              03  ...                    NaN         <NA>  POINT (-88.60000 36.40000) 2017-09-12 00:00:00
+        [10434 rows x 38 columns]
         """
 
         return self.unfiltered_data.loc[
@@ -678,7 +652,7 @@ class VortexTrack:
     @property
     def linestrings(self) -> Dict[str, Dict[str, LineString]]:
         """
-        :return: spatial linestring of current track
+        :return: spatial linestrings for every advisory and track
         """
 
         configuration = self.__configuration
@@ -739,7 +713,7 @@ class VortexTrack:
         self, wind_speed: float, segments: int = 91
     ) -> Dict[str, Dict[str, Dict[str, Polygon]]]:
         """
-        calculate the isotach at the given wind speed at every time in the dataset
+        isotach at the given wind speed at every time in the dataset
 
         :param wind_speed: wind speed to extract (in knots)
         :param segments: number of discretization points per quadrant
@@ -772,9 +746,9 @@ class VortexTrack:
         # generate overall swath based on the desired isotach
         isotachs = {}
         for advisory, advisory_tracks in tracks.items():
-            isotachs[advisory] = {}
+            advisory_isotachs = {}
             for track_start_time, track_data in advisory_tracks.items():
-                isotachs[advisory][track_start_time] = {}
+                track_isotachs = {}
                 for index, row in track_data.iterrows():
                     # get the starting angle range for NEQ based on storm direction
                     rotation_angle = 360 - row['direction']
@@ -823,17 +797,18 @@ class VortexTrack:
                         if isinstance(isotach, MultiPolygon):
                             isotach = isotach.buffer(1e-10)
 
-                        isotachs[advisory][track_start_time][
-                            f'{row["datetime"]}:%Y%m%dT%H%M%S'
-                        ] = isotach
-
+                        track_isotachs[f'{row["datetime"]}:%Y%m%dT%H%M%S'] = isotach
+                if len(track_isotachs) > 0:
+                    advisory_isotachs[track_start_time] = track_isotachs
+            if len(advisory_isotachs) > 0:
+                isotachs[advisory] = advisory_isotachs
         return isotachs
 
     def wind_swaths(
         self, wind_speed: int, segments: int = 91
     ) -> Dict[str, Dict[str, Polygon]]:
         """
-        extract wind swaths (per advisory type) of the track as polygons
+        wind swaths (per advisory type) for each advisory and track, as polygons
 
         :param wind_speed: wind speed in knots (one of ``34``, ``50``, or ``64``)
         :param segments: number of discretization points per quadrant (default = ``91``)
@@ -843,19 +818,25 @@ class VortexTrack:
 
         wind_swaths = {}
         for advisory, advisory_isotachs in isotachs.items():
-            wind_swaths[advisory] = {}
-            for track_start_time, track_data in advisory_isotachs.items():
-                wind_swaths[advisory][track_start_time] = {}
+            advisory_wind_swaths = {}
+            for track_start_time, track_isotachs in advisory_isotachs.items():
                 convex_hulls = []
-                for index in range(len(advisory_isotachs) - 1):
+                isotach_times = list(track_isotachs)
+                for index in range(len(isotach_times) - 1):
                     convex_hulls.append(
                         ops.unary_union(
-                            [advisory_isotachs[index], advisory_isotachs[index + 1]]
+                            [
+                                track_isotachs[isotach_times[index]],
+                                track_isotachs[isotach_times[index + 1]],
+                            ]
                         ).convex_hull
                     )
 
-                # get the union of polygons
-                wind_swaths[advisory][track_start_time] = ops.unary_union(convex_hulls)
+                if len(convex_hulls) > 0:
+                    # get the union of polygons
+                    advisory_wind_swaths[track_start_time] = ops.unary_union(convex_hulls)
+            if len(advisory_isotachs) > 0:
+                wind_swaths[advisory] = advisory_wind_swaths
 
         return wind_swaths
 
@@ -892,9 +873,17 @@ class VortexTrack:
             if configuration['filename'] is not None:
                 atcf_file = configuration['filename']
             else:
-                url = atcf_url(self.nhc_code, self.file_deck, self.mode)
+                url = atcf_url(self.nhc_code, self.file_deck)
+                try:
+                    response = urlopen(url)
+                except URLError:
+                    url = atcf_url(self.nhc_code, self.file_deck, mode=ATCF_Mode.HISTORICAL)
+                    try:
+                        response = urlopen(url)
+                    except URLError:
+                        raise ConnectionError(f'could not connect to {url}')
                 atcf_file = io.BytesIO()
-                atcf_file.write(urlopen(url).read())
+                atcf_file.write(response.read())
                 atcf_file.seek(0)
                 if url.endswith('.gz'):
                     atcf_file = gzip.GzipFile(fileobj=atcf_file, mode='rb')
@@ -1005,7 +994,6 @@ class VortexTrack:
         return {
             'id': self.nhc_code,
             'file_deck': self.file_deck,
-            'mode': self.mode,
             'advisories': self.advisories,
             'filename': self.filename,
         }
@@ -1082,7 +1070,7 @@ class VortexTrack:
         return f'{self.nhc_code} ({" + ".join(pandas.unique(self.data["advisory"]).tolist())}) track with {len(self)} entries, spanning {self.distances:.2f} meters over {self.duration}'
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.mode, self.advisories, self.filename])})'
+        return f'{self.__class__.__name__}({", ".join(repr(value) for value in [self.nhc_code, self.start_date, self.end_date, self.file_deck, self.advisories, self.filename])})'
 
 
 class HollandBRelation:
@@ -1134,14 +1122,16 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
         track_start_times = advisory_data['track_start_time']
 
         tracks[advisory] = {}
-        for initial_time in track_start_times:
+        for track_start_time in track_start_times:
             if advisory == 'BEST':
                 track_data = advisory_data
             else:
                 track_data = advisory_data[
-                    advisory_data['datetime'] == initial_time
+                    advisory_data['datetime'] == pandas.to_datetime(track_start_time)
                 ].sort_values('forecast_hours')
 
-            tracks[advisory][f'{pandas.to_datetime(initial_time):%Y%m%dT%H%M%S}'] = track_data
+            tracks[advisory][
+                f'{pandas.to_datetime(track_start_time):%Y%m%dT%H%M%S}'
+            ] = track_data
 
     return tracks

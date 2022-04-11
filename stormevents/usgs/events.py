@@ -146,8 +146,7 @@ def usgs_flood_storms(year: int = None) -> DataFrame:
 
     storms = nhc_storms(tuple(pandas.unique(events['year'])))
 
-    storm_names = pandas.unique(storms['name'].str.strip())
-    storm_names.sort()
+    storm_names = sorted(pandas.unique(storms['name'].str.strip()))
     for storm_name in storm_names:
         event_storms = events[
             events['usgs_name'].str.contains(storm_name, flags=re.IGNORECASE)

@@ -73,7 +73,7 @@ def test_vortex_track_isotachs():
     track_1 = VortexTrack('florence2018')
     track_2 = VortexTrack('florence2018', file_deck='a')
 
-    # track_1.isotachs(34)
+    track_1.isotachs(34)
     track_2.isotachs(34)
 
 

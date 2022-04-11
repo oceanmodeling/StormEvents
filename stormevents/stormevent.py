@@ -43,19 +43,19 @@ class StormEvent:
         :param end_date: ending time
 
         >>> StormEvent('florence', 2018)
-        StormEvent('FLORENCE', 2018)
+        StormEvent(name='FLORENCE', year=2018, start_date=Timestamp('2018-08-30 06:00:00'), end_date=Timestamp('2018-09-18 12:00:00'))
 
         >>> StormEvent('paine', 2016, start_date='2016-09-18', end_date=datetime(2016, 9, 19, 12))
-        StormEvent('PAINE', 2016, start_date='2016-09-19 00:00:00', end_date='2016-09-19 12:00:00')
+        StormEvent(name='PAINE', year=2016, start_date=Timestamp('2016-09-18 00:00:00'), end_date=datetime.datetime(2016, 9, 19, 12, 0))
 
         >>> StormEvent('florence', 2018, start_date=timedelta(days=2))
-        StormEvent('FLORENCE', 2018, start_date='2018-09-01 06:00:00')
+        StormEvent(name='FLORENCE', year=2018, start_date=Timestamp('2018-09-01 06:00:00'), end_date=Timestamp('2018-09-18 12:00:00'))
 
         >>> StormEvent('henri', 2021, start_date=timedelta(days=-3), end_date=timedelta(days=-2))
-        StormEvent('HENRI', 2021, start_date='2021-08-21 12:00:00', end_date='2021-08-22 12:00:00')
+        StormEvent(name='HENRI', year=2021, start_date=Timestamp('2021-08-21 12:00:00'), end_date=Timestamp('2021-08-22 12:00:00'))
 
         >>> StormEvent('ida', 2021, end_date=timedelta(days=2))
-        StormEvent('IDA', 2021, end_date='2021-08-29 18:00:00')
+        StormEvent(name='IDA', year=2021, start_date=Timestamp('2021-08-27 18:00:00'), end_date=Timestamp('2021-08-29 18:00:00'))
         """
 
         storms = nhc_storms(year=year)
@@ -85,7 +85,7 @@ class StormEvent:
         :return: storm object
 
         >>> StormEvent.from_nhc_code('EP172016')
-        StormEvent('PAINE', 2016)
+        StormEvent(name='PAINE', year=2016, start_date=Timestamp('2016-09-18 00:00:00'), end_date=Timestamp('2016-09-21 12:00:00'))
         """
 
         try:
@@ -119,7 +119,7 @@ class StormEvent:
         :return: storm object
 
         >>> StormEvent.from_usgs_id(310)
-        StormEvent('HENRI', 2021, end_date='2021-08-24 12:00:00')
+        StormEvent(name='HENRI', year=2021, start_date=Timestamp('2021-08-20 18:00:00'), end_date=Timestamp('2021-08-24 12:00:00'))
         """
 
         flood_events = usgs_flood_storms(year=year)
@@ -242,7 +242,6 @@ class StormEvent:
         start_date: datetime = None,
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
-        mode: ATCF_Mode = None,
         advisories: List[ATCF_Advisory] = None,
         filename: PathLike = None,
     ) -> VortexTrack:
@@ -252,14 +251,13 @@ class StormEvent:
         :param start_date: start date
         :param end_date: end date
         :param file_deck: ATCF file deck
-        :param mode: ATCF mode
         :param advisories: ATCF advisory types
         :param filename: file path to ``fort.22``
         :return: vortex track
 
         >>> storm = StormEvent('florence', 2018)
-        >>> storm.track(file_deck='b')
-        VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+        >>> storm.track()
+        VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
         """
 
         if start_date is None:
@@ -276,7 +274,6 @@ class StormEvent:
                 start_date=start_date,
                 end_date=end_date,
                 file_deck=file_deck,
-                mode=mode,
                 advisories=advisories,
             )
         return track
@@ -314,6 +311,7 @@ class StormEvent:
         self,
         product: COOPS_Product,
         wind_speed: int,
+        advisories: List[ATCF_Advisory] = None,
         station_type: COOPS_StationStatus = None,
         start_date: datetime = None,
         end_date: datetime = None,
@@ -328,6 +326,7 @@ class StormEvent:
 
         :param product: CO-OPS product
         :param wind_speed: wind speed in knots (one of ``34``, ``50``, or ``64``)
+        :param advisories: ATCF advisory types
         :param start_date: start date
         :param end_date: end date
         :param station_type: either ``current`` or ``historical``
@@ -358,10 +357,17 @@ class StormEvent:
         if isinstance(track, VortexTrack):
             track.start_date = start_date
             track.end_date = end_date
+            track.advisories = advisories
         else:
-            track = self.track(start_date=start_date, end_date=end_date, filename=track)
+            track = self.track(
+                start_date=start_date, end_date=end_date, filename=track, advisories=advisories
+            )
 
-        region = ops.unary_union(list(track.wind_swaths(wind_speed).values()))
+        polygons = []
+        wind_swaths = track.wind_swaths(wind_speed)
+        for advisory, advisory_wind_swaths in wind_swaths.items():
+            polygons.append(ops.unary_union(list(advisory_wind_swaths.values())))
+        region = ops.unary_union(polygons)
 
         return self.coops_product_within_region(
             region=region,

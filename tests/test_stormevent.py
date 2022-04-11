@@ -65,14 +65,14 @@ def test_storm_event_lookup():
     assert henri2021.nhc_code == 'AL082021'
     assert henri2021.usgs_id == 310
     assert henri2021.start_date == datetime(2021, 8, 20, 18)
-    assert henri2021.end_date == datetime(2021, 8, 24, 12)
+    assert henri2021.end_date == datetime(2021, 8, 24, 18)
 
     assert ida2021.name == 'IDA'
     assert ida2021.year == 2021
     assert ida2021.nhc_code == 'AL092021'
     assert ida2021.usgs_id == 312
     assert ida2021.start_date == datetime(2021, 8, 27, 18)
-    assert ida2021.end_date == datetime(2021, 9, 2, 6)
+    assert ida2021.end_date == datetime(2021, 9, 4, 18)
 
 
 def test_storm_event_time_interval():
@@ -104,10 +104,10 @@ def test_storm_event_time_interval():
     )
 
     assert henri2021.start_date == datetime(2021, 8, 20, 18)
-    assert henri2021.end_date == datetime(2021, 8, 22, 12)
+    assert henri2021.end_date == datetime(2021, 8, 22, 18)
     assert (
         repr(henri2021)
-        == "StormEvent(name='HENRI', year=2021, start_date=Timestamp('2021-08-20 18:00:00'), end_date=Timestamp('2021-08-22 12:00:00'))"
+        == "StormEvent(name='HENRI', year=2021, start_date=Timestamp('2021-08-20 18:00:00'), end_date=Timestamp('2021-08-22 18:00:00'))"
     )
 
     assert ida2021.start_date == datetime(2021, 8, 30)
@@ -159,7 +159,7 @@ def test_storm_event_coops_product_within_isotach(florence2018):
             os.remove(path)
 
     null_data = florence2018.coops_product_within_isotach(
-        'water_level', wind_speed=34, end_date=florence2018.start_date + timedelta(minutes=1),
+        'water_level', wind_speed=34, end_date=florence2018.start_date + timedelta(hours=1),
     )
 
     tidal_data = florence2018.coops_product_within_isotach(
@@ -167,14 +167,13 @@ def test_storm_event_coops_product_within_isotach(florence2018):
         wind_speed=34,
         start_date=datetime(2018, 9, 13),
         end_date=datetime(2018, 9, 14),
-        track=florence2018.track(file_deck='a'),
     )
 
     assert len(null_data.data_vars) == 0
     assert list(tidal_data.data_vars) == ['v', 's', 'f', 'q']
 
     assert null_data['t'].sizes == {}
-    assert tidal_data.sizes == {'nos_id': 9, 't': 241}
+    assert tidal_data.sizes == {'nos_id': 6, 't': 241}
 
     tidal_data.to_netcdf(output_directory / 'florence2018_water_levels.nc')
 
