@@ -51,13 +51,13 @@ AL041851     UNNAMED    HU  1851    AL       4   ARCHIVE 1851-08-16 00:00:00 185
 AL051851     UNNAMED    TS  1851    AL       5   ARCHIVE 1851-09-13 00:00:00 1851-09-16 18:00:00
 AL061851     UNNAMED    TS  1851    AL       6   ARCHIVE 1851-10-16 00:00:00 1851-10-19 18:00:00
 ...              ...   ...   ...   ...     ...       ...                 ...                 ...
+CP902021      INVEST    LO  2021    CP      90  METWATCH 2021-07-24 12:00:00                 NaT
+CP912021      INVEST    DB  2021    CP      91  METWATCH 2021-08-07 18:00:00                 NaT
 EP922021      INVEST    DB  2021    EP      92  METWATCH 2021-06-05 06:00:00                 NaT
-AL952021      INVEST    DB  2021    AL      95  METWATCH 2021-10-28 12:00:00                 NaT
-AL962021      INVEST    EX  2021    AL      96  METWATCH 2021-11-07 12:00:00                 NaT
 EP712022  GENESIS001    DB  2022    EP      71   GENESIS 2022-01-20 12:00:00                 NaT
 EP902022      INVEST    LO  2022    EP      90  METWATCH 2022-01-20 12:00:00                 NaT
 
-[2720 rows x 8 columns]
+[2714 rows x 8 columns]
 ```
 
 ##### retrieve storm track by NHC code
@@ -70,20 +70,20 @@ track.data
 ```
 
 ```
-    basin storm_number            datetime track_start_time advisory  ... isowave_radius_for_SEQ  isowave_radius_for_NWQ  isowave_radius_for_SWQ  extra_values                    geometry
-0      AL           11 2017-08-30 00:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-26.90000 16.10000)
-1      AL           11 2017-08-30 06:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-28.30000 16.20000)
-2      AL           11 2017-08-30 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-29.70000 16.30000)
-3      AL           11 2017-08-30 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-30.80000 16.30000)
-4      AL           11 2017-08-30 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-30.80000 16.30000)
-..    ...          ...                 ...              ...      ...  ...                    ...                     ...                     ...           ...                         ...
-168    AL           11 2017-09-12 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-86.90000 33.80000)
-169    AL           11 2017-09-12 18:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-88.10000 34.80000)
-170    AL           11 2017-09-13 00:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-88.90000 35.60000)
-171    AL           11 2017-09-13 06:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-89.50000 36.20000)
-172    AL           11 2017-09-13 12:00:00       2017-08-30     BEST  ...                    NaN                     NaN                     NaN          <NA>  POINT (-90.10000 36.80000)
+    basin storm_number            datetime advisory_number  ... isowave_radius_for_SWQ extra_values                    geometry  track_start_time
+0      AL           11 2017-08-30 00:00:00                  ...                    NaN         <NA>  POINT (-26.90000 16.10000)        2017-08-30
+1      AL           11 2017-08-30 06:00:00                  ...                    NaN         <NA>  POINT (-28.30000 16.20000)        2017-08-30
+2      AL           11 2017-08-30 12:00:00                  ...                    NaN         <NA>  POINT (-29.70000 16.30000)        2017-08-30
+3      AL           11 2017-08-30 18:00:00                  ...                    NaN         <NA>  POINT (-30.80000 16.30000)        2017-08-30
+4      AL           11 2017-08-30 18:00:00                  ...                    NaN         <NA>  POINT (-30.80000 16.30000)        2017-08-30
+..    ...          ...                 ...             ...  ...                    ...          ...                         ...               ...
+168    AL           11 2017-09-12 12:00:00                  ...                    NaN         <NA>  POINT (-86.90000 33.80000)        2017-08-30
+169    AL           11 2017-09-12 18:00:00                  ...                    NaN         <NA>  POINT (-88.10000 34.80000)        2017-08-30
+170    AL           11 2017-09-13 00:00:00                  ...                    NaN         <NA>  POINT (-88.90000 35.60000)        2017-08-30
+171    AL           11 2017-09-13 06:00:00                  ...                    NaN         <NA>  POINT (-89.50000 36.20000)        2017-08-30
+172    AL           11 2017-09-13 12:00:00                  ...                    NaN         <NA>  POINT (-90.10000 36.80000)        2017-08-30
 
-[173 rows x 37 columns]
+[173 rows x 38 columns]
 ```
 
 ##### retrieve storm track by name and year
@@ -97,7 +97,7 @@ VortexTrack.from_storm_name('irma', 2017)
 ```
 
 ```
-VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
+VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
 ```
 
 ##### specify storm track file deck
@@ -113,20 +113,20 @@ track.data
 ```
 
 ```
-      basin storm_number            datetime    track_start_time  ... isowave_radius_for_NWQ isowave_radius_for_SWQ  extra_values                    geometry
-0        AL           11 2017-08-27 06:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-17.40000 11.70000)
-1        AL           11 2017-08-27 12:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-17.90000 11.80000)
-2        AL           11 2017-08-27 18:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-18.40000 11.90000)
-3        AL           11 2017-08-28 00:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-19.00000 12.00000)
-4        AL           11 2017-08-28 06:00:00 2017-08-28 06:00:00  ...                    NaN                    NaN          <NA>  POINT (-19.50000 12.00000)
-...     ...          ...                 ...                 ...  ...                    ...                    ...           ...                         ...
-10739    AL           11 2017-09-12 00:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-84.40000 31.90000)
-10740    AL           11 2017-09-12 03:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-84.90000 32.40000)
-10741    AL           11 2017-09-12 12:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-86.40000 33.80000)
-10742    AL           11 2017-09-13 00:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-88.20000 35.20000)
-10743    AL           11 2017-09-13 12:00:00 2017-09-12 00:00:00  ...                    NaN                    NaN          <NA>  POINT (-88.60000 36.40000)
+      basin storm_number            datetime advisory_number  ... isowave_radius_for_SWQ extra_values                    geometry    track_start_time
+0        AL           11 2017-08-27 06:00:00              01  ...                    NaN         <NA>  POINT (-17.40000 11.70000) 2017-08-28 06:00:00
+1        AL           11 2017-08-27 12:00:00              01  ...                    NaN         <NA>  POINT (-17.90000 11.80000) 2017-08-28 06:00:00
+2        AL           11 2017-08-27 18:00:00              01  ...                    NaN         <NA>  POINT (-18.40000 11.90000) 2017-08-28 06:00:00
+3        AL           11 2017-08-28 00:00:00              01  ...                    NaN         <NA>  POINT (-19.00000 12.00000) 2017-08-28 06:00:00
+4        AL           11 2017-08-28 06:00:00              01  ...                    NaN         <NA>  POINT (-19.50000 12.00000) 2017-08-28 06:00:00
+...     ...          ...                 ...             ...  ...                    ...          ...                         ...                 ...
+10739    AL           11 2017-09-12 00:00:00              03  ...                    NaN         <NA>  POINT (-84.40000 31.90000) 2017-09-12 00:00:00
+10740    AL           11 2017-09-12 03:00:00              03  ...                    NaN         <NA>  POINT (-84.90000 32.40000) 2017-09-12 00:00:00
+10741    AL           11 2017-09-12 12:00:00              03  ...                    NaN         <NA>  POINT (-86.40000 33.80000) 2017-09-12 00:00:00
+10742    AL           11 2017-09-13 00:00:00              03  ...                    NaN         <NA>  POINT (-88.20000 35.20000) 2017-09-12 00:00:00
+10743    AL           11 2017-09-13 12:00:00              03  ...                    NaN         <NA>  POINT (-88.60000 36.40000) 2017-09-12 00:00:00
 
-[10434 rows x 37 columns]
+[10434 rows x 38 columns]
 ```
 
 ##### read storm track from file
@@ -403,7 +403,7 @@ StormEvent('FLORENCE', 2018)
 ```
 
 ```
-StormEvent('FLORENCE', 2018)
+StormEvent(name='FLORENCE', year=2018, start_date=Timestamp('2018-08-30 06:00:00'), end_date=Timestamp('2018-09-18 12:00:00'))
 ```
 
 or from a storm NHC code,
@@ -415,7 +415,7 @@ StormEvent.from_nhc_code('EP172016')
 ```
 
 ```
-StormEvent('PAINE', 2016)
+StormEvent(name='PAINE', year=2016, start_date=Timestamp('2016-09-18 00:00:00'), end_date=Timestamp('2016-09-21 12:00:00'))
 ```
 
 or from a USGS flood event ID.
@@ -427,7 +427,7 @@ StormEvent.from_usgs_id(310)
 ```
 
 ```
-StormEvent('HENRI', 2021, end_date='2021-08-24 12:00:00')
+StormEvent(name='HENRI', year=2021, start_date=Timestamp('2021-08-20 18:00:00'), end_date=Timestamp('2021-08-24 12:00:00'))
 ```
 
 To constrain the time interval, you can provide an absolute time range,
@@ -440,7 +440,7 @@ StormEvent('paine', 2016, start_date='2016-09-19', end_date=datetime(2016, 9, 19
 ```
 
 ```
-StormEvent('PAINE', 2016, start_date='2016-09-19 00:00:00', end_date='2016-09-19 12:00:00')
+StormEvent(name='PAINE', year=2016, start_date=datetime.datetime(2016, 9, 19, 0, 0), end_date=datetime.datetime(2016, 9, 19, 12, 0))
 ```
 
 ```python
@@ -451,7 +451,7 @@ StormEvent('paine', 2016, end_date=datetime(2016, 9, 19, 12))
 ```
 
 ```
-StormEvent('PAINE', 2016, end_date='2016-09-19 12:00:00')
+StormEvent(name='PAINE', year=2016, start_date=Timestamp('2016-09-18 00:00:00'), end_date=datetime.datetime(2016, 9, 19, 12, 0))
 ```
 
 or, alternatively, you can provide relative time deltas, which will be interpreted compared to the absolute time interval
@@ -465,7 +465,7 @@ StormEvent('florence', 2018, start_date=timedelta(days=2))  # <- start 2 days af
 ```
 
 ```
-StormEvent('FLORENCE', 2018, start_date='2018-09-01 06:00:00')
+StormEvent(name='FLORENCE', year=2018, start_date=Timestamp('2018-09-01 06:00:00'), end_date=Timestamp('2018-09-18 12:00:00'))
 ```
 
 ```python
@@ -481,7 +481,7 @@ StormEvent(
 ```
 
 ```
-StormEvent('HENRI', 2021, start_date='2021-08-21 12:00:00', end_date='2021-08-22 12:00:00')
+StormEvent(name='HENRI', year=2021, start_date=Timestamp('2021-08-21 12:00:00'), end_date=Timestamp('2021-08-22 12:00:00'))
 ```
 
 ```python
@@ -492,7 +492,7 @@ StormEvent('ida', 2021, end_date=timedelta(days=2))  # <- end 2 days after NHC s
 ```
 
 ```
-StormEvent('IDA', 2021, end_date='2021-08-29 18:00:00')
+StormEvent(name='IDA', year=2021, start_date=Timestamp('2021-08-27 18:00:00'), end_date=Timestamp('2021-08-29 18:00:00'))
 ```
 
 #### retrieve data for a storm
@@ -511,7 +511,7 @@ storm.track()
 ```
 
 ```
-VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.historical: 'ARCHIVE'>, 'BEST', None)
+VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
 ```
 
 ```python
@@ -522,7 +522,7 @@ storm.track(file_deck='a')
 ```
 
 ```
-VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.ADVISORY: 'a'>, <ATCF_Mode.historical: 'ARCHIVE'>, None, None)
+VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), <ATCF_FileDeck.ADVISORY: 'a'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], None)
 ```
 
 ##### high-water mark (HWM) surveys provided by the United States Geological Survey (USGS)
