@@ -42,20 +42,21 @@ def usgs_flood_events(
 
 
     >>> usgs_flood_events()
-                                                name  year  ...          start_date            end_date
-    usgs_id                                                 ...
-    7                             FEMA 2013 exercise  2013  ... 2013-05-15 04:00:00 2013-05-23 04:00:00
-    8                                          Wilma  2005  ... 2005-10-20 00:00:00 2005-10-31 00:00:00
-    9                            Midwest Floods 2011  2011  ... 2011-02-01 06:00:00 2011-08-30 05:00:00
-    10                          2013 - June PA Flood  2013  ... 2013-06-23 00:00:00 2013-07-01 00:00:00
-    11               Colorado 2013 Front Range Flood  2013  ... 2013-09-12 05:00:00 2013-09-24 05:00:00
-    ...                                          ...   ...  ...                 ...                 ...
-    311                   2021 August Flash Flood TN  2021  ... 2021-08-21 05:00:00 2021-08-22 05:00:00
-    312                    2021 Tropical Cyclone Ida  2021  ... 2021-08-27 05:00:00 2021-09-03 05:00:00
-    313                Chesapeake Bay - October 2021  2021  ... 2021-10-28 04:00:00                 NaT
-    314      2021 November Flooding Washington State  2021  ... 2021-11-08 06:00:00 2021-11-19 06:00:00
-    315          Washington Coastal Winter 2021-2022  2021  ... 2021-11-01 05:00:00 2022-06-30 05:00:00
-    [292 rows x 11 columns]
+                                                name  year                                        description  ... last_updated_by          start_date            end_date
+    usgs_id                                                                                                    ...
+    7                             FEMA 2013 exercise  2013                   Ardent/Sentry 2013 FEMA Exercise  ...             NaN 2013-05-15 04:00:00 2013-05-23 04:00:00
+    8                                          Wilma  2005  Category 3 in west FL. \nHurricane Wilma was t...  ...             NaN 2005-10-20 00:00:00 2005-10-31 00:00:00
+    9                            Midwest Floods 2011  2011  Spring and summer 2011 flooding of the Mississ...  ...            35.0 2011-02-01 06:00:00 2011-08-30 05:00:00
+    10                          2013 - June PA Flood  2013           Localized summer rain, small scale event  ...             NaN 2013-06-23 00:00:00 2013-07-01 00:00:00
+    11               Colorado 2013 Front Range Flood  2013  A large prolonged precipitation event resulted...  ...            35.0 2013-09-12 05:00:00 2013-09-24 05:00:00
+    ...                                          ...   ...                                                ...  ...             ...                 ...                 ...
+    312                    2021 Tropical Cyclone Ida  2021                                                NaN  ...           864.0 2021-08-27 05:00:00 2021-09-03 05:00:00
+    313                Chesapeake Bay - October 2021  2021     Coastal-flooding event in the  Chesapeake Bay.  ...           406.0 2021-10-28 04:00:00                 NaT
+    314      2021 November Flooding Washington State  2021                         Atmospheric River Flooding  ...           864.0 2021-11-08 06:00:00 2021-11-19 06:00:00
+    315          Washington Coastal Winter 2021-2022  2021                                                NaN  ...           864.0 2021-11-01 05:00:00 2022-06-30 05:00:00
+    317        2022 Hunga Tonga-Hunga Haapai tsunami  2022                                                     ...             1.0 2022-01-14 05:00:00 2022-01-18 05:00:00
+
+    [293 rows x 11 columns]
     """
 
     events = pandas.read_json('https://stn.wim.usgs.gov/STNServices/Events.json')
@@ -145,8 +146,7 @@ def usgs_flood_storms(year: int = None) -> DataFrame:
 
     storms = nhc_storms(tuple(pandas.unique(events['year'])))
 
-    storm_names = pandas.unique(storms['name'].str.strip())
-    storm_names.sort()
+    storm_names = sorted(pandas.unique(storms['name'].str.strip()))
     for storm_name in storm_names:
         event_storms = events[
             events['usgs_name'].str.contains(storm_name, flags=re.IGNORECASE)
@@ -380,22 +380,37 @@ class USGS_Event:
         """
         :returns: data frame of data for the current parameters
 
-        >>> flood = USGS_Event(23)
+        >>> flood = USGS_Event(182)
         >>> flood.high_water_marks()
-                 latitude  longitude eventName                      hwmTypeName  ... approval_id hwm_uncertainty uncertainty                    geometry
-        hwm_id                                                                   ...
-        14699   38.917360 -75.947890     Irene                           Debris  ...         NaN             NaN         NaN  POINT (-75.94789 38.91736)
-        14700   38.917360 -75.947890     Irene                              Mud  ...         NaN             NaN         NaN  POINT (-75.94789 38.91736)
-        14701   38.917580 -75.948470     Irene                              Mud  ...         NaN             NaN         NaN  POINT (-75.94847 38.91758)
-        14702   38.917360 -75.946060     Irene                       Stain line  ...         NaN             NaN         NaN  POINT (-75.94606 38.91736)
-        14703   38.917580 -75.945970     Irene                              Mud  ...         NaN             NaN         NaN  POINT (-75.94597 38.91758)
-        ...           ...        ...       ...                              ...  ...         ...             ...         ...                         ...
-        41666   44.184900 -72.823970     Irene  Other (Note in Description box)  ...     24707.0             NaN         NaN  POINT (-72.82397 44.18490)
-        41667   43.616332 -72.658893     Irene                      Clear water  ...     24706.0             NaN         NaN  POINT (-72.65889 43.61633)
-        41668   43.617370 -72.667530     Irene                        Seed line  ...     24705.0             NaN         NaN  POINT (-72.66753 43.61737)
-        41670   43.524600 -72.677540     Irene                        Seed line  ...         NaN             NaN         NaN  POINT (-72.67754 43.52460)
-        41671   43.534470 -72.672750     Irene                        Seed line  ...         NaN             NaN         NaN  POINT (-72.67275 43.53447)
-        [1300 rows x 51 columns]
+                 latitude  longitude            eventName hwmTypeName  ... hwm_uncertainty                                          hwm_notes siteZone                    geometry
+        hwm_id                                                         ...
+        22602   31.170642 -81.428402  Irma September 2017      Debris  ...             NaN                                                NaN      NaN  POINT (-81.42840 31.17064)
+        22605   31.453850 -81.362853  Irma September 2017   Seed line  ...             0.1                                                NaN      NaN  POINT (-81.36285 31.45385)
+        22612   30.720000 -81.549440  Irma September 2017   Seed line  ...             NaN  There is a secondary peak around 5.5 ft, so th...      NaN  POINT (-81.54944 30.72000)
+        22636   32.007730 -81.238270  Irma September 2017   Seed line  ...             0.1  Trimble R8 used to establish TBM. Levels ran f...      NaN  POINT (-81.23827 32.00773)
+        22653   31.531078 -81.358894  Irma September 2017   Seed line  ...             NaN                                                NaN      NaN  POINT (-81.35889 31.53108)
+        ...           ...        ...                  ...         ...  ...             ...                                                ...      ...                         ...
+        26171   18.470402 -66.246631  Irma September 2017      Debris  ...             0.5                                                NaN      NaN  POINT (-66.24663 18.47040)
+        26173   18.470300 -66.449900  Irma September 2017      Debris  ...             0.5                                levels from GNSS BM      NaN  POINT (-66.44990 18.47030)
+        26175   18.463954 -66.140869  Irma September 2017      Debris  ...             0.5                                levels from GNSS BM      NaN  POINT (-66.14087 18.46395)
+        26177   18.488720 -66.392160  Irma September 2017      Debris  ...             0.5                                levels from GNSS BM      NaN  POINT (-66.39216 18.48872)
+        26179   18.005607 -65.871768  Irma September 2017      Debris  ...             0.5                                levels from GNSS BM      NaN  POINT (-65.87177 18.00561)
+        [506 rows x 53 columns]
+        >>> flood.high_water_marks(quality=['EXCELLENT', 'GOOD'])
+                 latitude  longitude            eventName hwmTypeName  ...                                          hwm_notes peak_summary_id siteZone                    geometry
+        hwm_id                                                         ...
+        22605   31.453850 -81.362853  Irma September 2017   Seed line  ...                                                NaN             NaN      NaN  POINT (-81.36285 31.45385)
+        22612   30.720000 -81.549440  Irma September 2017   Seed line  ...  There is a secondary peak around 5.5 ft, so th...             NaN      NaN  POINT (-81.54944 30.72000)
+        22636   32.007730 -81.238270  Irma September 2017   Seed line  ...  Trimble R8 used to establish TBM. Levels ran f...             NaN      NaN  POINT (-81.23827 32.00773)
+        22674   32.030907 -80.900605  Irma September 2017   Seed line  ...                                                NaN          5042.0      NaN  POINT (-80.90061 32.03091)
+        22849   30.741940 -81.687780  Irma September 2017      Debris  ...                                                NaN          4834.0      NaN  POINT (-81.68778 30.74194)
+        ...           ...        ...                  ...         ...  ...                                                ...             ...      ...                         ...
+        25150   30.038222 -81.880928  Irma September 2017   Seed line  ...                              GNSS Level II survey.             NaN      NaN  POINT (-81.88093 30.03822)
+        25151   30.118110 -81.760220  Irma September 2017   Seed line  ...                             GNSS Level III survey.             NaN      NaN  POINT (-81.76022 30.11811)
+        25158   29.720560 -81.506110  Irma September 2017   Seed line  ...                              GNSS Level II survey.             NaN      NaN  POINT (-81.50611 29.72056)
+        25159   30.097514 -81.794375  Irma September 2017   Seed line  ...                             GNSS Level III survey.             NaN      NaN  POINT (-81.79438 30.09751)
+        25205   29.783890 -81.263060  Irma September 2017   Seed line  ...                              GNSS Level II survey.             NaN      NaN  POINT (-81.26306 29.78389)
+        [277 rows x 53 columns]
         """
 
         if self.__query is None:
