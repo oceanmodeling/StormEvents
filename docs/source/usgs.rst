@@ -8,9 +8,9 @@ and provides the results of these surveys via their API.
 list flood events that have HWM surveys
 ---------------------------------------
 
-.. autofunction:: stormevents.usgs.highwatermarks.usgs_highwatermark_events
+.. autofunction:: stormevents.usgs.events.usgs_flood_events
 
-retrieve HWM survey data for any flood event
---------------------------------------------
+abstraction of a USGS flood event
+---------------------------------
 
-.. autoclass:: stormevents.usgs.highwatermarks.HighWaterMarks
+.. autoclass:: stormevents.usgs.events.USGS_Event
