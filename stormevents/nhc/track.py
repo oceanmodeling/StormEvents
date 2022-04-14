@@ -1121,7 +1121,7 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
         if advisory == 'BEST':
             advisory_data = advisory_data.sort_values('datetime')
 
-        track_start_times = advisory_data['track_start_time']
+        track_start_times = pandas.unique(advisory_data['track_start_time'])
 
         tracks[advisory] = {}
         for track_start_time in track_start_times:
@@ -1129,7 +1129,7 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
                 track_data = advisory_data
             else:
                 track_data = advisory_data[
-                    advisory_data['datetime'] == pandas.to_datetime(track_start_time)
+                    advisory_data['track_start_time'] == pandas.to_datetime(track_start_time)
                 ].sort_values('forecast_hours')
 
             tracks[advisory][
