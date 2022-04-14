@@ -45,7 +45,7 @@ def usgs_flood_events(
                                                 name  year                                        description  ... last_updated_by          start_date            end_date
     usgs_id                                                                                                    ...
     7                             FEMA 2013 exercise  2013                   Ardent/Sentry 2013 FEMA Exercise  ...             NaN 2013-05-15 04:00:00 2013-05-23 04:00:00
-    8                                          Wilma  2005  Category 3 in west FL. \nHurricane Wilma was t...  ...             NaN 2005-10-20 00:00:00 2005-10-31 00:00:00
+    8                                          Wilma  2005  Category 3 in west FL.   Hurricane Wilma was t...  ...             NaN 2005-10-20 00:00:00 2005-10-31 00:00:00
     9                            Midwest Floods 2011  2011  Spring and summer 2011 flooding of the Mississ...  ...            35.0 2011-02-01 06:00:00 2011-08-30 05:00:00
     10                          2013 - June PA Flood  2013           Localized summer rain, small scale event  ...             NaN 2013-06-23 00:00:00 2013-07-01 00:00:00
     11               Colorado 2013 Front Range Flood  2013  A large prolonged precipitation event resulted...  ...            35.0 2013-09-12 05:00:00 2013-09-24 05:00:00
@@ -55,7 +55,6 @@ def usgs_flood_events(
     314      2021 November Flooding Washington State  2021                         Atmospheric River Flooding  ...           864.0 2021-11-08 06:00:00 2021-11-19 06:00:00
     315          Washington Coastal Winter 2021-2022  2021                                                NaN  ...           864.0 2021-11-01 05:00:00 2022-06-30 05:00:00
     317        2022 Hunga Tonga-Hunga Haapai tsunami  2022                                                     ...             1.0 2022-01-14 05:00:00 2022-01-18 05:00:00
-
     [293 rows x 11 columns]
     """
 
