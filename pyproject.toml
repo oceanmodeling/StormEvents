@@ -34,6 +34,10 @@ pytest-xdist = '*'
 sphinx = '*'
 sphinx-rtd-theme = '*'
 
+[tool.poetry.extras]
+testing = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
+development = ['flake8', 'isort', 'oitnb']
+
 [tool.poetry-dynamic-versioning]
 enable = true
 
