@@ -1,6 +1,46 @@
+[tool.poetry]
+name = 'stormevents'
+version = '0.0.0'
+description = 'Python interfaces for observational data surrounding named storm events'
+authors = ['Zach Burnett <zachary.burnett@noaa.gov>', 'William Pringle <wpringle@anl.gov>', 'Jaime R Calzada <jreniel@gmail.com>']
+license = 'GPL-3.0-or-later'
+readme = 'README.md'
+repository = 'https://github.com/noaa-ocs-modeling/StormEvents.git'
+documentation = 'https://stormevents.readthedocs.io'
+
+[tool.poetry.dependencies]
+beautifulsoup4 = '*'
+geopandas = '*'
+netcdf4 = '*'
+numpy = '*'
+python-dateutil = '*'
+pandas = '*'
+pyproj = '^2.6'
+requests = '*'
+shapely = '*'
+typepigeon = '^1.0.5'
+xarray = '*'
+
+[tool.poetry.dev-dependencies]
+dunamai = '*'
+flake8 = '*'
+isort = '*'
+m2r2 = '*'
+oitnb = '*'
+pytest = '*'
+pytest-cov = '*'
+pytest-socket = '*'
+pytest-xdist = '*'
+sphinx = '*'
+sphinx-rtd-theme = '*'
+
+[tool.poetry-dynamic-versioning]
+enable = true
+
 [build-system]
 requires = [
-    "dunamai",
-    "setuptools",
+    'poetry-core>=1.0.0',
+    'poetry-dynamic-versioning',
 ]
-build-backend = "setuptools.build_meta"
+build-backend = 'poetry.core.masonry.api'
+
