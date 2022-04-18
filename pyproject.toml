@@ -8,6 +8,16 @@ readme = 'README.md'
 repository = 'https://github.com/noaa-ocs-modeling/StormEvents.git'
 documentation = 'https://stormevents.readthedocs.io'
 
+[build-system]
+requires = [
+    'poetry-core>=1.0.0',
+    'poetry-dynamic-versioning',
+]
+build-backend = 'poetry.core.masonry.api'
+
+[tool.poetry-dynamic-versioning]
+enable = true
+
 [tool.poetry.dependencies]
 beautifulsoup4 = '*'
 geopandas = '*'
@@ -37,14 +47,3 @@ sphinx-rtd-theme = '*'
 [tool.poetry.extras]
 testing = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
 development = ['flake8', 'isort', 'oitnb']
-
-[tool.poetry-dynamic-versioning]
-enable = true
-
-[build-system]
-requires = [
-    'poetry-core>=1.0.0',
-    'poetry-dynamic-versioning',
-]
-build-backend = 'poetry.core.masonry.api'
-
