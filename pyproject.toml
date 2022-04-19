@@ -19,6 +19,7 @@ build-backend = 'poetry.core.masonry.api'
 enable = true
 
 [tool.poetry.dependencies]
+python = '^3.6'
 beautifulsoup4 = '*'
 geopandas = '*'
 netcdf4 = '*'
