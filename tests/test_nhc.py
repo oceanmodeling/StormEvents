@@ -1,5 +1,6 @@
 from copy import copy
 from datetime import timedelta
+import sys
 
 import pytest
 from pytest_socket import SocketBlockedError
@@ -160,6 +161,9 @@ def test_vortex_track_to_file():
     check_reference_directory(output_directory, reference_directory)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 7), reason='floating point differences in Python 3.6',
+)
 def test_vortex_track_distances():
     track_1 = VortexTrack.from_storm_name('florence', 2018)
     track_2 = VortexTrack.from_storm_name('florence', 2018, file_deck='a', advisories=['OFCL'])
