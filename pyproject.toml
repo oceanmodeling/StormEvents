@@ -30,20 +30,18 @@ requests = '*'
 shapely = '*'
 typepigeon = '^1.0.5'
 xarray = '*'
-
-[tool.poetry.dev-dependencies]
-dunamai = '*'
-flake8 = '*'
-isort = '*'
-m2r2 = '*'
-oitnb = '*'
-pytest = '*'
-pytest-cov = '*'
-pytest-socket = '*'
-pytest-xdist = '*'
-sphinx = '*'
-sphinx-rtd-theme = '*'
+flake8 = {version = '*', optional = true}
+isort = {version = '*', optional = true}
+oitnb = {version = '*', optional = true}
+pytest = {version = '*', optional = true}
+pytest-cov = {version = '*', optional = true}
+pytest-socket = {version = '*', optional = true}
+pytest-xdist = {version = '*', optional = true}
+m2r2 = {version = '*', optional = true}
+sphinx = {version = '*', optional = true}
+sphinx-rtd-theme = {version = '*', optional = true}
 
 [tool.poetry.extras]
 testing = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
 development = ['flake8', 'isort', 'oitnb']
+documentation = ['m2r2', 'sphinx', 'sphinx-rtd-theme']

@@ -51,14 +51,13 @@ jobs:
           key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - name: install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install . pytest pytest-xdist
+        run: pip install ".[testing]"
       - name: run tests
         if: matrix.python-version != '3.x' || matrix.os != 'ubuntu-latest'
         run: pytest --numprocesses auto
       - name: run tests with coverage
         if: matrix.python-version == '3.x' && matrix.os == 'ubuntu-latest'
         run: |
-          pip install pytest-cov
           pytest --numprocesses auto --cov . --cov-report xml:coverage.xml
           coverage report
       - name: upload coverage to Codecov
