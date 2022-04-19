@@ -50,7 +50,6 @@ jobs:
           path: ${{ env.pythonLocation }}
           key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - name: install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: pip install ".[testing]"
       - name: run tests
         if: matrix.python-version != '3.x' || matrix.os != 'ubuntu-latest'
