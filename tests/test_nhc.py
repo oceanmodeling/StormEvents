@@ -1,6 +1,8 @@
 from copy import copy
 from datetime import timedelta
+import sys
 
+import numpy
 import pytest
 from pytest_socket import SocketBlockedError
 
@@ -110,7 +112,7 @@ def test_vortex_track_tracks():
 
     assert len(tracks) == 4
     assert len(tracks['OFCL']) == 77
-    assert len(tracks['OFCL']['20180831T000000']) == 2
+    assert len(tracks['OFCL']['20180831T000000']) == 13
 
 
 @pytest.mark.disable_socket
@@ -160,13 +162,12 @@ def test_vortex_track_to_file():
     check_reference_directory(output_directory, reference_directory)
 
 
-@pytest.mark.skip
 def test_vortex_track_distances():
     track_1 = VortexTrack.from_storm_name('florence', 2018)
     track_2 = VortexTrack.from_storm_name('florence', 2018, file_deck='a', advisories=['OFCL'])
 
-    assert track_1.distances['BEST']['20180830T060000'] == 8725961.838567913
-    assert track_2.distances['OFCL']['20180831T000000'] == 15490.033837939689
+    assert numpy.isclose(track_1.distances['BEST']['20180830T060000'], 8725961.838567913)
+    assert numpy.isclose(track_2.distances['OFCL']['20180831T000000'], 8882602.389540724)
 
 
 def test_vortex_track_recompute_velocity():

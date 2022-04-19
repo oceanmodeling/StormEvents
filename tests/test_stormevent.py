@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import os
 
 import pytest
+import shapely
 from shapely.geometry import box
 
 from stormevents.stormevent import StormEvent
@@ -181,29 +182,24 @@ def test_storm_event_coops_product_within_isotach(florence2018):
 
 
 def test_storm_event_coops_product_within_region(florence2018):
-    null_track = florence2018.track(end_date=florence2018.start_date + timedelta(hours=12))
-    null_data = florence2018.coops_product_within_region(
+    null_tidal_data = florence2018.coops_product_within_region(
         'water_level',
-        region=box(*null_track.linestrings['BEST']['20180830T060000'].bounds),
-        end_date=null_track.end_date,
+        region=shapely.geometry.box(0, 0, 1, 1),
+        start_date=florence2018.start_date,
+        end_date=florence2018.start_date + timedelta(minutes=1),
     )
 
-    track = florence2018.track(
+    east_coast = shapely.geometry.box(-85, 25, -65, 45)
+
+    east_coast_tidal_data = florence2018.coops_product_within_region(
+        'water_level',
+        region=east_coast,
         start_date=datetime(2018, 9, 13, 23, 59),
         end_date=datetime(2018, 9, 14),
-        file_deck='a',
-        advisories='OFCL',
     )
 
-    tidal_data_1 = florence2018.coops_product_within_region(
-        'water_level',
-        region=box(*track.linestrings['OFCL']['20180914T000000'].bounds),
-        start_date=track.start_date,
-        end_date=track.end_date,
-    )
+    assert len(null_tidal_data.data_vars) == 0
+    assert list(east_coast_tidal_data.data_vars) == ['v', 's', 'f', 'q']
 
-    assert len(null_data.data_vars) == 0
-    assert list(tidal_data_1.data_vars) == ['v', 's', 'f', 'q']
-
-    assert null_data['t'].sizes == {}
-    assert tidal_data_1.sizes == {'nos_id': 8, 't': 1}
+    assert null_tidal_data['t'].sizes == {}
+    assert east_coast_tidal_data.sizes == {'nos_id': 111, 't': 1}
