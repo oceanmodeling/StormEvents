@@ -30,7 +30,6 @@ requests = '*'
 shapely = '*'
 typepigeon = '^1.0.5'
 xarray = '*'
-flake8 = {version = '*', optional = true}
 isort = {version = '*', optional = true}
 oitnb = {version = '*', optional = true}
 pytest = {version = '*', optional = true}
