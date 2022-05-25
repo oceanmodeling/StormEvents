@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/gh/oceanmodeling/StormEvents/branch/main/graph/badge.svg?token=BQWB1QKJ3Q)](https://codecov.io/gh/oceanmodeling/StormEvents)
 [![version](https://img.shields.io/pypi/v/StormEvents)](https://pypi.org/project/StormEvents)
 [![license](https://img.shields.io/github/license/oceanmodeling/StormEvents)](https://opensource.org/licenses/gpl-license)
-[![style](https://github.com/psf/black)](https://img.shields.io/badge/code%20style-black-000000.svg)
+[![style](https://img.shields.io/badge/code%20style-black-black)](https://github.com/psf/black)
 
 `stormevents` provides Python interfaces for observational data surrounding named storm events.
 
