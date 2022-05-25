@@ -486,10 +486,8 @@ class StormEvent:
                     product=product,
                     start_date=start_date,
                     end_date=end_date,
-                    datum=datum,
-                    units=units,
-                    time_zone=time_zone,
                     interval=interval,
+                    datum=datum,
                 )
                 if len(station_data["t"]) > 0:
                     stations_data.append(station_data)
