@@ -6,5 +6,4 @@
    installation
    nhc
    usgs
-   coops
    stormevent

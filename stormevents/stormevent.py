@@ -14,22 +14,20 @@ from shapely.geometry.base import BaseGeometry
 from shapely.ops import shape as shapely_shape
 from xarray import Dataset
 
-from stormevents.coops.tidalstations import COOPS_Interval
-from stormevents.coops.tidalstations import COOPS_Product
-from stormevents.coops.tidalstations import COOPS_Station
-from stormevents.coops.tidalstations import coops_stations_within_region
-from stormevents.coops.tidalstations import COOPS_StationStatus
-from stormevents.coops.tidalstations import COOPS_TidalDatum
-from stormevents.coops.tidalstations import COOPS_TimeZone
-from stormevents.coops.tidalstations import COOPS_Units
-from stormevents.nhc import nhc_storms
-from stormevents.nhc import VortexTrack
-from stormevents.nhc.atcf import ATCF_Advisory
-from stormevents.nhc.atcf import ATCF_FileDeck
-from stormevents.usgs import usgs_flood_storms
-from stormevents.usgs import USGS_StormEvent
-from stormevents.utilities import relative_to_time_interval
-from stormevents.utilities import subset_time_interval
+from searvey.coops import (
+    COOPS_Interval,
+    COOPS_Product,
+    COOPS_Station,
+    coops_stations_within_region,
+    StationStatus,
+    COOPS_TidalDatum,
+    COOPS_TimeZone,
+    COOPS_Units,
+)
+from stormevents.nhc import nhc_storms, VortexTrack
+from stormevents.nhc.atcf import ATCF_Advisory, ATCF_FileDeck, ATCF_Mode
+from stormevents.usgs import usgs_flood_storms, USGS_StormEvent
+from stormevents.utilities import relative_to_time_interval, subset_time_interval
 
 
 class StormStatus(Enum):
@@ -346,7 +344,7 @@ class StormEvent:
         product: COOPS_Product,
         wind_speed: int,
         advisories: List[ATCF_Advisory] = None,
-        station_type: COOPS_StationStatus = None,
+        status: StationStatus = None,
         start_date: datetime = None,
         end_date: datetime = None,
         datum: COOPS_TidalDatum = None,
@@ -363,7 +361,7 @@ class StormEvent:
         :param advisories: ATCF advisory types
         :param start_date: start date
         :param end_date: end date
-        :param station_type: either ``current`` or ``historical``
+        :param status: either ``current`` or ``historical``
         :param datum: tidal datum
         :param units: either ``metric`` or ``english``
         :param time_zone: time zone
@@ -408,7 +406,7 @@ class StormEvent:
 
         return self.coops_product_within_region(
             region=region,
-            station_type=station_type,
+            status=status,
             start_date=start_date,
             end_date=end_date,
             product=product,
@@ -424,7 +422,7 @@ class StormEvent:
         region: Polygon,
         start_date: datetime = None,
         end_date: datetime = None,
-        station_type: COOPS_StationStatus = None,
+        status: StationStatus = None,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -437,7 +435,7 @@ class StormEvent:
         :param region: a Shapely polygon denoting the region of interest
         :param start_date: start date
         :param end_date: end date
-        :param station_type: either ``current`` or ``historical``
+        :param status: either ``current`` or ``historical``
         :param datum: tidal datum
         :param units: either ``metric`` or ``english``
         :param time_zone: time zone
@@ -479,9 +477,7 @@ class StormEvent:
                 start=self.start_date, end=self.end_date, relative=end_date
             )
 
-        stations = coops_stations_within_region(
-            region=region, station_status=station_type
-        )
+        stations = coops_stations_within_region(region=region, station_status=status)
 
         if len(stations) > 0:
             stations_data = []
