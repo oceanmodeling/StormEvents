@@ -32,7 +32,7 @@ shapely = '>=1.8'
 typepigeon = '>=1.0.5'
 xarray = '*'
 isort = { version = '*', optional = true }
-oitnb = { version = '*', optional = true }
+black = { version = '*', optional = true }
 pytest = { version = '*', optional = true }
 pytest-cov = { version = '*', optional = true }
 pytest-socket = { version = '*', optional = true }
@@ -43,5 +43,5 @@ sphinx-rtd-theme = { version = '*', optional = true }
 
 [tool.poetry.extras]
 testing = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
-development = ['isort', 'oitnb']
+development = ['isort', 'black']
 documentation = ['m2r2', 'sphinx', 'sphinx-rtd-theme']

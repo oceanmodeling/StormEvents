@@ -1,28 +1,30 @@
+import re
 from datetime import datetime
 from functools import lru_cache
 from os import PathLike
-import re
 from typing import List
 
-from geopandas import GeoDataFrame
 import pandas
-from pandas import DataFrame
 import typepigeon
+from geopandas import GeoDataFrame
+from pandas import DataFrame
 
 from stormevents.nhc import nhc_storms
-from stormevents.usgs.base import EventStatus, EventType
-from stormevents.usgs.highwatermarks import (
-    HighWaterMarkEnvironment,
-    HighWaterMarkQuality,
-    HighWaterMarksQuery,
-    HighWaterMarkType,
-)
-from stormevents.usgs.sensors import usgs_files, usgs_sensors
+from stormevents.usgs.base import EventStatus
+from stormevents.usgs.base import EventType
+from stormevents.usgs.highwatermarks import HighWaterMarkEnvironment
+from stormevents.usgs.highwatermarks import HighWaterMarkQuality
+from stormevents.usgs.highwatermarks import HighWaterMarksQuery
+from stormevents.usgs.highwatermarks import HighWaterMarkType
+from stormevents.usgs.sensors import usgs_files
+from stormevents.usgs.sensors import usgs_sensors
 
 
 @lru_cache(maxsize=None)
 def usgs_flood_events(
-    year: int = None, event_type: EventType = None, event_status: EventStatus = None,
+    year: int = None,
+    event_type: EventType = None,
+    event_status: EventStatus = None,
 ) -> DataFrame:
     """
     this function collects all USGS flood events of the given type and status that have high-water mark data
@@ -58,54 +60,56 @@ def usgs_flood_events(
     [293 rows x 11 columns]
     """
 
-    events = pandas.read_json('https://stn.wim.usgs.gov/STNServices/Events.json')
+    events = pandas.read_json("https://stn.wim.usgs.gov/STNServices/Events.json")
     events.rename(
         columns={
-            'event_id': 'usgs_id',
-            'event_name': 'name',
-            'event_start_date': 'start_date',
-            'event_end_date': 'end_date',
-            'event_description': 'description',
-            'event_coordinator': 'coordinator',
+            "event_id": "usgs_id",
+            "event_name": "name",
+            "event_start_date": "start_date",
+            "event_end_date": "end_date",
+            "event_description": "description",
+            "event_coordinator": "coordinator",
         },
         inplace=True,
     )
-    events.set_index('usgs_id', inplace=True)
-    events['start_date'] = pandas.to_datetime(events['start_date'])
-    events['end_date'] = pandas.to_datetime(events['end_date'])
-    events['last_updated'] = pandas.to_datetime(events['last_updated'])
-    events['event_type'] = events['event_type_id'].apply(lambda value: EventType(value).name)
-    events['event_status'] = events['event_status_id'].apply(
+    events.set_index("usgs_id", inplace=True)
+    events["start_date"] = pandas.to_datetime(events["start_date"])
+    events["end_date"] = pandas.to_datetime(events["end_date"])
+    events["last_updated"] = pandas.to_datetime(events["last_updated"])
+    events["event_type"] = events["event_type_id"].apply(
+        lambda value: EventType(value).name
+    )
+    events["event_status"] = events["event_status_id"].apply(
         lambda value: EventStatus(value).name
     )
-    events['year'] = events['start_date'].dt.year
+    events["year"] = events["start_date"].dt.year
     events = events[
         [
-            'name',
-            'year',
-            'description',
-            'event_type',
-            'event_status',
-            'coordinator',
-            'instruments',
-            'last_updated',
-            'last_updated_by',
-            'start_date',
-            'end_date',
+            "name",
+            "year",
+            "description",
+            "event_type",
+            "event_status",
+            "coordinator",
+            "instruments",
+            "last_updated",
+            "last_updated_by",
+            "start_date",
+            "end_date",
         ]
     ]
 
     if event_type is not None:
         event_type = typepigeon.convert_value(event_type, [str])
-        events = events[events['event_type'].isin(event_type)]
+        events = events[events["event_type"].isin(event_type)]
 
     if event_status is not None:
         event_status = typepigeon.convert_value(event_status, [str])
-        events = events[events['event_status'].isin(event_status)]
+        events = events[events["event_status"].isin(event_status)]
 
     if year is not None:
         year = typepigeon.convert_value(year, [int])
-        events = events[events['year'].isin(year)]
+        events = events[events["year"].isin(year)]
 
     return events
 
@@ -121,49 +125,86 @@ def usgs_flood_storms(year: int = None) -> DataFrame:
     :return: table of USGS flood events with NHC storm names
 
     >>> usgs_flood_storms()
-                                                   usgs_name  year  nhc_name  ... last_updated_by          start_date            end_date
-    usgs_id                                                                   ...
-    8                                                  Wilma  2005     WILMA  ...             NaN 2005-10-20 00:00:00 2005-10-31 00:00:00
-    18                                        Isaac Aug 2012  2012     ISAAC  ...            35.0 2012-08-27 05:00:00 2012-09-02 05:00:00
-    19                                                  Rita  2005      RITA  ...             NaN 2005-09-23 04:00:00 2005-09-25 04:00:00
-    23                                                 Irene  2011     IRENE  ...             NaN 2011-08-26 04:00:00 2011-08-29 04:00:00
-    24                                                 Sandy  2012     SANDY  ...             NaN 2012-10-21 04:00:00 2012-10-30 04:00:00
-    ...                                                  ...   ...       ...  ...             ...                 ...                 ...
-    303                     2020 TS Marco - Hurricane  Laura  2020     MARCO  ...           864.0 2020-08-22 05:00:00 2020-08-30 05:00:00
-    304                                 2020 Hurricane Sally  2020     SALLY  ...           864.0 2020-09-13 05:00:00 2020-09-20 05:00:00
-    305                                 2020 Hurricane Delta  2020     DELTA  ...           864.0 2020-10-06 05:00:00 2020-10-13 05:00:00
-    310                          2021 Tropical Cyclone Henri  2021     HENRI  ...           864.0 2021-08-20 05:00:00 2021-09-03 05:00:00
-    312                            2021 Tropical Cyclone Ida  2021       IDA  ...           864.0 2021-08-27 05:00:00 2021-09-03 05:00:00
-    [30 rows x 13 columns]
+              usgs_id                                        usgs_name  year  nhc_name  ...               last_updated last_updated_by          start_date            end_date
+    nhc_code                                                                            ...
+    AL252005        8                                            Wilma  2005     WILMA  ...                        NaT             NaN 2005-10-20 00:00:00 2005-10-31 00:00:00
+    AL092012       18                                   Isaac Aug 2012  2012     ISAAC  ... 2018-09-10 14:14:55.378445            35.0 2012-08-27 05:00:00 2012-09-02 05:00:00
+    AL182005       19                                             Rita  2005      RITA  ...                        NaT             NaN 2005-09-23 04:00:00 2005-09-25 04:00:00
+    AL092011       23                                            Irene  2011     IRENE  ...                        NaT             NaN 2011-08-26 04:00:00 2011-08-29 04:00:00
+    AL092011       23                                            Irene  2011     IRENE  ...                        NaT             NaN 2011-08-26 04:00:00 2011-08-29 04:00:00
+    AL182012       24                                            Sandy  2012     SANDY  ...                        NaT             NaN 2012-10-21 04:00:00 2012-10-30 04:00:00
+    AL072008       25                                           Gustav  2008    GUSTAV  ...                        NaT             NaN 2008-08-31 04:00:00 2008-09-03 04:00:00
+    AL092008       26                                              Ike  2008       IKE  ...                        NaT             NaN 2008-09-11 04:00:00 2008-09-12 04:00:00
+    AL112015      119                                          Joaquin  2015   JOAQUIN  ...                        NaT             NaN 2015-10-01 04:00:00 2015-10-08 04:00:00
+    AL092016      131                                          Hermine  2016   HERMINE  ...                        NaT             NaN 2016-09-01 04:00:00 2016-09-07 04:00:00
+    AL132003      133                            Isabel September 2003  2003    ISABEL  ...                        NaT             NaN 2003-09-06 05:00:00 2003-09-30 05:00:00
+    AL142016      135                             Matthew October 2016  2016   MATTHEW  ...                        NaT             NaN 2016-10-03 04:00:00 2016-10-30 04:00:00
+    AL092017      180                                  Harvey Aug 2017  2017    HARVEY  ...                        NaT             NaN 2017-08-24 05:00:00 2017-09-24 05:00:00
+    AL112017      182                              Irma September 2017  2017      IRMA  ... 2018-09-07 15:07:25.174430            35.0 2017-09-03 05:00:00 2017-09-30 05:00:00
+    AL152017      189                             Maria September 2017  2017     MARIA  ... 2020-10-05 19:41:33.520407             1.0 2017-09-17 04:00:00 2017-10-02 04:00:00
+    AL122017      190                              Jose September 2017  2017      JOSE  ... 2020-10-05 19:40:26.866120             1.0 2017-09-18 04:00:00 2017-09-25 04:00:00
+    AL162017      196                                Nate October 2017  2017      NATE  ... 2018-09-07 15:06:46.782674            35.0 2017-10-05 05:00:00 2017-10-14 05:00:00
+    EP142018      281                                 Lane August 2018  2018      LANE  ... 2018-08-22 02:38:28.664132            35.0 2018-08-22 05:00:00 2018-09-15 05:00:00
+    AL072018      282                                  Gordon Sep 2018  2018    GORDON  ... 2018-09-04 14:10:53.247893            35.0 2018-09-04 05:00:00 2018-10-04 05:00:00
+    AL072018      282                                  Gordon Sep 2018  2018    GORDON  ... 2018-09-04 14:10:53.247893            35.0 2018-09-04 05:00:00 2018-10-04 05:00:00
+    AL062018      283                                Florence Sep 2018  2018  FLORENCE  ... 2018-09-07 15:05:56.149271            35.0 2018-09-07 05:00:00 2018-10-07 05:00:00
+    AL092018      284                                   Isaac Sep 2018  2018     ISAAC  ... 2018-12-06 16:10:38.342516             3.0 2018-09-11 04:00:00 2018-09-18 04:00:00
+    AL142018      287                                 Michael Oct 2018  2018   MICHAEL  ... 2018-12-06 16:24:40.504991             3.0 2018-10-08 04:00:00 2018-10-15 04:00:00
+    AL052019      291                            2019 Hurricane Dorian  2019    DORIAN  ... 2019-08-31 18:00:27.314745            36.0 2019-08-28 04:00:00 2019-09-20 04:00:00
+    AL052019      291                            2019 Hurricane Dorian  2019    DORIAN  ... 2019-08-31 18:00:27.314745            36.0 2019-08-28 04:00:00 2019-09-20 04:00:00
+    AL111995      299  1995 South Carolina August Tropical Storm Jerry  1995     JERRY  ... 2020-06-24 18:11:28.492197           864.0 1995-08-01 05:00:00 1995-08-31 05:00:00
+    AL081999      300    1999 South Carolina September Hurricane Floyd  1999     FLOYD  ... 2020-06-24 18:12:51.380357           864.0 1999-09-01 05:00:00 1999-09-30 05:00:00
+    AL092020      301                            2020 Hurricane Isaias  2020    ISAIAS  ... 2020-07-31 11:47:44.480931           864.0 2020-07-31 05:00:00 2020-08-07 05:00:00
+    AL142020      303                 2020 TS Marco - Hurricane  Laura  2020     MARCO  ... 2020-08-24 18:31:59.388708           864.0 2020-08-22 05:00:00 2020-08-30 05:00:00
+    AL132020      303                 2020 TS Marco - Hurricane  Laura  2020     LAURA  ... 2020-08-24 18:31:59.388708           864.0 2020-08-22 05:00:00 2020-08-30 05:00:00
+    AL192020      304                             2020 Hurricane Sally  2020     SALLY  ... 2020-09-13 13:15:24.843513           864.0 2020-09-13 05:00:00 2020-09-20 05:00:00
+    AL262020      305                             2020 Hurricane Delta  2020     DELTA  ... 2020-10-06 12:58:46.905258           864.0 2020-10-06 05:00:00 2020-10-13 05:00:00
+    AL082021      310                      2021 Tropical Cyclone Henri  2021     HENRI  ... 2021-08-21 15:56:08.379065           864.0 2021-08-20 05:00:00 2021-09-03 05:00:00
+    AL092021      312                        2021 Tropical Cyclone Ida  2021       IDA  ... 2021-08-27 13:00:47.886713           864.0 2021-08-27 05:00:00 2021-09-03 05:00:00
     """
 
-    events = usgs_flood_events(year=year, event_type=EventType.HURRICANE)
+    events = usgs_flood_events(year=year, event_type=EventType.HURRICANE).copy()
 
-    events.rename(columns={'name': 'usgs_name'}, inplace=True)
-    events['nhc_name'] = None
-    events['nhc_code'] = None
+    events.rename(columns={"name": "usgs_name"}, inplace=True)
+    events["nhc_name"] = None
+    events["nhc_code"] = None
 
-    storms = nhc_storms(tuple(pandas.unique(events['year'])))
+    events.reset_index(inplace=True)
 
-    storm_names = sorted(pandas.unique(storms['name'].str.strip()))
+    storms = nhc_storms(tuple(pandas.unique(events["year"])))
+
+    storm_names = sorted(pandas.unique(storms["name"].str.strip()))
     for storm_name in storm_names:
         event_storms = events[
-            events['usgs_name'].str.contains(storm_name, flags=re.IGNORECASE)
+            events["usgs_name"].str.contains(storm_name, flags=re.IGNORECASE)
         ]
-        for event_id, event in event_storms.iterrows():
+        for _, event in event_storms.iterrows():
             storms_matching = storms[
-                storms['name'].str.contains(storm_name, flags=re.IGNORECASE)
-                & (storms['year'] == event['year'])
+                storms["name"].str.contains(storm_name, flags=re.IGNORECASE)
+                & (storms["year"] == event["year"])
             ]
 
             for nhc_code, storm in storms_matching.iterrows():
-                events.at[event_id, 'nhc_name'] = storm['name']
-                events.at[event_id, 'nhc_code'] = storm.name
+                matching_event = events.loc[events["usgs_id"] == event["usgs_id"]].iloc[
+                    0
+                ]
+                if matching_event["nhc_code"] is None:
+                    events.at[matching_event.name, "nhc_name"] = storm["name"]
+                    events.at[matching_event.name, "nhc_code"] = storm.name
+                else:
+                    matching_event["nhc_name"] = storm["name"]
+                    matching_event["nhc_code"] = storm.name
+                    events = events.append(matching_event)
 
-    return events.loc[
-        ~pandas.isna(events['nhc_code']),
-        ['usgs_name', 'year', 'nhc_name', 'nhc_code', *events.columns[2:-2],],
+    events = events.loc[
+        ~pandas.isna(events["nhc_code"]),
+        ["usgs_id", "usgs_name", "year", "nhc_name", "nhc_code", *events.columns[3:-2]],
     ]
+
+    events.sort_values("usgs_id", inplace=True)
+    events.set_index("nhc_code", inplace=True)
+
+    return events
 
 
 class USGS_Event:
@@ -171,7 +212,7 @@ class USGS_Event:
     representation of an arbitrary flood event as defined by the USGS
     """
 
-    URL = 'https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json'
+    URL = "https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json"
 
     def __init__(self, id: int):
         """
@@ -217,7 +258,11 @@ class USGS_Event:
         self.__error = None
 
     @classmethod
-    def from_name(cls, name: str, year: int = None,) -> 'USGS_Event':
+    def from_name(
+        cls,
+        name: str,
+        year: int = None,
+    ) -> "USGS_Event":
         """
         retrieve high-water mark info from the USGS flood event name
 
@@ -227,20 +272,20 @@ class USGS_Event:
         """
 
         events = usgs_flood_events(year=year)
-        events = events[events['name'] == name]
+        events = events[events["name"] == name]
 
         if len(events) == 0:
             raise ValueError(f'no event with name "{name}" found')
 
         if year is not None:
-            events = events[events['year'] == year]
+            events = events[events["year"] == year]
 
         event = events.iloc[0]
 
         return cls(id=event.name)
 
     @classmethod
-    def from_csv(cls, filename: PathLike) -> 'USGS_Event':
+    def from_csv(cls, filename: PathLike) -> "USGS_Event":
         """
         read a CSV file with high-water mark data
 
@@ -248,11 +293,11 @@ class USGS_Event:
         :return: flood event object
         """
 
-        data = pandas.read_csv(filename, index_col='hwm_id')
+        data = pandas.read_csv(filename, index_col="hwm_id")
         try:
-            instance = cls(id=int(data['event_id'].iloc[0]))
+            instance = cls(id=int(data["event_id"].iloc[0]))
         except KeyError:
-            instance = cls.from_name(data['eventName'].iloc[0])
+            instance = cls.from_name(data["eventName"].iloc[0])
         instance.__data = data
         return instance
 
@@ -267,47 +312,47 @@ class USGS_Event:
 
     @property
     def name(self) -> str:
-        return self.__metadata['name']
+        return self.__metadata["name"]
 
     @property
     def year(self) -> int:
-        return self.__metadata['year']
+        return self.__metadata["year"]
 
     @property
     def description(self) -> str:
-        return self.__metadata['description']
+        return self.__metadata["description"]
 
     @property
     def event_type(self) -> EventType:
-        return typepigeon.convert_value(self.__metadata['event_type'], EventType)
+        return typepigeon.convert_value(self.__metadata["event_type"], EventType)
 
     @property
     def event_status(self) -> EventStatus:
-        return typepigeon.convert_value(self.__metadata['event_status'], EventStatus)
+        return typepigeon.convert_value(self.__metadata["event_status"], EventStatus)
 
     @property
     def coordinator(self) -> str:
-        return self.__metadata['coordinator']
+        return self.__metadata["coordinator"]
 
     @property
     def instruments(self) -> str:
-        return self.__metadata['instruments']
+        return self.__metadata["instruments"]
 
     @property
     def last_updated(self) -> datetime:
-        return self.__metadata['last_updated']
+        return self.__metadata["last_updated"]
 
     @property
     def last_updated_by(self) -> str:
-        return self.__metadata['last_updated_by']
+        return self.__metadata["last_updated_by"]
 
     @property
     def start_date(self) -> datetime:
-        return typepigeon.convert_value(self.__metadata['start_date'], datetime)
+        return typepigeon.convert_value(self.__metadata["start_date"], datetime)
 
     @property
     def end_date(self) -> datetime:
-        return typepigeon.convert_value(self.__metadata['end_date'], datetime)
+        return typepigeon.convert_value(self.__metadata["end_date"], datetime)
 
     @property
     def files(self) -> DataFrame:
@@ -364,7 +409,7 @@ class USGS_Event:
         return usgs_sensors(event_id=self.id)
 
     def retrieve_file(self, id: int, path: PathLike):
-        'https://stn.wim.usgs.gov/STNServices/Files/{id}/item'
+        "https://stn.wim.usgs.gov/STNServices/Files/{id}/item"
 
     def high_water_marks(
         self,
@@ -443,7 +488,7 @@ class USGS_Event:
 
         return self.__query.data
 
-    def __eq__(self, other: 'USGS_Event') -> bool:
+    def __eq__(self, other: "USGS_Event") -> bool:
         return (
             self.__query is not None
             and other.__query is not None
@@ -451,7 +496,7 @@ class USGS_Event:
         )
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(id={repr(self.id)})'
+        return f"{self.__class__.__name__}(id={repr(self.id)})"
 
 
 class USGS_StormEvent(USGS_Event):
@@ -466,9 +511,11 @@ class USGS_StormEvent(USGS_Event):
         """
 
         storms = usgs_flood_storms(year=year)
-        storm = storms[(storms['nhc_name'] == name.upper().strip()) & (storms['year'] == year)]
+        storm = storms[
+            (storms["nhc_name"] == name.upper().strip()) & (storms["year"] == year)
+        ]
 
         if len(storm) == 0:
             raise ValueError(f'storm "{name} {year}" not found in USGS HWM database')
 
-        super().__init__(id=storm.index[0])
+        super().__init__(id=storm.iloc[0, 0])

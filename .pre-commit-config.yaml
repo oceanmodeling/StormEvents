@@ -1,0 +1,44 @@
+---
+default_language_version:
+  python: "python3"
+fail_fast: true
+ci:
+    skip: ["poetry-lock", "prospector", "mypy"]
+
+repos:
+  - repo: "https://github.com/pre-commit/pre-commit-hooks"
+    rev: "v4.2.0"
+    hooks:
+      - id: "check-added-large-files"
+      - id: "check-ast"
+      - id: "check-byte-order-marker"
+      - id: "check-docstring-first"
+      - id: "check-executables-have-shebangs"
+      - id: "check-json"
+      - id: "check-symlinks"
+      - id: "check-merge-conflict"
+      - id: "check-vcs-permalinks"
+      - id: "check-xml"
+      - id: "check-yaml"
+      - id: "debug-statements"
+      - id: "end-of-file-fixer"
+        exclude: .+\.ipynb
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.9.0
+    hooks:
+      - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+      - id: python-use-type-annotations
+
+  - repo: "https://github.com/asottile/reorder_python_imports"
+    rev: "v3.1.0"
+    hooks:
+      - id: "reorder-python-imports"
+        args:
+          - "--py39-plus"
+
+  - repo: "https://github.com/psf/black"
+    rev: "22.3.0"
+    hooks:
+      - id: "black"

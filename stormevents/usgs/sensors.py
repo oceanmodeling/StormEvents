@@ -2,8 +2,8 @@ from enum import Enum
 from os import PathLike
 
 import pandas
-from pandas import DataFrame
 import requests
+from pandas import DataFrame
 
 
 class SensorType(Enum):
@@ -64,11 +64,11 @@ class USGS_File:
 
     @property
     def url(self) -> str:
-        return f'https://stn.wim.usgs.gov/STNServices/Files/{id}/item'
+        return f"https://stn.wim.usgs.gov/STNServices/Files/{id}/item"
 
     def to_file(self, path: PathLike):
         response = requests.get(self.url, stream=True)
-        with open(path, 'wb') as output_file:
+        with open(path, "wb") as output_file:
             for chunk in response.iter_content(chunk_size=1024):
                 output_file.write(chunk)
 
@@ -101,18 +101,18 @@ def usgs_files(file_type: FileType = None, event_id: int = None) -> DataFrame:
     """
 
     if event_id is None:
-        url = 'https://stn.wim.usgs.gov/STNServices/Files.json'
+        url = "https://stn.wim.usgs.gov/STNServices/Files.json"
     else:
-        url = f'https://stn.wim.usgs.gov/STNServices/Events/{event_id}/Files.json'
+        url = f"https://stn.wim.usgs.gov/STNServices/Events/{event_id}/Files.json"
 
     files = pandas.read_json(url)
-    files.set_index('file_id', inplace=True)
+    files.set_index("file_id", inplace=True)
 
     if file_type is not None:
         if isinstance(file_type, FileType):
             file_type = file_type.value
 
-        files = files[files['filetype_id'] == file_type]
+        files = files[files["filetype_id"] == file_type]
     return files
 
 
@@ -149,21 +149,21 @@ def usgs_sensors(
     """
 
     if event_id is None:
-        url = 'https://stn.wim.usgs.gov/STNServices/Instruments.json'
+        url = "https://stn.wim.usgs.gov/STNServices/Instruments.json"
     else:
-        url = f'https://stn.wim.usgs.gov/STNServices/Events/{event_id}/Instruments.json'
+        url = f"https://stn.wim.usgs.gov/STNServices/Events/{event_id}/Instruments.json"
 
     sensors = pandas.read_json(url)
-    sensors.set_index('instrument_id', inplace=True)
+    sensors.set_index("instrument_id", inplace=True)
 
     if sensor_type is not None:
         if isinstance(sensor_type, SensorType):
             sensor_type = sensor_type.value
-        sensors = sensors[sensors['sensor_type_id'] == sensor_type]
+        sensors = sensors[sensors["sensor_type_id"] == sensor_type]
 
     if deployment_type is not None:
         if isinstance(deployment_type, DeploymentType):
             deployment_type = deployment_type.value
-        sensors = sensors[sensors['deployment_type_id'] == deployment_type]
+        sensors = sensors[sensors["deployment_type_id"] == deployment_type]
 
     return sensors

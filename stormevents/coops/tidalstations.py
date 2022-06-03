@@ -2,96 +2,109 @@
 interface with the NOAA Center for Operational Oceanographic Products and Services (CO-OPS) API
 https://api.tidesandcurrents.noaa.gov/api/prod/
 """
-
+import json
 from datetime import datetime
 from enum import Enum
 from functools import lru_cache
-import json
 from pathlib import Path
 from typing import Union
 
-from bs4 import BeautifulSoup, element
 import geopandas
-from geopandas import GeoDataFrame
 import numpy
 import pandas
-from pandas import DataFrame, Series
 import requests
-from shapely.geometry import box, MultiPolygon, Polygon
 import typepigeon
 import xarray
+from bs4 import BeautifulSoup
+from bs4 import element
+from geopandas import GeoDataFrame
+from pandas import DataFrame
+from pandas import Series
+from shapely.geometry import box
+from shapely.geometry import MultiPolygon
+from shapely.geometry import Polygon
 from xarray import Dataset
 
 
 class COOPS_Product(Enum):
     WATER_LEVEL = (
-        'water_level'
+        "water_level"
         # Preliminary or verified water levels, depending on availability.
     )
-    AIR_TEMPERATURE = 'air_temperature'  # Air temperature as measured at the station.
-    WATER_TEMPERATURE = 'water_temperature'  # Water temperature as measured at the station.
-    WIND = 'wind'  # Wind speed, direction, and gusts as measured at the station.
-    AIR_PRESSURE = 'air_pressure'  # Barometric pressure as measured at the station.
-    AIR_GAP = 'air_gap'  # Air Gap (distance between a bridge and the water's surface) at the station.
-    CONDUCTIVITY = 'conductivity'  # The water's conductivity as measured at the station.
-    VISIBILITY = 'visibility'  # Visibility from the station's visibility sensor. A measure of atmospheric clarity.
-    HUMIDITY = 'humidity'  # Relative humidity as measured at the station.
-    SALINITY = 'salinity'  # Salinity and specific gravity data for the station.
-    HOURLY_HEIGHT = 'hourly_height'  # Verified hourly height water level data for the station.
-    HIGH_LOW = 'high_low'  # Verified high/low water level data for the station.
-    DAILY_MEAN = 'daily_mean'  # Verified daily mean water level data for the station.
-    MONTHLY_MEAN = 'monthly_mean'  # Verified monthly mean water level data for the station.
+    AIR_TEMPERATURE = "air_temperature"  # Air temperature as measured at the station.
+    WATER_TEMPERATURE = (
+        "water_temperature"  # Water temperature as measured at the station.
+    )
+    WIND = "wind"  # Wind speed, direction, and gusts as measured at the station.
+    AIR_PRESSURE = "air_pressure"  # Barometric pressure as measured at the station.
+    AIR_GAP = "air_gap"  # Air Gap (distance between a bridge and the water's surface) at the station.
+    CONDUCTIVITY = (
+        "conductivity"  # The water's conductivity as measured at the station.
+    )
+    VISIBILITY = "visibility"  # Visibility from the station's visibility sensor. A measure of atmospheric clarity.
+    HUMIDITY = "humidity"  # Relative humidity as measured at the station.
+    SALINITY = "salinity"  # Salinity and specific gravity data for the station.
+    HOURLY_HEIGHT = (
+        "hourly_height"  # Verified hourly height water level data for the station.
+    )
+    HIGH_LOW = "high_low"  # Verified high/low water level data for the station.
+    DAILY_MEAN = "daily_mean"  # Verified daily mean water level data for the station.
+    MONTHLY_MEAN = (
+        "monthly_mean"  # Verified monthly mean water level data for the station.
+    )
     ONE_MINUTE_WATER_LEVEL = (
-        'one_minute_water_level'
+        "one_minute_water_level"
         # One minute water level data for the station.
     )
-    PREDICTIONS = 'predictions'  # 6 minute predictions water level data for the station.*
-    DATUMS = 'datums'  # datums data for the stations.
-    CURRENTS = 'currents'  # Currents data for currents stations.
+    PREDICTIONS = (
+        "predictions"  # 6 minute predictions water level data for the station.*
+    )
+    DATUMS = "datums"  # datums data for the stations.
+    CURRENTS = "currents"  # Currents data for currents stations.
     CURRENTS_PREDICTIONS = (
-        'currents_predictions'
+        "currents_predictions"
         # Currents predictions data for currents predictions stations.
     )
 
 
 class COOPS_TidalDatum(Enum):
-    CRD = 'CRD'  # Columbia River Datum
-    IGLD = 'IGLD'  # International Great Lakes Datum
-    LWD = 'LWD'  # Great Lakes Low Water Datum (Chart Datum)
-    MHHW = 'MHHW'  # Mean Higher High Water
-    MHW = 'MHW'  # Mean High Water
-    MTL = 'MTL'  # Mean Tide Level
-    MSL = 'MSL'  # Mean Sea Level
-    MLW = 'MLW'  # Mean Low Water
-    MLLW = 'MLLW'  # Mean Lower Low Water
-    NAVD = 'NAVD'  # North American Vertical Datum
-    STND = 'STND'  # Station Datum
+    CRD = "CRD"  # Columbia River Datum
+    IGLD = "IGLD"  # International Great Lakes Datum
+    LWD = "LWD"  # Great Lakes Low Water Datum (Chart Datum)
+    MHHW = "MHHW"  # Mean Higher High Water
+    MHW = "MHW"  # Mean High Water
+    MTL = "MTL"  # Mean Tide Level
+    MSL = "MSL"  # Mean Sea Level
+    MLW = "MLW"  # Mean Low Water
+    MLLW = "MLLW"  # Mean Lower Low Water
+    NAVD = "NAVD"  # North American Vertical Datum
+    STND = "STND"  # Station Datum
 
 
 class COOPS_VelocityType(Enum):
-    SPEED_DIR = 'speed_dir'  # Return results for speed and dirction
-    DEFAULT = 'default'  # Return results for velocity major, mean flood direction and mean ebb dirction
+    SPEED_DIR = "speed_dir"  # Return results for speed and dirction
+    DEFAULT = "default"  # Return results for velocity major, mean flood direction and mean ebb dirction
 
 
 class COOPS_Units(Enum):
-    METRIC = 'metric'
-    ENGLISH = 'english'
+    METRIC = "metric"
+    ENGLISH = "english"
 
 
 class COOPS_TimeZone(Enum):
-    GMT = 'gmt'  # Greenwich Mean Time
-    LST = 'lst'  # Local Standard Time. The time local to the requested station.
-    LST_LDT = 'lst_ldt'  # Local Standard/Local Daylight Time. The time local to the requested station.
+    GMT = "gmt"  # Greenwich Mean Time
+    LST = "lst"  # Local Standard Time. The time local to the requested station.
+    LST_LDT = "lst_ldt"  # Local Standard/Local Daylight Time. The time local to the requested station.
 
 
 class COOPS_Interval(Enum):
-    H = 'h'  # Hourly Met data and harmonic predictions will be returned
-    HILO = 'hilo'  # High/Low tide predictions for all stations.
+    H = "h"  # Hourly Met data and harmonic predictions will be returned
+    HILO = "hilo"  # High/Low tide predictions for all stations.
 
 
 class COOPS_StationStatus(Enum):
-    ACTIVE = 'active'
-    DISCONTINUED = 'discontinued'
+    ACTIVE = "active"
+    DISCONTINUED = "discontinued"
 
 
 class COOPS_Station:
@@ -122,17 +135,17 @@ class COOPS_Station:
         stations = coops_stations()
         if id in stations.index:
             metadata = stations.loc[id]
-        elif id in stations['nws_id'].values:
-            metadata = stations[stations['nws_id'] == id]
-        elif id in stations['name'].values:
-            metadata = stations[stations['name'] == id]
+        elif id in stations["nws_id"].values:
+            metadata = stations[stations["nws_id"] == id]
+        elif id in stations["name"].values:
+            metadata = stations[stations["name"] == id]
         else:
             metadata = None
 
         if metadata is None or len(metadata) == 0:
             raise ValueError(f'station with "{id}" not found')
 
-        removed = metadata['removed']
+        removed = metadata["removed"]
         if isinstance(removed, Series):
             self.__active = pandas.isna(removed).any()
             removed = pandas.unique(removed.dropna().sort_values(ascending=False))
@@ -144,10 +157,10 @@ class COOPS_Station:
             metadata = metadata.iloc[0]
 
         self.nos_id = metadata.name
-        self.nws_id = metadata['nws_id']
+        self.nws_id = metadata["nws_id"]
         self.location = metadata.geometry
-        self.state = metadata['state']
-        self.name = metadata['name']
+        self.state = metadata["state"]
+        self.name = metadata["name"]
 
         self.__query = None
 
@@ -166,30 +179,32 @@ class COOPS_Station:
         :return: table of tidal constituents for the current station
         """
 
-        url = f'https://tidesandcurrents.noaa.gov/harcon.html?id={self.nos_id}'
+        url = f"https://tidesandcurrents.noaa.gov/harcon.html?id={self.nos_id}"
         response = requests.get(url)
-        soup = BeautifulSoup(response.content, features='html.parser')
-        table = soup.find_all('table', {'class': 'table table-striped'})
+        soup = BeautifulSoup(response.content, features="html.parser")
+        table = soup.find_all("table", {"class": "table table-striped"})
         if len(table) > 0:
             table = table[0]
-            columns = [field.text for field in table.find('thead').find('tr').find_all('th')]
+            columns = [
+                field.text for field in table.find("thead").find("tr").find_all("th")
+            ]
             constituents = []
-            for row in table.find_all('tr')[1:]:
-                constituents.append([entry.text for entry in row.find_all('td')])
+            for row in table.find_all("tr")[1:]:
+                constituents.append([entry.text for entry in row.find_all("td")])
             constituents = DataFrame(constituents, columns=columns)
-            constituents.rename(columns={'Constituent #': '#'}, inplace=True)
+            constituents.rename(columns={"Constituent #": "#"}, inplace=True)
             constituents = constituents.astype(
                 {
-                    '#': numpy.int32,
-                    'Amplitude': numpy.float64,
-                    'Phase': numpy.float64,
-                    'Speed': numpy.float64,
+                    "#": numpy.int32,
+                    "Amplitude": numpy.float64,
+                    "Phase": numpy.float64,
+                    "Speed": numpy.float64,
                 }
             )
         else:
-            constituents = DataFrame(columns=['#', 'Amplitude', 'Phase', 'Speed'])
+            constituents = DataFrame(columns=["#", "Amplitude", "Phase", "Speed"])
 
-        constituents.set_index('#', inplace=True)
+        constituents.set_index("#", inplace=True)
         return constituents
 
     def product(
@@ -260,29 +275,33 @@ class COOPS_Station:
 
         data = self.__query.data
 
-        data['nos_id'] = self.nos_id
-        data.set_index(['nos_id', data.index], inplace=True)
+        data["nos_id"] = self.nos_id
+        data.set_index(["nos_id", data.index], inplace=True)
 
         data = data.to_xarray()
 
-        if len(data['t']) > 0:
+        if len(data["t"]) > 0:
             data = data.assign_coords(
-                nws_id=('nos_id', [self.nws_id]),
-                x=('nos_id', [self.location.x]),
-                y=('nos_id', [self.location.y]),
+                nws_id=("nos_id", [self.nws_id]),
+                x=("nos_id", [self.location.x]),
+                y=("nos_id", [self.location.y]),
             )
         else:
             data = data.assign_coords(
-                nws_id=('nos_id', []), x=('nos_id', []), y=('nos_id', []),
+                nws_id=("nos_id", []),
+                x=("nos_id", []),
+                y=("nos_id", []),
             )
 
         return data
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__} - {self.nos_id} ({self.name}) - {self.location}'
+        return (
+            f"{self.__class__.__name__} - {self.nos_id} ({self.name}) - {self.location}"
+        )
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}({self.nos_id})'
+        return f"{self.__class__.__name__}({self.nos_id})"
 
 
 class COOPS_Query:
@@ -291,7 +310,7 @@ class COOPS_Query:
     https://api.tidesandcurrents.noaa.gov/api/prod/
     """
 
-    URL = 'https://tidesandcurrents.noaa.gov/api/datagetter?'
+    URL = "https://tidesandcurrents.noaa.gov/api/datagetter?"
 
     def __init__(
         self,
@@ -411,7 +430,7 @@ class COOPS_Query:
             product = product.value
         start_date = self.start_date
         if start_date is not None and not isinstance(start_date, str):
-            start_date = f'{self.start_date:%Y%m%d %H:%M}'
+            start_date = f"{self.start_date:%Y%m%d %H:%M}"
         datum = self.datum
         if isinstance(datum, Enum):
             datum = datum.value
@@ -426,16 +445,16 @@ class COOPS_Query:
             interval = interval.value
 
         return {
-            'station': self.station,
-            'product': product,
-            'begin_date': start_date,
-            'end_date': f'{self.end_date:%Y%m%d %H:%M}',
-            'datum': datum,
-            'units': units,
-            'time_zone': time_zone,
-            'interval': interval,
-            'format': 'json',
-            'application': 'noaa/nos/csdl/stormevents',
+            "station": self.station,
+            "product": product,
+            "begin_date": start_date,
+            "end_date": f"{self.end_date:%Y%m%d %H:%M}",
+            "datum": datum,
+            "units": units,
+            "time_zone": time_zone,
+            "interval": interval,
+            "format": "json",
+            "application": "noaa/nos/csdl/stormevents",
         }
 
     @property
@@ -464,21 +483,26 @@ class COOPS_Query:
         if self.__previous_query is None or self.query != self.__previous_query:
             response = requests.get(self.URL, params=self.query)
             data = response.json()
-            fields = ['t', 'v', 's', 'f', 'q']
-            if 'error' in data or 'data' not in data:
-                if 'error' in data:
-                    self.__error = data['error']['message']
+            fields = ["t", "v", "s", "f", "q"]
+            if "error" in data or "data" not in data:
+                if "error" in data:
+                    self.__error = data["error"]["message"]
                 data = DataFrame(columns=fields)
             else:
-                data = DataFrame(data['data'], columns=fields)
-                data[data == ''] = numpy.nan
+                data = DataFrame(data["data"], columns=fields)
+                data[data == ""] = numpy.nan
                 data = data.astype(
-                    {'v': numpy.float32, 's': numpy.float32, 'f': 'string', 'q': 'string'},
-                    errors='ignore',
+                    {
+                        "v": numpy.float32,
+                        "s": numpy.float32,
+                        "f": "string",
+                        "q": "string",
+                    },
+                    errors="ignore",
                 )
-                data['t'] = pandas.to_datetime(data['t'])
+                data["t"] = pandas.to_datetime(data["t"])
 
-            data.set_index('t', inplace=True)
+            data.set_index("t", inplace=True)
             self.__data = data
         return self.__data
 
@@ -489,10 +513,10 @@ class COOPS_Query:
 @lru_cache(maxsize=None)
 def __coops_stations_html_tables() -> element.ResultSet:
     response = requests.get(
-        'https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current',
+        "https://access.co-ops.nos.noaa.gov/nwsproducts.html?type=current",
     )
-    soup = BeautifulSoup(response.content, features='html.parser')
-    return soup.find_all('div', {'class': 'table-responsive'})
+    soup = BeautifulSoup(response.content, features="html.parser")
+    return soup.find_all("div", {"class": "table-responsive"})
 
 
 @lru_cache(maxsize=None)
@@ -553,82 +577,84 @@ def coops_stations(station_status: COOPS_StationStatus = None) -> GeoDataFrame:
     tables = __coops_stations_html_tables()
 
     status_tables = {
-        COOPS_StationStatus.ACTIVE: (0, 'NWSTable'),
-        COOPS_StationStatus.DISCONTINUED: (1, 'HistNWSTable'),
+        COOPS_StationStatus.ACTIVE: (0, "NWSTable"),
+        COOPS_StationStatus.DISCONTINUED: (1, "HistNWSTable"),
     }
 
     dataframes = {}
     for status, (table_index, table_id) in status_tables.items():
-        table = tables[table_index].find('table', {'id': table_id}).find_all('tr')
+        table = tables[table_index].find("table", {"id": table_id}).find_all("tr")
 
-        stations_columns = [field.text for field in table[0].find_all('th')]
+        stations_columns = [field.text for field in table[0].find_all("th")]
         stations = DataFrame(
             [
-                [value.text.strip() for value in station.find_all('td')]
+                [value.text.strip() for value in station.find_all("td")]
                 for station in table[1:]
             ],
             columns=stations_columns,
         )
         stations.rename(
             columns={
-                'NOS ID': 'nos_id',
-                'NWS ID': 'nws_id',
-                'Latitude': 'y',
-                'Longitude': 'x',
-                'State': 'state',
-                'Station Name': 'name',
+                "NOS ID": "nos_id",
+                "NWS ID": "nws_id",
+                "Latitude": "y",
+                "Longitude": "x",
+                "State": "state",
+                "Station Name": "name",
             },
             inplace=True,
         )
         stations = stations.astype(
             {
-                'nos_id': numpy.int32,
-                'nws_id': 'string',
-                'x': numpy.float16,
-                'y': numpy.float16,
-                'state': 'string',
-                'name': 'string',
+                "nos_id": numpy.int32,
+                "nws_id": "string",
+                "x": numpy.float16,
+                "y": numpy.float16,
+                "state": "string",
+                "name": "string",
             },
             copy=False,
         )
-        stations.set_index('nos_id', inplace=True)
+        stations.set_index("nos_id", inplace=True)
 
         if status == COOPS_StationStatus.DISCONTINUED:
-            with open(Path(__file__).parent / 'us_states.json') as us_states_file:
+            with open(Path(__file__).parent / "us_states.json") as us_states_file:
                 us_states = json.load(us_states_file)
 
             for name, abbreviation in us_states.items():
-                stations.loc[stations['state'] == name, 'state'] = abbreviation
+                stations.loc[stations["state"] == name, "state"] = abbreviation
 
-            stations.rename(columns={'Removed Date/Time': 'removed'}, inplace=True)
+            stations.rename(columns={"Removed Date/Time": "removed"}, inplace=True)
 
-            stations['removed'] = pandas.to_datetime(stations['removed']).astype('string')
+            stations["removed"] = pandas.to_datetime(stations["removed"]).astype(
+                "string"
+            )
 
             stations = (
-                stations[~pandas.isna(stations['removed'])]
-                .sort_values('removed', ascending=False)
-                .groupby('nos_id')
+                stations[~pandas.isna(stations["removed"])]
+                .sort_values("removed", ascending=False)
+                .groupby("nos_id")
                 .aggregate(
                     {
-                        'nws_id': 'first',
-                        'removed': ','.join,
-                        'y': 'first',
-                        'x': 'first',
-                        'state': 'first',
-                        'name': 'first',
+                        "nws_id": "first",
+                        "removed": ",".join,
+                        "y": "first",
+                        "x": "first",
+                        "state": "first",
+                        "name": "first",
                     }
                 )
             )
         else:
-            stations['removed'] = pandas.NA
+            stations["removed"] = pandas.NA
 
-        stations['status'] = status.value
+        stations["status"] = status.value
         dataframes[status] = stations
 
     active_stations = dataframes[COOPS_StationStatus.ACTIVE]
     discontinued_stations = dataframes[COOPS_StationStatus.DISCONTINUED]
     discontinued_stations.loc[
-        discontinued_stations.index.isin(active_stations.index), 'status'
+        discontinued_stations.index.isin(active_stations.index), "status"
     ] = COOPS_StationStatus.ACTIVE.value
 
     stations = pandas.concat(
@@ -637,22 +663,25 @@ def coops_stations(station_status: COOPS_StationStatus = None) -> GeoDataFrame:
             discontinued_stations,
         )
     )
-    stations.loc[pandas.isna(stations['status']), 'status'] = COOPS_StationStatus.ACTIVE.value
-    stations.sort_values(['status', 'removed'], na_position='first', inplace=True)
+    stations.loc[
+        pandas.isna(stations["status"]), "status"
+    ] = COOPS_StationStatus.ACTIVE.value
+    stations.sort_values(["status", "removed"], na_position="first", inplace=True)
 
     if station_status is not None:
         if isinstance(station_status, COOPS_StationStatus):
             station_status = station_status.value
-        stations = stations[stations['status'] == station_status]
+        stations = stations[stations["status"] == station_status]
 
     return GeoDataFrame(
-        stations[['nws_id', 'name', 'state', 'status', 'removed']],
-        geometry=geopandas.points_from_xy(stations['x'], stations['y']),
+        stations[["nws_id", "name", "state", "status", "removed"]],
+        geometry=geopandas.points_from_xy(stations["x"], stations["y"]),
     )
 
 
 def coops_stations_within_region(
-    region: Polygon, station_status: COOPS_StationStatus = None,
+    region: Polygon,
+    station_status: COOPS_StationStatus = None,
 ) -> GeoDataFrame:
     """
     retrieve all stations within the specified region of interest
@@ -692,7 +721,8 @@ def coops_stations_within_bounds(
     station_status: COOPS_StationStatus = None,
 ) -> GeoDataFrame:
     return coops_stations_within_region(
-        region=box(minx=minx, miny=miny, maxx=maxx, maxy=maxy), station_status=station_status
+        region=box(minx=minx, miny=miny, maxx=maxx, maxy=maxy),
+        station_status=station_status,
     )
 
 
@@ -742,7 +772,9 @@ def coops_product_within_region(
         q        (nos_id, t) object 'p' 'p' 'p' 'p' 'p' 'p' ... 'p' 'p' 'p' 'p' 'p'
     """
 
-    stations = coops_stations_within_region(region=region, station_status=station_status)
+    stations = coops_stations_within_region(
+        region=region, station_status=station_status
+    )
     station_data = [
         COOPS_Station(station).product(
             product=product,
@@ -755,5 +787,5 @@ def coops_product_within_region(
         )
         for station in stations.index
     ]
-    station_data = [station for station in station_data if len(station['t']) > 0]
-    return xarray.combine_nested(station_data, concat_dim='nos_id')
+    station_data = [station for station in station_data if len(station["t"]) > 0]
+    return xarray.combine_nested(station_data, concat_dim="nos_id")
