@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from numbers import Number
 from typing import Union
 
@@ -65,7 +66,9 @@ def subset_time_interval(
 
 
 def relative_to_time_interval(
-    start: datetime, end: datetime, relative: Union[datetime, timedelta],
+    start: datetime,
+    end: datetime,
+    relative: Union[datetime, timedelta],
 ) -> datetime:
     """
     return the absolute time relative to the time interval

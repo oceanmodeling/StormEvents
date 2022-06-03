@@ -1,14 +1,17 @@
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
+from typing import Dict
+from typing import List
 
 import geopandas
-from geopandas import GeoDataFrame
 import pandas
-from pandas import DataFrame
 import requests
 import typepigeon
+from geopandas import GeoDataFrame
+from pandas import DataFrame
 
-from stormevents.usgs.base import EventStatus, EventType
+from stormevents.usgs.base import EventStatus
+from stormevents.usgs.base import EventType
 
 
 class HighWaterMarkType(Enum):
@@ -40,8 +43,8 @@ class HighWaterMarkQuality(Enum):
 
 
 class HighWaterMarkEnvironment(Enum):
-    COASTAL = 'Coastal'
-    RIVERINE = 'Riverine'
+    COASTAL = "Coastal"
+    RIVERINE = "Riverine"
 
 
 class HighWaterMarksQuery:
@@ -50,7 +53,7 @@ class HighWaterMarksQuery:
     https://stn.wim.usgs.gov/STNServices/Documentation/home
     """
 
-    URL = 'https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json'
+    URL = "https://stn.wim.usgs.gov/STNServices/HWMs/FilteredHWMs.json"
 
     def __init__(
         self,
@@ -180,30 +183,31 @@ class HighWaterMarksQuery:
     @property
     def query(self) -> Dict[str, Any]:
         query = {
-            'Event': self.event_id,
-            'EventType': self.event_type,
-            'EventStatus': self.event_status,
-            'States': self.us_states,
-            'County': self.us_counties,
-            'HWMType': self.hwm_type,
-            'HWMQuality': self.quality,
-            'HWMEnvironment': self.environment,
-            'SurveyComplete': self.survey_completed,
-            'StillWater': self.still_water,
+            "Event": self.event_id,
+            "EventType": self.event_type,
+            "EventStatus": self.event_status,
+            "States": self.us_states,
+            "County": self.us_counties,
+            "HWMType": self.hwm_type,
+            "HWMQuality": self.quality,
+            "HWMEnvironment": self.environment,
+            "SurveyComplete": self.survey_completed,
+            "StillWater": self.still_water,
         }
 
         for key, value in query.items():
-            if key not in ['SurveyComplete', 'StillWater']:
+            if key not in ["SurveyComplete", "StillWater"]:
                 if isinstance(value, Enum):
                     value = value.value
                 elif isinstance(value, List):
                     value = [
-                        entry.value if isinstance(entry, Enum) else entry for entry in value
+                        entry.value if isinstance(entry, Enum) else entry
+                        for entry in value
                     ]
                     value = typepigeon.convert_value(value, [str])
 
                     if len(value) > 0:
-                        value = ','.join(value)
+                        value = ",".join(value)
                     else:
                         value = None
 
@@ -240,11 +244,11 @@ class HighWaterMarksQuery:
             if any(
                 value is not None
                 for key, value in query.items()
-                if key not in ['SurveyComplete', 'StillWater']
+                if key not in ["SurveyComplete", "StillWater"]
             ):
                 url = self.URL
             else:
-                url = 'https://stn.wim.usgs.gov/STNServices/HWMs.json'
+                url = "https://stn.wim.usgs.gov/STNServices/HWMs.json"
 
             response = requests.get(url, params=query)
 
@@ -252,70 +256,75 @@ class HighWaterMarksQuery:
                 data = DataFrame(response.json())
                 self.__error = None
             else:
-                self.__error = f'{response.reason} - {response.request.url}'
+                self.__error = f"{response.reason} - {response.request.url}"
                 raise ValueError(self.__error)
 
             if len(data) > 0:
-                data['survey_date'] = pandas.to_datetime(data['survey_date'], errors='coerce')
-                data['flag_date'] = pandas.to_datetime(data['flag_date'], errors='coerce')
-                data.loc[data['markerName'].str.len() == 0, 'markerName'] = None
+                data["survey_date"] = pandas.to_datetime(
+                    data["survey_date"], errors="coerce"
+                )
+                data["flag_date"] = pandas.to_datetime(
+                    data["flag_date"], errors="coerce"
+                )
+                data.loc[data["markerName"].str.len() == 0, "markerName"] = None
             else:
                 data = DataFrame(
                     columns=[
-                        'latitude',
-                        'longitude',
-                        'eventName',
-                        'hwmTypeName',
-                        'hwmQualityName',
-                        'verticalDatumName',
-                        'verticalMethodName',
-                        'approvalMember',
-                        'markerName',
-                        'horizontalMethodName',
-                        'horizontalDatumName',
-                        'flagMemberName',
-                        'surveyMemberName',
-                        'site_no',
-                        'siteDescription',
-                        'sitePriorityName',
-                        'networkNames',
-                        'stateName',
-                        'countyName',
-                        'siteZone',
-                        'sitePermHousing',
-                        'site_latitude',
-                        'site_longitude',
-                        'hwm_id',
-                        'waterbody',
-                        'site_id',
-                        'event_id',
-                        'hwm_type_id',
-                        'hwm_quality_id',
-                        'latitude_dd',
-                        'longitude_dd',
-                        'survey_date',
-                        'elev_ft',
-                        'vdatum_id',
-                        'vcollect_method_id',
-                        'bank',
-                        'marker_id',
-                        'hcollect_method_id',
-                        'hwm_notes',
-                        'hwm_environment',
-                        'flag_date',
-                        'stillwater',
-                        'hdatum_id',
-                        'hwm_label',
-                        'files',
-                        'height_above_gnd',
-                        'hwm_locationdescription',
-                        'flag_member_id',
-                        'survey_member_id',
+                        "latitude",
+                        "longitude",
+                        "eventName",
+                        "hwmTypeName",
+                        "hwmQualityName",
+                        "verticalDatumName",
+                        "verticalMethodName",
+                        "approvalMember",
+                        "markerName",
+                        "horizontalMethodName",
+                        "horizontalDatumName",
+                        "flagMemberName",
+                        "surveyMemberName",
+                        "site_no",
+                        "siteDescription",
+                        "sitePriorityName",
+                        "networkNames",
+                        "stateName",
+                        "countyName",
+                        "siteZone",
+                        "sitePermHousing",
+                        "site_latitude",
+                        "site_longitude",
+                        "hwm_id",
+                        "waterbody",
+                        "site_id",
+                        "event_id",
+                        "hwm_type_id",
+                        "hwm_quality_id",
+                        "latitude_dd",
+                        "longitude_dd",
+                        "survey_date",
+                        "elev_ft",
+                        "vdatum_id",
+                        "vcollect_method_id",
+                        "bank",
+                        "marker_id",
+                        "hcollect_method_id",
+                        "hwm_notes",
+                        "hwm_environment",
+                        "flag_date",
+                        "stillwater",
+                        "hdatum_id",
+                        "hwm_label",
+                        "files",
+                        "height_above_gnd",
+                        "hwm_locationdescription",
+                        "flag_member_id",
+                        "survey_member_id",
                     ],
                 )
-            data.set_index('hwm_id', inplace=True)
+            data.set_index("hwm_id", inplace=True)
             self.__data = GeoDataFrame(
-                data, geometry=geopandas.points_from_xy(data['longitude'], data['latitude']),
+                data,
+                geometry=geopandas.points_from_xy(data["longitude"], data["latitude"]),
             )
             self.__previous_query = query
         elif self.__error is not None:
@@ -323,21 +332,21 @@ class HighWaterMarksQuery:
 
         return self.__data
 
-    def __eq__(self, other: 'HighWaterMarksQuery') -> bool:
+    def __eq__(self, other: "HighWaterMarksQuery") -> bool:
         return self.query == other.query
 
     def __repr__(self) -> str:
         return (
-            f'{self.__class__.__name__}('
-            f'event_id={self.event_id}, '
-            f'event_type={self.event_type}, '
-            f'event_status={self.event_status}, '
-            f'us_states={self.us_states}, '
-            f'us_counties={self.us_counties}, '
-            f'hwm_type={self.hwm_type}, '
-            f'quality={self.quality}, '
-            f'environment={self.environment}, '
-            f'survey_completed={self.survey_completed}, '
-            f'still_water={self.still_water}'
-            f')'
+            f"{self.__class__.__name__}("
+            f"event_id={self.event_id}, "
+            f"event_type={self.event_type}, "
+            f"event_status={self.event_status}, "
+            f"us_states={self.us_states}, "
+            f"us_counties={self.us_counties}, "
+            f"hwm_type={self.hwm_type}, "
+            f"quality={self.quality}, "
+            f"environment={self.environment}, "
+            f"survey_completed={self.survey_completed}, "
+            f"still_water={self.still_water}"
+            f")"
         )

@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/gh/oceanmodeling/StormEvents/branch/main/graph/badge.svg?token=BQWB1QKJ3Q)](https://codecov.io/gh/oceanmodeling/StormEvents)
 [![version](https://img.shields.io/pypi/v/StormEvents)](https://pypi.org/project/StormEvents)
 [![license](https://img.shields.io/github/license/oceanmodeling/StormEvents)](https://opensource.org/licenses/gpl-license)
-[![style](https://sourceforge.net/p/oitnb/code/ci/default/tree/_doc/_static/oitnb.svg?format=raw)](https://sourceforge.net/p/oitnb/code)
+[![style](https://github.com/psf/black)](https://img.shields.io/badge/code%20style-black-000000.svg)
 
 `stormevents` provides Python interfaces for observational data surrounding named storm events.
 
@@ -292,7 +292,7 @@ coops_stations_within_region(region=region)
 
 ```
         nws_id                               name state removed                    geometry
-nos_id                                                                                     
+nos_id
 8651370  DUKN7                               Duck    NC     NaT  POINT (-75.75000 36.18750)
 8652587  ORIN7                Oregon Inlet Marina    NC     NaT  POINT (-75.56250 35.78125)
 8654467  HCGN7              USCG Station Hatteras    NC     NaT  POINT (-75.68750 35.21875)
@@ -488,7 +488,7 @@ StormEvent(name='HENRI', year=2021, start_date=Timestamp('2021-08-21 12:00:00'),
 from stormevents import StormEvent
 from datetime import timedelta
 
-StormEvent('ida', 2021, end_date=timedelta(days=2))  # <- end 2 days after NHC start time 
+StormEvent('ida', 2021, end_date=timedelta(days=2))  # <- end 2 days after NHC start time
 ```
 
 ```
@@ -537,7 +537,7 @@ flood.high_water_marks()
 
 ```
          latitude  longitude          eventName  ... siteZone peak_summary_id                    geometry
-hwm_id                                           ...                                                     
+hwm_id                                           ...
 33496   37.298440 -80.007750  Florence Sep 2018  ...      NaN             NaN  POINT (-80.00775 37.29844)
 33497   33.699720 -78.936940  Florence Sep 2018  ...      NaN             NaN  POINT (-78.93694 33.69972)
 33498   33.758610 -78.792780  Florence Sep 2018  ...      NaN             NaN  POINT (-78.79278 33.75861)

@@ -1,21 +1,23 @@
 import os
+import re
 from os import PathLike
 from pathlib import Path
-import re
-from typing import Dict, List
+from typing import Dict
+from typing import List
 
 import pytest
 import xarray
 
-from stormevents.nhc.storms import nhc_storms, nhc_storms_archive
+from stormevents.nhc.storms import nhc_storms
+from stormevents.nhc.storms import nhc_storms_archive
 
-DATA_DIRECTORY = Path(__file__).parent.absolute().resolve() / 'data'
-INPUT_DIRECTORY = DATA_DIRECTORY / 'input'
-OUTPUT_DIRECTORY = DATA_DIRECTORY / 'output'
-REFERENCE_DIRECTORY = DATA_DIRECTORY / 'reference'
+DATA_DIRECTORY = Path(__file__).parent.absolute().resolve() / "data"
+INPUT_DIRECTORY = DATA_DIRECTORY / "input"
+OUTPUT_DIRECTORY = DATA_DIRECTORY / "output"
+REFERENCE_DIRECTORY = DATA_DIRECTORY / "reference"
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def cache_nhc_storms():
     nhc_storms()
     nhc_storms_archive()
@@ -41,7 +43,7 @@ def check_reference_directory(
         else:
             test_filename = test_directory / reference_filename.name
 
-            if reference_filename.suffix in ['.h5', '.nc']:
+            if reference_filename.suffix in [".h5", ".nc"]:
                 reference_filesize = Path(reference_filename).stat().st_size
                 test_filesize = Path(test_filename).stat().st_size
 
@@ -68,7 +70,8 @@ def check_reference_directory(
                         ):
                             try:
                                 lines_to_skip.update(
-                                    line_index % len(test_lines) for line_index in line_indices
+                                    line_index % len(test_lines)
+                                    for line_index in line_indices
                                 )
                             except ZeroDivisionError:
                                 continue
@@ -77,6 +80,6 @@ def check_reference_directory(
                         del test_lines[line_index], reference_lines[line_index]
 
                     cwd = Path.cwd()
-                    assert '\n'.join(test_lines) == '\n'.join(
+                    assert "\n".join(test_lines) == "\n".join(
                         reference_lines
                     ), f'"{os.path.relpath(test_filename, cwd)}" != "{os.path.relpath(reference_filename, cwd)}"'
