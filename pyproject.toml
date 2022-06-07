@@ -37,11 +37,13 @@ pytest = { version = '*', optional = true }
 pytest-cov = { version = '*', optional = true }
 pytest-socket = { version = '*', optional = true }
 pytest-xdist = { version = '*', optional = true }
+dunamai = { version = '*', optional = true }
 m2r2 = { version = '*', optional = true }
 sphinx = { version = '*', optional = true }
 sphinx-rtd-theme = { version = '*', optional = true }
+toml = { version = '*', optional = true }
 
 [tool.poetry.extras]
 testing = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
 development = ['isort', 'black']
-documentation = ['m2r2', 'sphinx', 'sphinx-rtd-theme']
+documentation = ['dunamai', 'm2r2', 'sphinx', 'sphinx-rtd-theme', 'toml']
