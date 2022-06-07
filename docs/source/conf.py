@@ -13,8 +13,8 @@ import sys
 from os import PathLike
 from pathlib import Path
 
+import toml as toml
 from dunamai import Version
-from setuptools import config
 
 
 def repository_root(path: PathLike = None) -> Path:
@@ -40,10 +40,10 @@ subprocess.run(
 )
 
 # -- Project information -----------------------------------------------------
-metadata = config.read_configuration("../../setup.cfg")["metadata"]
+metadata = toml.load("../../pyproject.toml")["tool"]["poetry"]
 
 project = metadata["name"]
-author = metadata["author"]
+author = metadata["authors"][0]
 copyright = f"2021, {author}"
 
 # The full version, including alpha/beta/rc tags
@@ -56,7 +56,8 @@ except RuntimeError:
 
 autoclass_content = "both"  # include both class docstring and __init__
 autodoc_default_options = {
-    # Make sure that any autodoc declarations show the right members
+    # Make sure that any autodoc declar
+    # ations show the right members
     "members": True,
     "inherited-members": True,
     "private-members": True,
