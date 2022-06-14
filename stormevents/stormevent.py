@@ -259,12 +259,11 @@ class StormEvent:
     @property
     def status(self) -> StormStatus:
         entry = self.__entry
-        if pandas.isna(entry["end_date"]) or datetime.today() - entry[
-            "end_date"
-        ] > timedelta(days=1):
-            return StormStatus.HISTORICAL
-        else:
+        age = datetime.today() - entry["end_date"]
+        if pandas.isna(entry["end_date"]) or age < timedelta(days=1):
             return StormStatus.REALTIME
+        else:
+            return StormStatus.HISTORICAL
 
     def track(
         self,

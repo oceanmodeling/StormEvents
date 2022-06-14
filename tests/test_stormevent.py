@@ -231,9 +231,8 @@ def test_status():
     storms = nhc_storms()
     latest_storm_entry = storms.iloc[-1]
     latest_storm = StormEvent.from_nhc_code(latest_storm_entry.name)
-    if pandas.isna(
-        latest_storm_entry["end_date"]
-    ) or datetime.today() - latest_storm_entry["end_date"] > timedelta(days=1):
+    age = datetime.today() - latest_storm_entry["end_date"]
+    if pandas.isna(latest_storm_entry["end_date"]) or age < timedelta(days=1):
         assert latest_storm.status == StormStatus.REALTIME
     else:
         assert latest_storm.status == StormStatus.HISTORICAL
