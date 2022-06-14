@@ -243,7 +243,7 @@ class StormEvent:
     @lru_cache(maxsize=None)
     def __data_start(self) -> datetime:
         data_start = self.__entry["start_date"]
-        if pandas.isna(data_start):
+        if pandas.isna(data_start) and not self.synthetic:
             data_start = VortexTrack.from_storm_name(self.name, self.year).start_date
         return data_start
 
@@ -268,7 +268,7 @@ class StormEvent:
     @lru_cache(maxsize=None)
     def __data_end(self) -> datetime:
         data_end = self.__entry["end_date"]
-        if pandas.isna(data_end):
+        if pandas.isna(data_end) and not self.synthetic:
             data_end = VortexTrack.from_storm_name(self.name, self.year).end_date
         return data_end
 
