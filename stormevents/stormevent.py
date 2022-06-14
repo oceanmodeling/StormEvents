@@ -261,7 +261,10 @@ class StormEvent:
         entry = self.__entry
         age = datetime.today() - entry["end_date"]
         if pandas.isna(entry["end_date"]) or age < timedelta(days=1):
-            return StormStatus.REALTIME
+            if datetime.today() - entry["start_date"] > timedelta(days=30):
+                return StormStatus.HISTORICAL
+            else:
+                return StormStatus.REALTIME
         else:
             return StormStatus.HISTORICAL
 
