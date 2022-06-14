@@ -49,12 +49,15 @@ class StormEvent:
         year: int,
         start_date: datetime = None,
         end_date: datetime = None,
+        synthetic: bool = False,
+        **kwargs,
     ):
         """
         :param name: storm name
         :param year: storm year
         :param start_date: starting time
         :param end_date: ending time
+        :param synthetic: whether the storm actually exists; `True` will skip lookup in the storm table
 
         >>> StormEvent('florence', 2018)
         StormEvent(name='FLORENCE', year=2018, start_date=Timestamp('2018-08-30 06:00:00'), end_date=Timestamp('2018-09-18 12:00:00'))
@@ -72,17 +75,30 @@ class StormEvent:
         StormEvent(name='IDA', year=2021, start_date=Timestamp('2021-08-27 18:00:00'), end_date=Timestamp('2021-08-29 18:00:00'))
         """
 
-        storms = nhc_storms(year=year)
-        storms = storms[storms["name"].str.contains(name.upper())]
-        if len(storms) > 0:
-            self.__entry = storms.iloc[0]
+        if not synthetic:
+            storms = nhc_storms(year=year)
+            storms = storms[storms["name"].str.contains(name.upper())]
+            if len(storms) > 0:
+                self.__entry = storms.iloc[0]
+            else:
+                raise ValueError(f'storm "{name} {year}" not found in NHC database')
         else:
-            raise ValueError(f'storm "{name} {year}" not found in NHC database')
+            self.__entry = Series(
+                {
+                    "name": name,
+                    "year": year,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    **kwargs,
+                },
+                index=None,
+            )
 
         self.__usgs_id = None
         self.__is_usgs_flood_event = True
         self.__high_water_marks = None
         self.__previous_configuration = {"name": self.name, "year": self.year}
+        self.__synthetic = synthetic
 
         self.start_date = start_date
         self.end_date = end_date
@@ -267,6 +283,10 @@ class StormEvent:
                 return StormStatus.REALTIME
         else:
             return StormStatus.HISTORICAL
+
+    @property
+    def synthetic(self) -> bool:
+        return self.__synthetic
 
     def track(
         self,
@@ -509,4 +529,50 @@ class StormEvent:
             f"start_date={repr(self.start_date)}, "
             f"end_date={repr(self.end_date)}"
             f")"
+        )
+
+    def __copy__(self) -> "StormEvent":
+        return self.__class__(
+            self.name,
+            year=self.year,
+            start_date=self.start_date,
+            end_date=self.end_date,
+        )
+
+    def perturb(
+        self,
+        name: str = None,
+        year: int = None,
+        start_date: datetime = None,
+        end_date: datetime = None,
+        **kwargs,
+    ) -> "StormEvent":
+        """
+        :param name: storm name
+        :param year: storm year
+        :param start_date: starting time
+        :param end_date: ending time
+        :return: a new synthetic storm based on parameters from the current storm
+        """
+
+        if name is None:
+            name = self.name
+        if year is None:
+            year = self.year
+        if start_date is None:
+            start_date = self.start_date
+        elif isinstance(start_date, timedelta):
+            start_date = self.start_date + start_date
+        if end_date is None:
+            end_date = self.end_date
+        elif isinstance(end_date, timedelta):
+            end_date = self.end_date + end_date
+
+        return self.__class__(
+            name=name,
+            year=year,
+            start_date=start_date,
+            end_date=end_date,
+            synthetic=True,
+            **kwargs,
         )
