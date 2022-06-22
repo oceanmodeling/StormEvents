@@ -211,4 +211,4 @@ def test_storm_event_coops_product_within_region(florence2018):
     assert list(east_coast_tidal_data.data_vars) == ["v", "s", "f", "q"]
 
     assert null_tidal_data["t"].sizes == {}
-    assert east_coast_tidal_data.sizes == {"nos_id": 111, "t": 1}
+    assert east_coast_tidal_data.sizes == {"nos_id": 112, "t": 1}

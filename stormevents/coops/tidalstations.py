@@ -608,8 +608,8 @@ def coops_stations(station_status: COOPS_StationStatus = None) -> GeoDataFrame:
             {
                 "nos_id": numpy.int32,
                 "nws_id": "string",
-                "x": numpy.float16,
-                "y": numpy.float16,
+                "x": numpy.float32,
+                "y": numpy.float32,
                 "state": "string",
                 "name": "string",
             },
