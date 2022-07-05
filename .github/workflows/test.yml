@@ -1,0 +1,76 @@
+name: test
+
+on:
+  push:
+    paths:
+      - '**.py'
+      - '.github/workflows/test*.yml'
+      - 'pyproject.toml'
+  pull_request:
+    paths:
+      - '**.py'
+      - '.github/workflows/test*.yml'
+      - 'pyproject.toml'
+
+jobs:
+  style:
+    name: check code style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-python@main
+        with:
+          python-version: '3.x'
+      - uses: actions/cache@main
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: style-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
+      - run: pip install flake8 black
+      # stop the build if there are Python syntax errors or undefined names
+      - run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+      - run: flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - run: black . --check
+  test:
+    needs: [ style ]
+    name: test Python ${{ matrix.python }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+        python: [ '3.9', '3.10' ]
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-python@main
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/cache@main
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
+      - run: pip install ".[testing]" pytest-xdist
+      - run: pytest -n auto
+  test_with_coverage:
+    needs: [ style, test ]
+    name: test with code coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-python@main
+        with:
+          python-version: '3.x'
+      - uses: actions/cache@main
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
+      - run: pip install ".[testing]" pytest-cov pytest-xdist
+      - run: pytest -n auto --cov . --cov-report xml:coverage.xml
+      - run: coverage report -m
+      - uses: codecov/codecov-action@master
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: false
