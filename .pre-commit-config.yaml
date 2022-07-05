@@ -2,8 +2,6 @@
 default_language_version:
   python: "python3"
 fail_fast: true
-ci:
-  skip: [ "poetry-lock", "prospector", "mypy" ]
 
 repos:
   - repo: "https://github.com/pre-commit/pre-commit-hooks"

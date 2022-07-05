@@ -52,7 +52,7 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
-      - run: pip install ".[testing]" pytest-xdist
+      - run: pip install ".[test]" pytest-xdist
       - run: pytest -n auto
   test_with_coverage:
     needs: [ style, test ]
@@ -68,7 +68,7 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
-      - run: pip install ".[testing]" pytest-cov pytest-xdist
+      - run: pip install ".[test]" pytest-cov pytest-xdist
       - run: pytest -n auto --cov . --cov-report xml:coverage.xml
       - run: coverage report -m
       - uses: codecov/codecov-action@master
