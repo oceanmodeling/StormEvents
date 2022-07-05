@@ -6,19 +6,20 @@ on:
       - published
 
 jobs:
-  publish:
-    name: publish package to PyPI
+  build_and_publish:
+    name: build and publish package
     runs-on: ubuntu-latest
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v2
-      - name: install Poetry
-        uses: abatilo/actions-poetry@v2.1.3
-      - name: install Dunamai
-        run: pip install dunamai
-      - name: extract version from VCS
-        run: poetry version $(dunamai from any)
-      - name: build wheel and source
-        run: poetry build
-      - name: upload wheel and source
-        run: poetry publish --username __token__ --password ${{ secrets.PYPI_TOKEN }}
+      - uses: actions/checkout@main
+      - uses: actions/setup-python@main
+        with:
+          python-version: '3.x'
+      - uses: actions/cache@main
+        with:
+          path: ${{ env.pythonLocation }}
+          key: build-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
+      - run: pip wheel . --no-deps -w dist
+      - uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
