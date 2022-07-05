@@ -1,4 +1,6 @@
 from datetime import datetime
+from datetime import timedelta
+from enum import Enum
 from functools import lru_cache
 from os import PathLike
 from typing import List
@@ -24,11 +26,15 @@ from stormevents.nhc import nhc_storms
 from stormevents.nhc import VortexTrack
 from stormevents.nhc.atcf import ATCF_Advisory
 from stormevents.nhc.atcf import ATCF_FileDeck
-from stormevents.nhc.atcf import ATCF_Mode
 from stormevents.usgs import usgs_flood_storms
 from stormevents.usgs import USGS_StormEvent
 from stormevents.utilities import relative_to_time_interval
 from stormevents.utilities import subset_time_interval
+
+
+class StormStatus(Enum):
+    HISTORICAL = "historical"
+    REALTIME = "realtime"
 
 
 class StormEvent:
@@ -249,6 +255,18 @@ class StormEvent:
         if pandas.isna(data_end):
             data_end = VortexTrack.from_storm_name(self.name, self.year).end_date
         return data_end
+
+    @property
+    def status(self) -> StormStatus:
+        entry = self.__entry
+        age = datetime.today() - entry["end_date"]
+        if pandas.isna(entry["end_date"]) or age < timedelta(days=1):
+            if datetime.today() - entry["start_date"] > timedelta(days=30):
+                return StormStatus.HISTORICAL
+            else:
+                return StormStatus.REALTIME
+        else:
+            return StormStatus.HISTORICAL
 
     def track(
         self,

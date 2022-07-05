@@ -2,11 +2,14 @@ import os
 from datetime import datetime
 from datetime import timedelta
 
+import pandas
 import pytest
 import shapely
 from shapely.geometry import box
 
+from stormevents.nhc import nhc_storms
 from stormevents.stormevent import StormEvent
+from stormevents.stormevent import StormStatus
 from tests import check_reference_directory
 from tests import OUTPUT_DIRECTORY
 from tests import REFERENCE_DIRECTORY
@@ -212,3 +215,27 @@ def test_storm_event_coops_product_within_region(florence2018):
 
     assert null_tidal_data["t"].sizes == {}
     assert east_coast_tidal_data.sizes == {"nos_id": 112, "t": 1}
+
+
+def test_status():
+    florence2018 = StormEvent("florence", 2018)
+    paine2016 = StormEvent.from_nhc_code("EP172016")
+    henri2021 = StormEvent.from_usgs_id(310)
+    ida2021 = StormEvent("ida", 2021)
+
+    assert florence2018.status == StormStatus.HISTORICAL
+    assert paine2016.status == StormStatus.HISTORICAL
+    assert henri2021.status == StormStatus.HISTORICAL
+    assert ida2021.status == StormStatus.HISTORICAL
+
+    storms = nhc_storms()
+    latest_storm_entry = storms.iloc[-1]
+    latest_storm = StormEvent.from_nhc_code(latest_storm_entry.name)
+    age = datetime.today() - latest_storm_entry["end_date"]
+    if pandas.isna(latest_storm_entry["end_date"]) or age < timedelta(days=1):
+        if datetime.today() - latest_storm_entry["start_date"] > timedelta(days=30):
+            assert latest_storm.status == StormStatus.HISTORICAL
+        else:
+            assert latest_storm.status == StormStatus.REALTIME
+    else:
+        assert latest_storm.status == StormStatus.HISTORICAL
