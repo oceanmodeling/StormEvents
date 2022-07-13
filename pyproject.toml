@@ -1,51 +1,37 @@
-[tool.poetry]
-name = 'stormevents'
-version = '0.0.0'
-description = 'Python interfaces for observational data surrounding named storm events'
-authors = ['Zach Burnett <zachary.r.burnett@gmail.com>']
-license = 'GPL-3.0-or-later'
-readme = 'README.md'
+[project]
+name = "stormevents"
+description = "Python interfaces for observational data surrounding named storm events"
+authors = [{ name = "Zach Burnett", email = "zachary.r.burnett@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.6"
+license = { file = "LICENSE" }
+dependencies = [
+    "beautifulsoup4",
+    "geopandas",
+    "netcdf4",
+    "numpy",
+    "python-dateutil",
+    "pandas",
+    "pyproj >=2.6",
+    "requests",
+    "searvey >=0.2.0,<1.0",
+    "shapely >=1.8",
+    "typepigeon >=1.0.5",
+    "xarray",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
+style = ['black', 'reorder-python-imports']
+docs = ['m2r2', 'sphinx', 'sphinx-rtd-theme', 'toml']
+
+[project.urls]
 repository = 'https://github.com/oceanmodeling/StormEvents.git'
 documentation = 'https://stormevents.readthedocs.io'
 
 [build-system]
-requires = [
-    'poetry-core>=1.0.0',
-    'poetry-dynamic-versioning',
-]
-build-backend = 'poetry.core.masonry.api'
+requires = ["setuptools", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"
 
-[tool.poetry-dynamic-versioning]
-enable = true
-
-[tool.poetry.dependencies]
-python = '^3.9'
-beautifulsoup4 = '*'
-geopandas = '*'
-netcdf4 = '*'
-numpy = '*'
-python-dateutil = '*'
-pandas = '*'
-pyproj = '>=2.6'
-requests = '*'
-searvey = '^0.2.0'
-shapely = '>=1.8'
-typepigeon = '>=1.0.5'
-xarray = '*'
-isort = { version = '*', optional = true }
-black = { version = '*', optional = true }
-pytest = { version = '*', optional = true }
-pytest-cov = { version = '*', optional = true }
-pytest-socket = { version = '*', optional = true }
-pytest-xdist = { version = '*', optional = true }
-dunamai = { version = '*', optional = true }
-m2r2 = { version = '*', optional = true }
-sphinx = { version = '*', optional = true }
-sphinx-rtd-theme = { version = '*', optional = true }
-toml = { version = '*', optional = true }
-
-[tool.poetry.extras]
-linting = ["mypy", "prospector"]
-testing = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
-development = ['isort', 'black']
-documentation = ['dunamai', 'm2r2', 'sphinx', 'sphinx-rtd-theme', 'toml']
+[tool.setuptools_scm]
