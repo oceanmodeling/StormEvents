@@ -1,7 +1,7 @@
 # StormEvents
 
-[![tests](https://github.com/oceanmodeling/StormEvents/workflows/tests/badge.svg)](https://github.com/oceanmodeling/StormEvents/actions?query=workflow%3Atests)
-[![build](https://github.com/oceanmodeling/StormEvents/workflows/build/badge.svg)](https://github.com/oceanmodeling/StormEvents/actions?query=workflow%3Abuild)
+[![test](https://github.com/oceanmodeling/StormEvents/actions/workflows/test.yml/badge.svg)](https://github.com/oceanmodeling/StormEvents/actions/workflows/test.yml)
+[![build](https://github.com/oceanmodeling/StormEvents/actions/workflows/build.yml/badge.svg)](https://github.com/oceanmodeling/StormEvents/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/oceanmodeling/StormEvents/branch/main/graph/badge.svg?token=BQWB1QKJ3Q)](https://codecov.io/gh/oceanmodeling/StormEvents)
 [![version](https://img.shields.io/pypi/v/StormEvents)](https://pypi.org/project/StormEvents)
 [![license](https://img.shields.io/github/license/oceanmodeling/StormEvents)](https://opensource.org/licenses/gpl-license)
