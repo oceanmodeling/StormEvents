@@ -19,7 +19,7 @@ build-backend = 'poetry.core.masonry.api'
 enable = true
 
 [tool.poetry.dependencies]
-python = '^3.6'
+python = '^3.9'
 beautifulsoup4 = '*'
 geopandas = '*'
 netcdf4 = '*'
@@ -28,6 +28,7 @@ python-dateutil = '*'
 pandas = '*'
 pyproj = '>=2.6'
 requests = '*'
+searvey = '^0.2.0'
 shapely = '>=1.8'
 typepigeon = '>=1.0.5'
 xarray = '*'
@@ -44,6 +45,7 @@ sphinx-rtd-theme = { version = '*', optional = true }
 toml = { version = '*', optional = true }
 
 [tool.poetry.extras]
+linting = ["mypy", "prospector"]
 testing = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
 development = ['isort', 'black']
 documentation = ['dunamai', 'm2r2', 'sphinx', 'sphinx-rtd-theme', 'toml']

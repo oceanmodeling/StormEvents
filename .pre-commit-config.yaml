@@ -3,7 +3,7 @@ default_language_version:
   python: "python3"
 fail_fast: true
 ci:
-    skip: ["poetry-lock", "prospector", "mypy"]
+  skip: [ "poetry-lock", "prospector", "mypy" ]
 
 repos:
   - repo: "https://github.com/pre-commit/pre-commit-hooks"
@@ -22,7 +22,9 @@ repos:
       - id: "check-yaml"
       - id: "debug-statements"
       - id: "end-of-file-fixer"
-        exclude: .+\.ipynb
+        exclude: .+\.ipynb|tests/data/.+
+      - id: "trailing-whitespace"
+        exclude: .+\.ipynb|tests/data/.+
 
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0
