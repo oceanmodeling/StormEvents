@@ -6,8 +6,8 @@ on:
       - published
 
 jobs:
-  build_and_publish:
-    name: build and publish package
+  build:
+    name: build package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
@@ -19,6 +19,30 @@ jobs:
           path: ${{ env.pythonLocation }}
           key: build-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: pip wheel . --no-deps -w dist
+      - uses: actions/upload-artifact@main
+        with:
+          name: package
+          path: dist/
+      - uses: xresloader/upload-to-github-release@main
+        with:
+          file: "dist/*"
+  publish:
+    name: publish package
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-python@main
+        with:
+          python-version: '3.x'
+      - uses: actions/cache@main
+        with:
+          path: ${{ env.pythonLocation }}
+          key: build-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
+      - uses: actions/download-artifact@main
+        with:
+          name: package
+          path: dist/
       - uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__
