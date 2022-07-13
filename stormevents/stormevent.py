@@ -7,6 +7,7 @@ from typing import List
 
 import pandas
 import xarray
+from pandas import Series
 from searvey.coops import COOPS_Interval
 from searvey.coops import COOPS_Product
 from searvey.coops import COOPS_Station
