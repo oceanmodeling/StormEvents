@@ -28,6 +28,7 @@ jobs:
           file: "dist/*"
   publish:
     name: publish package
+    needs: [ build ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
