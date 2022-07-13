@@ -214,7 +214,8 @@ def test_storm_event_coops_product_within_region(florence2018):
     assert list(east_coast_tidal_data.data_vars) == ["v", "s", "f", "q"]
 
     assert null_tidal_data["t"].sizes == {}
-    assert east_coast_tidal_data.sizes == {"nos_id": 112, "t": 1}
+    assert east_coast_tidal_data.sizes["nos_id"] > 0
+    assert east_coast_tidal_data.sizes["t"] > 0
 
 
 def test_status():
@@ -229,7 +230,9 @@ def test_status():
     assert ida2021.status == StormStatus.HISTORICAL
 
     storms = nhc_storms()
-    latest_storm_entry = storms.iloc[-1]
+    latest_storm_entry = storms[
+        (storms["class"] == "HU") | (storms["class"] == "TS")
+    ].iloc[-1]
     latest_storm = StormEvent.from_nhc_code(latest_storm_entry.name)
     age = datetime.today() - latest_storm_entry["end_date"]
     if pandas.isna(latest_storm_entry["end_date"]) or age < timedelta(days=1):
