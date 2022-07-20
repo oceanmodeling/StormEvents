@@ -15,30 +15,43 @@ from tests import REFERENCE_DIRECTORY
 
 
 def test_nhc_gis_storms():
-    reference_directory = REFERENCE_DIRECTORY / "test_nhc_gis_storms"
-    output_directory = OUTPUT_DIRECTORY / "test_nhc_gis_storms"
-
-    if not output_directory.exists():
-        output_directory.mkdir(parents=True, exist_ok=True)
-
     storms = nhc_storms_gis_archive(year=tuple(range(2008, 2021 + 1)))
 
-    storms.to_csv(output_directory / "storms.csv")
+    assert len(storms) > 0
 
-    check_reference_directory(output_directory, reference_directory)
+    storm_1 = storms.loc["AL012008"]
+    assert storm_1["name"] == "ARTHUR"
+    assert storm_1["class"] == "TS"
+    assert storm_1["year"] == 2008
+    assert storm_1["basin"] == "AL"
+    assert storm_1["number"] == 1
+
+    storm_2 = storms.loc["EP182021"]
+    assert storm_2["name"] == "TERRY"
+    assert storm_2["class"] == "TS"
+    assert storm_2["year"] == 2021
+    assert storm_2["basin"] == "EP"
+    assert storm_2["number"] == 18
 
 
 def test_nhc_storms():
-    output_directory = OUTPUT_DIRECTORY / "test_nhc_storms"
-    reference_directory = REFERENCE_DIRECTORY / "test_nhc_storms"
-
-    if not output_directory.exists():
-        output_directory.mkdir(parents=True, exist_ok=True)
-
     storms = nhc_storms(year=tuple(range(1851, 2021 + 1)))
-    storms.to_csv(output_directory / "storms.csv")
 
-    check_reference_directory(output_directory, reference_directory)
+    assert len(storms) > 0
+
+    storm_1 = storms.loc["AL021851"]
+    assert storm_1["name"] == "UNNAMED"
+    assert storm_1["class"] == "HU"
+    assert storm_1["year"] == 1851
+    assert storm_1["basin"] == " AL"
+    assert storm_1["number"] == 2
+
+    storm_2 = storms.loc["AL212021"]
+    assert storm_2["name"] == "WANDA"
+    assert storm_2["class"] == "TS"
+    assert storm_2["year"] == 2021
+    assert storm_2["basin"] == " AL"
+    assert storm_2["number"] == 21
 
 
 def test_vortex_track():
