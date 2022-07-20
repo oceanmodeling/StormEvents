@@ -2,13 +2,8 @@ name: quick test
 
 on:
   push:
-    branches:
+    branches-ignore:
       - 'main'
-    paths:
-      - '**.py'
-      - '.github/workflows/test*.yml'
-      - 'pyproject.toml'
-  pull_request:
     paths:
       - '**.py'
       - '.github/workflows/test*.yml'
