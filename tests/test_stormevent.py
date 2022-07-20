@@ -81,6 +81,38 @@ def test_storm_event_lookup():
     assert ida2021.end_date == datetime(2021, 9, 4, 18)
 
 
+def test_synthetic_stormevent(florence2018):
+    synth_1 = StormEvent("synth_1", year=2018, synthetic=True)
+    synth_2 = StormEvent(
+        "synth_2",
+        start_date=datetime(2019, 10, 2),
+        end_date=datetime(2019, 10, 10),
+        year=2019,
+        synthetic=True,
+    )
+    synth_florence = florence2018.perturb(name="synth_florence")
+
+    assert synth_1.name == "synth_1"
+    assert synth_1.year == 2018
+    assert synth_1.nhc_code is None
+    assert synth_1.start_date is None
+    assert synth_1.end_date is None
+    assert synth_1.synthetic
+
+    assert synth_2.name == "synth_2"
+    assert synth_2.year == 2019
+    assert synth_2.nhc_code is None
+    assert synth_2.start_date == datetime(2019, 10, 2)
+    assert synth_2.end_date == datetime(2019, 10, 10)
+    assert synth_2.synthetic
+
+    assert synth_florence.name == "synth_florence"
+    assert synth_florence.year == 2018
+    assert synth_florence.start_date == florence2018.start_date
+    assert synth_florence.end_date == florence2018.end_date
+    assert synth_florence.synthetic
+
+
 def test_storm_event_time_interval():
     florence2018 = StormEvent("florence", 2018, start_date=timedelta(days=-2))
     paine2016 = StormEvent.from_nhc_code("EP172016", end_date=timedelta(days=1))
