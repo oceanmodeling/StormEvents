@@ -93,6 +93,7 @@ class StormEvent:
     ) -> "StormEvent":
         """
         retrieve storm information from the NHC code
+
         :param nhc_code: NHC code
         :param start_date: starting time
         :param end_date: ending time
@@ -130,6 +131,7 @@ class StormEvent:
     ) -> "StormEvent":
         """
         retrieve storm information from the USGS flood event ID
+
         :param usgs_id: USGS flood event ID
         :param start_date: starting time
         :param end_date: ending time
