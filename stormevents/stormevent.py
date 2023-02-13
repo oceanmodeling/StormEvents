@@ -5,6 +5,7 @@ from functools import lru_cache
 from os import PathLike
 from typing import List
 
+import geopandas as gpd
 import pandas
 import xarray
 from searvey.coops import COOPS_Interval
@@ -481,7 +482,11 @@ class StormEvent:
                 start=self.start_date, end=self.end_date, relative=end_date
             )
 
-        stations = coops_stations_within_region(region=region, station_status=status)
+        stations = gpd.GeoDataFrame()
+        if not region.is_empty:
+            stations = coops_stations_within_region(
+                region=region, station_status=status
+            )
 
         if len(stations) > 0:
             stations_data = []

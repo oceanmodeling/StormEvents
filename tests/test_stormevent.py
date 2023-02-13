@@ -215,7 +215,8 @@ def test_status():
 
     storms = nhc_storms()
     latest_storm_entry = storms[
-        (storms["class"] == "HU") | (storms["class"] == "TS")
+        ((storms["class"] == "HU") | (storms["class"] == "TS"))
+        & (storms["number"] < 60)
     ].iloc[-1]
     latest_storm = StormEvent.from_nhc_code(latest_storm_entry.name)
     age = datetime.today() - latest_storm_entry["end_date"]

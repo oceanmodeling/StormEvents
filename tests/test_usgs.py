@@ -70,7 +70,7 @@ def test_usgs_flood_event():
         output_directory.mkdir(parents=True, exist_ok=True)
 
     flood_1 = USGS_Event.from_csv(input_directory / "florence2018.csv")
-    flood_2 = USGS_Event.from_name("Irma September 2017")
+    flood_2 = USGS_Event.from_name("2017 Irma")
 
     with pytest.raises(ValueError):
         USGS_StormEvent.from_name("nonexistent")
