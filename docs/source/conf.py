@@ -10,6 +10,7 @@
 import os
 import subprocess
 import sys
+from datetime import datetime
 from os import PathLike
 from pathlib import Path
 
@@ -40,11 +41,11 @@ subprocess.run(
 )
 
 # -- Project information -----------------------------------------------------
-metadata = toml.load("../../pyproject.toml")["tool"]["poetry"]
+metadata = toml.load("../../pyproject.toml")["project"]
 
 project = metadata["name"]
-author = metadata["authors"][0]
-copyright = f"2021, {author}"
+author = ", ".join([m["name"] for m in metadata["authors"]])
+copyright = f"{datetime.today().year}, {author}"
 
 # The full version, including alpha/beta/rc tags
 try:

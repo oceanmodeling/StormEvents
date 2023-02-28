@@ -821,7 +821,7 @@ class VortexTrack:
                                     row[["longitude", "latitude"]].values[None, :],
                                 ],
                                 axis=0,
-                            )
+                            ).astype(float)
 
                             quadrants.append(Polygon(vertices))
 

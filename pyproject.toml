@@ -1,7 +1,10 @@
 [project]
 name = "stormevents"
 description = "Python interfaces for observational data surrounding named storm events"
-authors = [{ name = "Zach Burnett", email = "zachary.r.burnett@gmail.com" }]
+authors = [
+    { name = "Zach Burnett", email = "zachary.r.burnett@gmail.com" },
+    { name = "Soroosh Mani", email = "Soroosh.Mani@noaa.gov"}
+]
 readme = "README.md"
 requires-python = ">=3.6"
 license = { file = "LICENSE" }
@@ -16,7 +19,7 @@ dependencies = [
     "requests",
     "searvey >=0.2.0,<1.0",
     "shapely >=1.8",
-    "typepigeon >=1.0.5",
+    "typepigeon >=1.0.5, <2",
     "xarray",
 ]
 dynamic = ["version"]
@@ -24,7 +27,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 test = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
 style = ['black', 'reorder-python-imports']
-docs = ['m2r2', 'sphinx', 'sphinx-rtd-theme', 'toml']
+docs = ['dunamai', 'm2r2', 'sphinx', 'sphinx-rtd-theme', 'toml']
 
 [project.urls]
 repository = 'https://github.com/oceanmodeling/StormEvents.git'
