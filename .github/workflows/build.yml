@@ -23,9 +23,6 @@ jobs:
         with:
           name: package
           path: dist/
-      - uses: xresloader/upload-to-github-release@main
-        with:
-          file: "dist/*"
   publish:
     name: publish package
     needs: [ build ]
