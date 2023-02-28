@@ -71,7 +71,7 @@ jobs:
       - run: pip install ".[test]" pytest-cov pytest-xdist
       - run: pytest -n auto --cov . --cov-report xml:coverage.xml
       - run: coverage report -m
-      - uses: codecov/codecov-action@master
+      - uses: codecov/codecov-action@main
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml

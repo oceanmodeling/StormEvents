@@ -1,7 +1,10 @@
 [project]
 name = "stormevents"
 description = "Python interfaces for observational data surrounding named storm events"
-authors = [{ name = "Zach Burnett", email = "zachary.r.burnett@gmail.com" }]
+authors = [
+    { name = "Zach Burnett", email = "zachary.r.burnett@gmail.com" },
+    { name = "Soroosh Mani", email = "Soroosh.Mani@noaa.gov"}
+]
 readme = "README.md"
 requires-python = ">=3.6"
 license = { file = "LICENSE" }
