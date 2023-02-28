@@ -100,15 +100,15 @@ def usgs_flood_events(
     ]
 
     if event_type is not None:
-        event_type = typepigeon.convert_value(event_type, [str])
+        event_type = typepigeon.to_type(event_type, [str])
         events = events[events["event_type"].isin(event_type)]
 
     if event_status is not None:
-        event_status = typepigeon.convert_value(event_status, [str])
+        event_status = typepigeon.to_type(event_status, [str])
         events = events[events["event_status"].isin(event_status)]
 
     if year is not None:
-        year = typepigeon.convert_value(year, [int])
+        year = typepigeon.to_type(year, [int])
         events = events[events["year"].isin(year)]
 
     return events
@@ -324,11 +324,11 @@ class USGS_Event:
 
     @property
     def event_type(self) -> EventType:
-        return typepigeon.convert_value(self.__metadata["event_type"], EventType)
+        return typepigeon.to_type(self.__metadata["event_type"], EventType)
 
     @property
     def event_status(self) -> EventStatus:
-        return typepigeon.convert_value(self.__metadata["event_status"], EventStatus)
+        return typepigeon.to_type(self.__metadata["event_status"], EventStatus)
 
     @property
     def coordinator(self) -> str:
@@ -348,11 +348,11 @@ class USGS_Event:
 
     @property
     def start_date(self) -> datetime:
-        return typepigeon.convert_value(self.__metadata["start_date"], datetime)
+        return typepigeon.to_type(self.__metadata["start_date"], datetime)
 
     @property
     def end_date(self) -> datetime:
-        return typepigeon.convert_value(self.__metadata["end_date"], datetime)
+        return typepigeon.to_type(self.__metadata["end_date"], datetime)
 
     @property
     def files(self) -> DataFrame:
