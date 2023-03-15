@@ -1188,9 +1188,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
 
         relation = HollandBRelation()
         holland_b = relation.holland_b(
-            max_sustained_wind_speed=carq_forecast[
-                "max_sustained_wind_speed"
-            ],
+            max_sustained_wind_speed=carq_forecast["max_sustained_wind_speed"],
             background_pressure=carq_forecast["background_pressure"],
             central_pressure=carq_forecast["central_pressure"],
         )
@@ -1199,16 +1197,10 @@ def correct_ofcl_based_on_carq_n_hollandb(
         holland_b = numpy.nanmean(holland_b)
 
         # Get CARQ from forecast hour 0 and isotach 34kt (i.e. the first item)
-        carq_ref = carq_forecast.loc[
-            carq_forecast.forecast_hours == 0
-        ].iloc[0]
+        carq_ref = carq_forecast.loc[carq_forecast.forecast_hours == 0].iloc[0]
 
         columns_of_interest = forecast[
-            [
-                "radius_of_maximum_winds" ,
-                "central_pressure",
-                "background_pressure"
-            ]
+            ["radius_of_maximum_winds", "central_pressure", "background_pressure"]
         ]
         columns_of_interest[columns_of_interest == 0] = pandas.NA
         missing = columns_of_interest.isna()
@@ -1218,30 +1210,24 @@ def correct_ofcl_based_on_carq_n_hollandb(
         radp_missing = missing.iloc[:, 2]
 
         # fill OFCL maximum wind radius with the first entry from the CARQ advisory
-        forecast.loc[
-            mrd_missing, "radius_of_maximum_winds"
-        ] = carq_ref["radius_of_maximum_winds"]
-
-        # fill OFCL background pressure with the first entry from the CARQ advisory central pressure (at sea level)
-        forecast.loc[radp_missing, "background_pressure"] = carq_ref[
-            "central_pressure"
+        forecast.loc[mrd_missing, "radius_of_maximum_winds"] = carq_ref[
+            "radius_of_maximum_winds"
         ]
 
+        # fill OFCL background pressure with the first entry from the CARQ advisory central pressure (at sea level)
+        forecast.loc[radp_missing, "background_pressure"] = carq_ref["central_pressure"]
+
         # fill OFCL central pressure (at sea level) with the 3rd hour entry, preserving Holland B
-        forecast.loc[
-            mslp_missing, "central_pressure"
-        ] = relation.central_pressure(
+        forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
             max_sustained_wind_speed=forecast.loc[
                 mslp_missing, "max_sustained_wind_speed"
             ],
-            background_pressure=forecast.loc[
-                mslp_missing, "background_pressure"
-            ],
+            background_pressure=forecast.loc[mslp_missing, "background_pressure"],
             holland_b=holland_b,
         )
 
         corr_ofcl_tracks[initial_time] = forecast
 
-    tracks['OFCL'] = corr_ofcl_tracks
+    tracks["OFCL"] = corr_ofcl_tracks
 
     return tracks
