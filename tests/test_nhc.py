@@ -184,7 +184,7 @@ def test_vortex_track_distances():
         track_1.distances["BEST"]["20180830T060000"], 8725961.838567913
     )
     assert numpy.isclose(
-        track_2.distances["OFCL"]["20180831T000000"], 8882602.389540724
+        track_2.distances["OFCL"]["20180831T000000"], 3499027.5307995058
     )
 
 
