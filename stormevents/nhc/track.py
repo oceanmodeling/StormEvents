@@ -564,7 +564,6 @@ class VortexTrack:
         atcf["max_sustained_wind_speed"] = (
             atcf["max_sustained_wind_speed"].astype("string").str.pad(5)
         )
-        atcf["central_pressure"] = atcf["central_pressure"].astype("string").str.pad(5)
         atcf["development_level"] = atcf["development_level"].str.pad(3)
         atcf["isotach_radius"] = atcf["isotach_radius"].astype("string").str.pad(4)
         atcf["isotach_quadrant_code"] = atcf["isotach_quadrant_code"].str.pad(4)
@@ -582,22 +581,20 @@ class VortexTrack:
         )
 
         atcf["background_pressure"].fillna(method="ffill", inplace=True)
-        atcf.loc[
-            ~pandas.isna(self.data["central_pressure"])
-            & (self.data["background_pressure"] <= self.data["central_pressure"])
-            & (self.data["central_pressure"] < 1013),
-            "background_pressure",
-        ] = "1013"
-        atcf.loc[
-            ~pandas.isna(self.data["central_pressure"])
-            & (self.data["background_pressure"] <= self.data["central_pressure"])
-            & (self.data["central_pressure"] < 1013),
-            "background_pressure",
-        ] = (
-            self.data["central_pressure"] + 1
+        atcf["background_pressure"] = atcf["background_pressure"].astype(int)
+        atcf["central_pressure"] = atcf["central_pressure"].astype(int)
+        press_cond = (
+            ~pandas.isna(atcf["central_pressure"])
+            & (atcf["background_pressure"] <= atcf["central_pressure"])
+            & (atcf["central_pressure"] < 1013)
         )
+        atcf.loc[press_cond, "background_pressure"] = 1013
+        atcf.loc[press_cond, "background_pressure"] = (
+            atcf.loc[press_cond, "central_pressure"] + 1
+        )
+        atcf["central_pressure"] = atcf["central_pressure"].astype("string").str.pad(5)
         atcf["background_pressure"] = (
-            atcf["background_pressure"].astype(int).astype("string").str.pad(5)
+            atcf["background_pressure"].astype("string").str.pad(5)
         )
 
         atcf["radius_of_last_closed_isobar"] = (
