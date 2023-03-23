@@ -1212,7 +1212,9 @@ def correct_ofcl_based_on_carq_n_hollandb(
         ]
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
-        forecast.loc[radp_missing, "background_pressure"] = carq_ref["background_pressure"]
+        forecast.loc[radp_missing, "background_pressure"] = carq_ref[
+            "background_pressure"
+        ]
 
         # fill OFCL central pressure (at sea level), preserving Holland B from 0-hr CARQ
         forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
