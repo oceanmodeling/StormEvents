@@ -584,12 +584,9 @@ class VortexTrack:
         atcf["background_pressure"] = atcf["background_pressure"].astype(int)
         atcf["central_pressure"] = atcf["central_pressure"].astype(int)
 
-        press_cond_nobg = (
-            ~atcf["central_pressure"].isna()
-            & (
-                (atcf["background_pressure"] <= atcf["central_pressure"])
-                | (atcf["background_pressure"].isna())
-            )
+        press_cond_nobg = ~atcf["central_pressure"].isna() & (
+            (atcf["background_pressure"] <= atcf["central_pressure"])
+            | (atcf["background_pressure"].isna())
         )
         atcf.loc[press_cond_nobg, "background_pressure"] = 1013
 
