@@ -564,7 +564,6 @@ class VortexTrack:
         atcf["max_sustained_wind_speed"] = (
             atcf["max_sustained_wind_speed"].astype("string").str.pad(5)
         )
-        atcf["central_pressure"] = atcf["central_pressure"].astype("string").str.pad(5)
         atcf["development_level"] = atcf["development_level"].str.pad(3)
         atcf["isotach_radius"] = atcf["isotach_radius"].astype("string").str.pad(4)
         atcf["isotach_quadrant_code"] = atcf["isotach_quadrant_code"].str.pad(4)
@@ -582,22 +581,22 @@ class VortexTrack:
         )
 
         atcf["background_pressure"].fillna(method="ffill", inplace=True)
-        atcf.loc[
-            ~pandas.isna(self.data["central_pressure"])
-            & (self.data["background_pressure"] <= self.data["central_pressure"])
-            & (self.data["central_pressure"] < 1013),
-            "background_pressure",
-        ] = "1013"
-        atcf.loc[
-            ~pandas.isna(self.data["central_pressure"])
-            & (self.data["background_pressure"] <= self.data["central_pressure"])
-            & (self.data["central_pressure"] < 1013),
-            "background_pressure",
-        ] = (
-            self.data["central_pressure"] + 1
+        atcf["background_pressure"] = atcf["background_pressure"].astype(int)
+        atcf["central_pressure"] = atcf["central_pressure"].astype(int)
+
+        press_cond_nobg = ~atcf["central_pressure"].isna() & (
+            (atcf["background_pressure"] <= atcf["central_pressure"])
+            | (atcf["background_pressure"].isna())
         )
+        atcf.loc[press_cond_nobg, "background_pressure"] = 1013
+
+        press_cond_nobg_hieye = press_cond_nobg & (atcf["central_pressure"] >= 1013)
+        atcf.loc[press_cond_nobg_hieye, "background_pressure"] = (
+            atcf.loc[press_cond_nobg_hieye, "central_pressure"] + 1
+        )
+        atcf["central_pressure"] = atcf["central_pressure"].astype("string").str.pad(5)
         atcf["background_pressure"] = (
-            atcf["background_pressure"].astype(int).astype("string").str.pad(5)
+            atcf["background_pressure"].astype("string").str.pad(5)
         )
 
         atcf["radius_of_last_closed_isobar"] = (
@@ -981,55 +980,9 @@ class VortexTrack:
         # fill missing values of MRD and MSLP in the OFCL advisory
         if "OFCL" in self.advisories:
             tracks = separate_tracks(dataframe)
-
-            if "OFCL" in tracks:
-                ofcl_tracks = tracks["OFCL"]
-                carq_tracks = tracks["CARQ"]
-
-                for initial_time, forecast in ofcl_tracks.items():
-                    if initial_time in carq_tracks:
-                        carq_forecast = carq_tracks[initial_time]
-                    else:
-                        carq_forecast = carq_tracks[list(carq_tracks)[0]]
-
-                    relation = HollandBRelation()
-                    holland_b = relation.holland_b(
-                        max_sustained_wind_speed=carq_forecast[
-                            "max_sustained_wind_speed"
-                        ],
-                        background_pressure=carq_forecast["background_pressure"],
-                        central_pressure=carq_forecast["central_pressure"],
-                    )
-
-                    holland_b[holland_b == numpy.inf] = numpy.nan
-                    holland_b = numpy.nanmean(holland_b)
-
-                    mrd_missing = pandas.isna(forecast["radius_of_maximum_winds"])
-                    mslp_missing = pandas.isna(forecast["central_pressure"])
-                    radp_missing = pandas.isna(forecast["background_pressure"])
-
-                    # fill OFCL maximum wind radius with the first entry from the CARQ advisory
-                    forecast.loc[
-                        mrd_missing, "radius_of_maximum_winds"
-                    ] = carq_forecast["radius_of_maximum_winds"].iloc[0]
-
-                    # fill OFCL background pressure with the first entry from the CARQ advisory central pressure (at sea level)
-                    forecast.loc[radp_missing, "background_pressure"] = carq_forecast[
-                        "central_pressure"
-                    ].iloc[0]
-
-                    # fill OFCL central pressure (at sea level) with the 3rd hour entry, preserving Holland B
-                    forecast.loc[
-                        mslp_missing, "central_pressure"
-                    ] = relation.central_pressure(
-                        max_sustained_wind_speed=forecast.loc[
-                            mslp_missing, "max_sustained_wind_speed"
-                        ],
-                        background_pressure=forecast.loc[
-                            mslp_missing, "background_pressure"
-                        ],
-                        holland_b=holland_b,
-                    )
+            if all(adv in tracks for adv in ["OFCL", "CARQ"]):
+                tracks = correct_ofcl_based_on_carq_n_hollandb(tracks)
+                dataframe = combine_tracks(tracks)
 
         if len(self.__advisories_to_remove) > 0:
             dataframe = dataframe[
@@ -1175,6 +1128,7 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
     tracks = {}
     for advisory in pandas.unique(data["advisory"]):
         advisory_data = data[data["advisory"] == advisory]
+        advisory_data["forecast_hours"] = advisory_data.forecast_hours.astype(int)
 
         if advisory == "BEST":
             advisory_data = advisory_data.sort_values("datetime")
@@ -1194,5 +1148,87 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
             tracks[advisory][
                 f"{pandas.to_datetime(track_start_time):%Y%m%dT%H%M%S}"
             ] = track_data
+
+    return tracks
+
+
+def combine_tracks(tracks: Dict[str, Dict[str, DataFrame]]) -> DataFrame:
+    """
+    combine tracks separated using `separate_tracks`
+
+    :param tracks: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast)
+    :return: data frame of track
+    """
+
+    return pandas.concat([df for adv_trk in tracks.values() for df in adv_trk.values()])
+
+
+def correct_ofcl_based_on_carq_n_hollandb(
+    tracks: Dict[str, Dict[str, DataFrame]]
+) -> Dict[str, Dict[str, DataFrame]]:
+    """
+    Correct official forecast using consensus track along with holland-b
+    relation
+
+    :param tracks: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast)
+    :return: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast) with corrected OFCL
+    """
+
+    ofcl_tracks = tracks["OFCL"]
+    carq_tracks = tracks["CARQ"]
+
+    corr_ofcl_tracks = dict()
+
+    for initial_time, forecast in ofcl_tracks.items():
+        if initial_time in carq_tracks:
+            carq_forecast = carq_tracks[initial_time]
+        else:
+            carq_forecast = carq_tracks[list(carq_tracks)[0]]
+
+        relation = HollandBRelation()
+        holland_b = relation.holland_b(
+            max_sustained_wind_speed=carq_forecast["max_sustained_wind_speed"],
+            background_pressure=carq_forecast["background_pressure"],
+            central_pressure=carq_forecast["central_pressure"],
+        )
+
+        holland_b[holland_b == numpy.inf] = numpy.nan
+        holland_b = numpy.nanmean(holland_b)
+
+        # Get CARQ from forecast hour 0 and isotach 34kt (i.e. the first item)
+        carq_ref = carq_forecast.loc[carq_forecast.forecast_hours == 0].iloc[0]
+
+        columns_of_interest = forecast[
+            ["radius_of_maximum_winds", "central_pressure", "background_pressure"]
+        ]
+        columns_of_interest[columns_of_interest == 0] = pandas.NA
+        missing = columns_of_interest.isna()
+        # Order of columns is the same as columns_of_interest
+        mrd_missing = missing.iloc[:, 0]
+        mslp_missing = missing.iloc[:, 1]
+        radp_missing = missing.iloc[:, 2]
+
+        # fill OFCL maximum wind radius with the first entry from 0-hr CARQ
+        forecast.loc[mrd_missing, "radius_of_maximum_winds"] = carq_ref[
+            "radius_of_maximum_winds"
+        ]
+
+        # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
+        forecast.loc[radp_missing, "background_pressure"] = carq_ref[
+            "background_pressure"
+        ]
+
+        # fill OFCL central pressure (at sea level), preserving Holland B from 0-hr CARQ
+        forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
+            max_sustained_wind_speed=forecast.loc[
+                mslp_missing, "max_sustained_wind_speed"
+            ],
+            background_pressure=forecast.loc[mslp_missing, "background_pressure"],
+            holland_b=holland_b,
+        )
+
+        corr_ofcl_tracks[initial_time] = forecast
+
+    tracks["OFCL"] = corr_ofcl_tracks
 
     return tracks

@@ -184,7 +184,7 @@ def test_vortex_track_distances():
         track_1.distances["BEST"]["20180830T060000"], 8725961.838567913
     )
     assert numpy.isclose(
-        track_2.distances["OFCL"]["20180831T000000"], 8882602.389540724
+        track_2.distances["OFCL"]["20180831T000000"], 3499027.5307995058
     )
 
 
@@ -272,3 +272,18 @@ def test_vortex_track_no_internet():
     )  # these are not the same because of the velocity recalculation
 
     check_reference_directory(output_directory, reference_directory)
+
+
+def test_carq_autofix_ofcl():
+    track = VortexTrack.from_storm_name(
+        "Florence", 2018, advisories=["OFCL"], file_deck="a"
+    )
+
+    variables_of_interest = [
+        "central_pressure",
+        "background_pressure",
+        "radius_of_maximum_winds",
+    ]
+
+    assert not (track.data[variables_of_interest] == 0).any(axis=None)
+    assert not (track.data[variables_of_interest].isna()).any(axis=None)
