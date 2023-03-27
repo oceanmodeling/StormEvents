@@ -562,7 +562,7 @@ class VortexTrack:
         atcf["longitude"] = atcf["longitude"].str.strip("-").str.pad(6)
 
         atcf["max_sustained_wind_speed"] = (
-            atcf["max_sustained_wind_speed"].astype("string").str.pad(5)
+            atcf["max_sustained_wind_speed"].astype("string").str.pad(4)
         )
         atcf["development_level"] = atcf["development_level"].str.pad(3)
         atcf["isotach_radius"] = atcf["isotach_radius"].astype("string").str.pad(4)
@@ -660,10 +660,6 @@ class VortexTrack:
             inplace=True,
         )
 
-        fort22["longitude"] = fort22["longitude"].str.strip().str.pad(4)
-        fort22["latitude"] = fort22["latitude"].str.strip().str.pad(5)
-        fort22["gust_speed"] = fort22["gust_speed"].str.strip().str.pad(5)
-        fort22["direction"] = fort22["direction"].str.strip().str.pad(3)
         fort22["name"] = fort22["name"].str.strip().str.pad(12)
         fort22.loc[fort22["name"] == "", "name"] = self.name
 
