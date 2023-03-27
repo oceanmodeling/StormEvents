@@ -660,9 +660,6 @@ class VortexTrack:
             inplace=True,
         )
 
-        fort22["name"] = fort22["name"].str.strip().str.pad(12)
-        fort22.loc[fort22["name"] == "", "name"] = self.name
-
         fort22["record_number"] = (
             (self.data.groupby(["datetime"]).ngroup() + 1).astype("string").str.pad(4)
         )
