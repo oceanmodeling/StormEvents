@@ -366,7 +366,7 @@ class VortexTrack:
 
     @file_deck.setter
     def file_deck(self, file_deck: ATCF_FileDeck):
-        if file_deck is None and self.filename is None:
+        if file_deck is None:
             if self.advisories is not None or len(self.advisories) > 0:
                 if ATCF_Advisory.BEST in typepigeon.convert_value(
                     self.advisories, [ATCF_Advisory]
