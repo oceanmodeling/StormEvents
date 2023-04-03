@@ -267,9 +267,7 @@ def test_vortex_track_no_internet():
     track_3.to_file(output_directory / "vortex_3.22", overwrite=True)
 
     assert track_1 == track_2
-    assert (
-        track_1 != track_3
-    )  # these are not the same because of the velocity recalculation
+    assert track_1 == track_3
 
     check_reference_directory(output_directory, reference_directory)
 
