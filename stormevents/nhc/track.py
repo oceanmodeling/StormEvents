@@ -3,6 +3,7 @@ import io
 import logging
 import pathlib
 import re
+import warnings
 from datetime import datetime
 from datetime import timedelta
 from functools import partial
@@ -53,7 +54,7 @@ class VortexTrack:
         :param start_date: start date of track
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of `a`, `b`, `f`
-        :param advisories: ATCF advisory types; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
+        :param advisories: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
 
         >>> VortexTrack('AL112017')
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
@@ -115,7 +116,7 @@ class VortexTrack:
         start_date: datetime = None,
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
-        advisories: [ATCF_Advisory] = None,
+        advisories: List[ATCF_Advisory] = None,
     ) -> "VortexTrack":
         """
         :param name: storm name
@@ -123,7 +124,7 @@ class VortexTrack:
         :param start_date: start date of track
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
-        :param advisories: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
+        :param advisories: list of ATCF advisory types; valid choices are: ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, `HWRF``
 
         >>> VortexTrack.from_storm_name('irma', 2017)
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
@@ -146,11 +147,15 @@ class VortexTrack:
         path: PathLike,
         start_date: datetime = None,
         end_date: datetime = None,
+        file_deck: ATCF_FileDeck = None,
+        advisories: List[ATCF_Advisory] = None,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
         :param start_date: start date of track
         :param end_date: end date of track
+        :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
+        :param advisories: list of ATCF advisory types; valid choices are: ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, `HWRF``
 
         >>> VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/AL062018.dat')
         VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/AL062018.dat'))
@@ -158,12 +163,23 @@ class VortexTrack:
         VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-12 00:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/irma2017_fort.22'))
         """
 
+        if file_deck is None and advisories is None:
+            warnings.warn(
+                "It is recommended to specify the file_deck and/or advisories when reading from file"
+            )
+
         try:
             path = pathlib.Path(path)
         except:
             pass
 
-        return cls(storm=path, start_date=start_date, end_date=end_date)
+        return cls(
+            storm=path,
+            start_date=start_date,
+            end_date=end_date,
+            file_deck=file_deck,
+            advisories=advisories,
+        )
 
     @property
     def name(self) -> str:

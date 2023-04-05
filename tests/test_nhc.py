@@ -257,7 +257,7 @@ def test_vortex_track_no_internet():
     with pytest.raises((ConnectionError, SocketBlockedError)):
         VortexTrack(storm="al062018", start_date="20180911", end_date=None)
 
-    track_1 = VortexTrack.from_file(input_directory / "fort.22")
+    track_1 = VortexTrack.from_file(input_directory / "fort.22", file_deck="b")
     track_1.to_file(output_directory / "vortex_1.22", overwrite=True)
 
     track_2 = VortexTrack.from_file(track_1.filename)
@@ -266,10 +266,8 @@ def test_vortex_track_no_internet():
     track_3 = copy(track_1)
     track_3.to_file(output_directory / "vortex_3.22", overwrite=True)
 
-    assert track_1 == track_2
-    assert (
-        track_1 != track_3
-    )  # these are not the same because of the velocity recalculation
+    assert track_1 != track_2  # because file_deck is not specified for track_2
+    assert track_1 == track_3
 
     check_reference_directory(output_directory, reference_directory)
 
