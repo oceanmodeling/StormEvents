@@ -260,13 +260,13 @@ def test_vortex_track_no_internet():
     track_1 = VortexTrack.from_file(input_directory / "fort.22", file_deck='b')
     track_1.to_file(output_directory / "vortex_1.22", overwrite=True)
 
-    track_2 = VortexTrack.from_file(track_1.filename, file_deck='b')
+    track_2 = VortexTrack.from_file(track_1.filename)
     track_2.to_file(output_directory / "vortex_2.22", overwrite=True)
 
     track_3 = copy(track_1)
     track_3.to_file(output_directory / "vortex_3.22", overwrite=True)
 
-    assert track_1 == track_2
+    assert track_1 != track_2 # because file_deck is not specifided for track_2
     assert track_1 == track_3
 
     check_reference_directory(output_directory, reference_directory)

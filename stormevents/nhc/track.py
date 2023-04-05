@@ -3,6 +3,7 @@ import io
 import logging
 import pathlib
 import re
+import warnings
 from datetime import datetime
 from datetime import timedelta
 from functools import partial
@@ -162,12 +163,21 @@ class VortexTrack:
         VortexTrack('AL112017', Timestamp('2017-09-05 00:00:00'), Timestamp('2017-09-12 00:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/irma2017_fort.22'))
         """
 
+        if file_deck is None and advisories is None:
+            warnings.warn('It is recommended to specify the file_deck and/or advisories when reading from file')
+        
         try:
             path = pathlib.Path(path)
         except:
             pass
 
-        return cls(storm=path, start_date=start_date, end_date=end_date)
+        return cls(
+            storm=path,
+            start_date=start_date,
+            end_date=end_date,
+            file_deck=file_deck,
+            advisories=advisories,
+        )
 
     @property
     def name(self) -> str:
@@ -370,7 +380,7 @@ class VortexTrack:
 
     @file_deck.setter
     def file_deck(self, file_deck: ATCF_FileDeck):
-        if file_deck is None:
+        if file_deck is None and self.filename is None:
             if self.advisories is not None or len(self.advisories) > 0:
                 if ATCF_Advisory.BEST in typepigeon.convert_value(
                     self.advisories, [ATCF_Advisory]
