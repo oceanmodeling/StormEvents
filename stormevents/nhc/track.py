@@ -54,7 +54,7 @@ class VortexTrack:
         :param start_date: start date of track
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of `a`, `b`, `f`
-        :param advisories: ATCF advisory types; one of `BEST`, `OFCL`, `OFCP`, `HMON`, `CARQ`, `HWRF`
+        :param advisories: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
 
         >>> VortexTrack('AL112017')
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
@@ -124,7 +124,7 @@ class VortexTrack:
         :param start_date: start date of track
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
-        :param advisories: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
+        :param advisories: list of ATCF advisory types; valid choices are: ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, `HWRF``
 
         >>> VortexTrack.from_storm_name('irma', 2017)
         VortexTrack('AL112017', Timestamp('2017-08-30 00:00:00'), Timestamp('2017-09-13 12:00:00'), <ATCF_FileDeck.BEST: 'b'>, [<ATCF_Advisory.BEST: 'BEST'>], None)
@@ -155,7 +155,7 @@ class VortexTrack:
         :param start_date: start date of track
         :param end_date: end date of track
         :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
-        :param advisories: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
+        :param advisories: list of ATCF advisory types; valid choices are: ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, `HWRF``
 
         >>> VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/AL062018.dat')
         VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/AL062018.dat'))
@@ -164,8 +164,10 @@ class VortexTrack:
         """
 
         if file_deck is None and advisories is None:
-            warnings.warn('It is recommended to specify the file_deck and/or advisories when reading from file')
-        
+            warnings.warn(
+                "It is recommended to specify the file_deck and/or advisories when reading from file"
+            )
+
         try:
             path = pathlib.Path(path)
         except:
