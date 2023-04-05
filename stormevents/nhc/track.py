@@ -116,7 +116,7 @@ class VortexTrack:
         start_date: datetime = None,
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
-        advisories: [ATCF_Advisory] = None,
+        advisories: List[ATCF_Advisory] = None,
     ) -> "VortexTrack":
         """
         :param name: storm name
@@ -148,7 +148,7 @@ class VortexTrack:
         start_date: datetime = None,
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
-        advisories: [ATCF_Advisory] = None,
+        advisories: List[ATCF_Advisory] = None,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
