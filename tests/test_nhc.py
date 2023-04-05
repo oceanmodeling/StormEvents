@@ -257,10 +257,11 @@ def test_vortex_track_no_internet():
     with pytest.raises((ConnectionError, SocketBlockedError)):
         VortexTrack(storm="al062018", start_date="20180911", end_date=None)
 
-    track_1 = VortexTrack.from_file(input_directory / "fort.22")
+    breakpoint()
+    track_1 = VortexTrack.from_file(input_directory / "fort.22", file_deck='b')
     track_1.to_file(output_directory / "vortex_1.22", overwrite=True)
 
-    track_2 = VortexTrack.from_file(track_1.filename)
+    track_2 = VortexTrack.from_file(track_1.filename, file_deck='b')
     track_2.to_file(output_directory / "vortex_2.22", overwrite=True)
 
     track_3 = copy(track_1)

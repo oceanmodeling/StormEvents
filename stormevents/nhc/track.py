@@ -146,11 +146,15 @@ class VortexTrack:
         path: PathLike,
         start_date: datetime = None,
         end_date: datetime = None,
+        file_deck: ATCF_FileDeck = None,
+        advisories: [ATCF_Advisory] = None,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
         :param start_date: start date of track
         :param end_date: end date of track
+        :param file_deck: ATCF file deck; one of ``a``, ``b``, ``f``
+        :param advisories: ATCF advisory type; one of ``BEST``, ``OFCL``, ``OFCP``, ``HMON``, ``CARQ``, ``HWRF``
 
         >>> VortexTrack.from_file('tests/data/input/test_vortex_track_from_file/AL062018.dat')
         VortexTrack('AL062018', Timestamp('2018-08-30 06:00:00'), Timestamp('2018-09-18 12:00:00'), None, <ATCF_Mode.HISTORICAL: 'ARCHIVE'>, ['BEST', 'OFCL', 'OFCP', 'HMON', 'CARQ', 'HWRF'], PosixPath('/home/zrb/Projects/StormEvents/tests/data/input/test_vortex_track_from_file/AL062018.dat'))
