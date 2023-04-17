@@ -680,7 +680,7 @@ class VortexTrack:
             (self.data.groupby(["datetime"]).ngroup() + 1).astype("string").str.pad(4)
         )
 
-        if advisory == ATCF_Advisory.BEST:
+        if advisory == ATCF_Advisory.BEST or advisory == ATCF_Advisory.BEST.value:
             fort22["forecast_hours"] = (
                 (
                     (self.data["datetime"] - self.data["datetime"].iloc[0])

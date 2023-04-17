@@ -159,7 +159,9 @@ def test_vortex_track_to_file():
 
     track_1 = VortexTrack.from_storm_name("florence", 2018)
     track_1.to_file(output_directory / "florence2018_best.dat", overwrite=True)
-    track_1.to_file(output_directory / "florence2018_best.fort.22", overwrite=True)
+    track_1.to_file(
+        output_directory / "florence2018_best.fort.22", advisory="BEST", overwrite=True
+    )
 
     track_2 = VortexTrack.from_storm_name("florence", 2018, file_deck="a")
     track_2.to_file(output_directory / "florence2018_all.dat", overwrite=True)
