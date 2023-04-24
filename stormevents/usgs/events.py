@@ -194,7 +194,7 @@ def usgs_flood_storms(year: int = None) -> DataFrame:
                 else:
                     matching_event["nhc_name"] = storm["name"]
                     matching_event["nhc_code"] = storm.name
-                    events = events.append(matching_event)
+                    events.loc[len(events)] = matching_event
 
     events = events.loc[
         ~pandas.isna(events["nhc_code"]),
