@@ -27,7 +27,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 test = ['pytest', 'pytest-cov', 'pytest-socket', 'pytest-xdist']
 style = ['black', 'reorder-python-imports']
-docs = ['dunamai', 'm2r2', 'sphinx', 'sphinx-rtd-theme', 'toml']
+docs = ['dunamai', 'm2r2', 'sphinx<7', 'sphinx-rtd-theme', 'toml']
 
 [project.urls]
 repository = 'https://github.com/oceanmodeling/StormEvents.git'
