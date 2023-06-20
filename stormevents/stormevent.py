@@ -278,6 +278,7 @@ class StormEvent:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         filename: PathLike = None,
+        forecast_time: datetime = None,
     ) -> VortexTrack:
         """
         retrieve NHC ATCF track data
@@ -309,6 +310,7 @@ class StormEvent:
                 end_date=end_date,
                 file_deck=file_deck,
                 advisories=advisories,
+                forecast_time=forecast_time,
             )
         return track
 
