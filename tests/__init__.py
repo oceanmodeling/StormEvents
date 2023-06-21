@@ -4,7 +4,6 @@ from os import PathLike
 from pathlib import Path
 from typing import Dict
 from typing import List
-from difflib import context_diff, unified_diff
 
 import pytest
 import xarray
@@ -81,6 +80,6 @@ def check_reference_directory(
                         del test_lines[line_index], reference_lines[line_index]
 
                     cwd = Path.cwd()
-                    assert "\n".join(test_lines) == "\n".join(reference_lines), "".join(
-                        unified_diff(test_lines, reference_lines, n=0)
-                    )
+                    assert "\n".join(test_lines) == "\n".join(
+                        reference_lines
+                    ), f'"{os.path.relpath(test_filename, cwd)}" != "{os.path.relpath(reference_filename, cwd)}"'
