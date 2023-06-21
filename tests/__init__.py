@@ -4,7 +4,7 @@ from os import PathLike
 from pathlib import Path
 from typing import Dict
 from typing import List
-from difflib import context_diff
+from difflib import context_diff, unified_diff
 
 import pytest
 import xarray
@@ -83,6 +83,7 @@ def check_reference_directory(
                     cwd = Path.cwd()
                     assert "\n".join(test_lines) == "\n".join(
                         reference_lines
-                    ), "\n".join(
-                        context_diff("\n".join(test_lines), "\n".join(reference_lines))
+                    ), "".join(
+#                            context_diff("\n".join(test_lines), "\n".join(reference_lines))
+                            unified_diff("\n".join(test_lines), "\n".join(reference_lines))
                     )
