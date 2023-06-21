@@ -81,9 +81,6 @@ def check_reference_directory(
                         del test_lines[line_index], reference_lines[line_index]
 
                     cwd = Path.cwd()
-                    assert "\n".join(test_lines) == "\n".join(
-                        reference_lines
-                    ), "".join(
-#                            context_diff("\n".join(test_lines), "\n".join(reference_lines))
-                            unified_diff("\n".join(test_lines), "\n".join(reference_lines))
+                    assert "\n".join(test_lines) == "\n".join(reference_lines), "".join(
+                        unified_diff("\n".join(test_lines), "\n".join(reference_lines))
                     )
