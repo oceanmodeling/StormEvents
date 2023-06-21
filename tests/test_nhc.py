@@ -276,9 +276,12 @@ def test_vortex_track_no_internet():
 def test_vortex_track_forecast_time_init_arg():
     # Test __init__ to accept forecast_time argument
     track = VortexTrack(
-        storm="al082018", advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
+        storm="al062018", advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
     )
-    assert isinstance(track, VortexTrack)
+
+    dates = track.data.datetime.unique()
+    assert len(dates) == 1
+    assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
 
 
 def test_vortex_track_forecast_time_fromname_arg():
@@ -286,7 +289,23 @@ def test_vortex_track_forecast_time_fromname_arg():
     track = VortexTrack.from_storm_name(
         "Florence", 2018, advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
     )
-    assert isinstance(track, VortexTrack)
+
+    dates = track.data.datetime.unique()
+    assert len(dates) == 1
+    assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
+
+
+def test_vortex_track_forecast_time_fromfile_arg():
+    # Test from_file to accept forecast_time argument
+    input_directory = INPUT_DIRECTORY / "test_vortex_track_from_file"
+
+    track = VortexTrack.from_file(
+        input_directory / "AL062018.dat", file_deck="a", forecast_time="09-10-2018"
+    )
+
+    dates = track.data.datetime.unique()
+    assert len(dates) == 1
+    assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
 
 
 def test_vortex_track_forecast_time_outofbound_date():
@@ -294,7 +313,7 @@ def test_vortex_track_forecast_time_outofbound_date():
     msg = ""
     try:
         VortexTrack(
-            "al082018", advisories=["OFCL"], file_deck="a", forecast_time="07-15-2018"
+            "al062018", advisories=["OFCL"], file_deck="a", forecast_time="07-15-2018"
         )
     except ValueError as e:
         msg = str(e)
@@ -308,23 +327,12 @@ def test_vortex_track_forecast_time_nonforecast_track():
     msg = ""
     try:
         VortexTrack(
-            "al082018", advisories=["OFCL"], file_deck="b", forecast_time="07-15-2018"
+            "al062018", advisories=["OFCL"], file_deck="b", forecast_time="07-15-2018"
         )
     except ValueError as e:
         msg = str(e)
 
     assert "only applies to forecast" in msg
-
-
-def test_vortex_track_forecast_time_entrydates():
-    # Test all the entries have the same date which is == forecast time
-    # specified
-    track = VortexTrack.from_storm_name(
-        "Florence", 2018, advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
-    )
-    dates = track.data.datetime.unique()
-    assert len(dates) == 1
-    assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
 
 
 def test_vortex_track_forecast_time_set_value():

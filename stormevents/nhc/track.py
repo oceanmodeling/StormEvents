@@ -154,6 +154,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
+        forecast_time: datetime = None,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
@@ -184,6 +185,7 @@ class VortexTrack:
             end_date=end_date,
             file_deck=file_deck,
             advisories=advisories,
+            forecast_time=forecast_time,
         )
 
     @property
