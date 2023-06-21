@@ -279,7 +279,7 @@ def test_vortex_track_forecast_time_init_arg():
         storm="al062018", advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
     )
 
-    dates = track.data.datetime.unique()
+    dates = track.data.track_start_time.unique()
     assert len(dates) == 1
     assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
 
@@ -290,7 +290,7 @@ def test_vortex_track_forecast_time_fromname_arg():
         "Florence", 2018, advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
     )
 
-    dates = track.data.datetime.unique()
+    dates = track.data.track_start_time.unique()
     assert len(dates) == 1
     assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
 
@@ -303,22 +303,22 @@ def test_vortex_track_forecast_time_fromfile_arg():
         input_directory / "AL062018.dat", file_deck="a", forecast_time="09-10-2018"
     )
 
-    dates = track.data.datetime.unique()
+    dates = track.data.track_start_time.unique()
     assert len(dates) == 1
     assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
 
 
-def test_vortex_track_forecast_time_outofbound_date():
-    # Test it raises if forecast time is not between start and end
-    msg = ""
-    try:
-        VortexTrack(
-            "al062018", advisories=["OFCL"], file_deck="a", forecast_time="07-15-2018"
-        )
-    except ValueError as e:
-        msg = str(e)
-
-    assert "forecast time is outside available" in msg
+# def test_vortex_track_forecast_time_outofbound_date():
+#     # Test it raises if forecast time is not between start and end
+#     msg = ""
+#     try:
+#         VortexTrack(
+#             "al062018", advisories=["OFCL"], file_deck="a", forecast_time="07-15-2018"
+#         )
+#     except ValueError as e:
+#         msg = str(e)
+#
+#     assert "forecast time is outside available" in msg
 
 
 def test_vortex_track_forecast_time_nonforecast_track():
@@ -344,7 +344,7 @@ def test_vortex_track_forecast_time_set_value():
     )
     track.forecast_time = "09-10-2018"
 
-    dates = track.data.datetime.unique()
+    dates = track.data.track_start_time.unique()
 
     assert len(dates) == 1
     assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
@@ -356,7 +356,7 @@ def test_vortex_track_forecast_time_unset_value():
     )
     track.forecast_time = None
 
-    dates = track.data.datetime.unique()
+    dates = track.data.track_start_time.unique()
 
     assert len(dates) > 1
 

@@ -395,10 +395,13 @@ class VortexTrack:
             if self.file_deck != ATCF_FileDeck.ADVISORY:
                 raise ValueError("Forecast time only applies to forecast advisories")
 
-            if not (self.start_date < forecast_time < self.end_date):
-                raise ValueError(
-                    "The specified forecast time is outside available date range"
-                )
+            # NOTE: Cannot cleanly check forecast_time against
+            # start and end date, since the first is on `track_start_time`
+            # and the latter two on `datetime`
+            # if not (self.start_date < forecast_time < self.end_date):
+            #     raise ValueError(
+            #         "The specified forecast time is outside available date range"
+            #     )
 
         self.__forecast_time = forecast_time
 
@@ -522,7 +525,9 @@ class VortexTrack:
 
         if self.forecast_time is not None:
             return self.unfiltered_data.loc[
-                (self.unfiltered_data["datetime"] == self.forecast_time)
+                (self.unfiltered_data["track_start_time"] == self.forecast_time)
+                & (self.unfiltered_data["datetime"] >= self.start_date)
+                & (self.unfiltered_data["datetime"] <= self.end_date)
             ]
         return self.unfiltered_data.loc[
             (self.unfiltered_data["datetime"] >= self.start_date)
