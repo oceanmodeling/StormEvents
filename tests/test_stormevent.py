@@ -142,7 +142,7 @@ def test_storm_event_track(florence2018, ida2021):
 
 def test_storm_event_track_forecast_time(florence2018):
     florence_track = florence2018.track(file_deck="a", forecast_time="09-10-2018")
-    assert len(florence_track.data.datetime.unique()) == 1
+    assert len(florence_track.data.track_start_time.unique()) == 1
 
 
 def test_storm_event_high_water_marks(florence2018):
