@@ -550,7 +550,9 @@ class VortexTrack:
         integer_na_value = -99999
         for column in float_columns:
             atcf.loc[pandas.isna(atcf[column]), column] = integer_na_value
-            atcf.loc[:, column] = atcf.loc[:, column].round(0).astype(int)
+            # Due to update in pandas 2
+            atcf.loc[:, column] = atcf.loc[:, column].round(0)
+        atcf = atcf.astype({col: int for col in float_columns})
 
         atcf["basin"] = atcf["basin"].str.pad(2)
         atcf["storm_number"] = atcf["storm_number"].astype("string").str.pad(3)
@@ -654,7 +656,7 @@ class VortexTrack:
 
         for column in atcf.select_dtypes(include=["string"]).columns:
             atcf[column] = atcf[column].str.replace(
-                re.compile(str(integer_na_value)), ""
+                re.compile(str(integer_na_value)), "", regex=True
             )
 
         return atcf
