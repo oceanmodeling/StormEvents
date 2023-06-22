@@ -140,6 +140,11 @@ def test_storm_event_track(florence2018, ida2021):
     check_reference_directory(output_directory, reference_directory)
 
 
+def test_storm_event_track_forecast_time(florence2018):
+    florence_track = florence2018.track(file_deck="a", forecast_time="09-10-2018")
+    assert len(florence_track.data.track_start_time.unique()) == 1
+
+
 def test_storm_event_high_water_marks(florence2018):
     reference_directory = REFERENCE_DIRECTORY / "test_storm_event_high_water_marks"
     output_directory = OUTPUT_DIRECTORY / "test_storm_event_high_water_marks"

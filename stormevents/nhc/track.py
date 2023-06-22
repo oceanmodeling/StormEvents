@@ -48,6 +48,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
+        forecast_time: datetime = None,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -80,6 +81,7 @@ class VortexTrack:
         self.__end_date = None
         self.__file_deck = None
         self.__advisories = None
+        self.__forecast_time = None
 
         self.__advisories_to_remove = []
         self.__invalid_storm_name = False
@@ -107,6 +109,7 @@ class VortexTrack:
         # use start and end dates to mask dataframe here
         self.start_date = start_date
         self.end_date = end_date
+        self.forecast_time = forecast_time
 
     @classmethod
     def from_storm_name(
@@ -117,6 +120,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
+        forecast_time: datetime = None,
     ) -> "VortexTrack":
         """
         :param name: storm name
@@ -139,6 +143,7 @@ class VortexTrack:
             end_date=end_date,
             file_deck=file_deck,
             advisories=advisories,
+            forecast_time=forecast_time,
         )
 
     @classmethod
@@ -149,6 +154,7 @@ class VortexTrack:
         end_date: datetime = None,
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
+        forecast_time: datetime = None,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
@@ -179,6 +185,7 @@ class VortexTrack:
             end_date=end_date,
             file_deck=file_deck,
             advisories=advisories,
+            forecast_time=forecast_time,
         )
 
     @property
@@ -373,6 +380,32 @@ class VortexTrack:
         self.__end_date = end_date
 
     @property
+    def forecast_time(self) -> pandas.Timestamp:
+        """
+        :return: forecast time of forecast track
+        """
+
+        return self.__forecast_time
+
+    @forecast_time.setter
+    def forecast_time(self, forecast_time: datetime):
+        if forecast_time is not None:
+            forecast_time = pandas.to_datetime(forecast_time)
+
+            if self.file_deck != ATCF_FileDeck.ADVISORY:
+                raise ValueError("Forecast time only applies to forecast advisories")
+
+            # NOTE: Cannot cleanly check forecast_time against
+            # start and end date, since the first is on `track_start_time`
+            # and the latter two on `datetime`
+            # if not (self.start_date < forecast_time < self.end_date):
+            #     raise ValueError(
+            #         "The specified forecast time is outside available date range"
+            #     )
+
+        self.__forecast_time = forecast_time
+
+    @property
     def file_deck(self) -> ATCF_FileDeck:
         """
         :return: ATCF file deck; one of ``a``, ``b``, ``f``
@@ -490,6 +523,12 @@ class VortexTrack:
         [10434 rows x 38 columns]
         """
 
+        if self.forecast_time is not None:
+            return self.unfiltered_data.loc[
+                (self.unfiltered_data["track_start_time"] == self.forecast_time)
+                & (self.unfiltered_data["datetime"] >= self.start_date)
+                & (self.unfiltered_data["datetime"] <= self.end_date)
+            ]
         return self.unfiltered_data.loc[
             (self.unfiltered_data["datetime"] >= self.start_date)
             & (self.unfiltered_data["datetime"] <= self.end_date)
