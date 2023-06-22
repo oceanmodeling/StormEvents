@@ -2,6 +2,7 @@ from copy import copy
 from datetime import timedelta
 
 import numpy
+import pandas
 import pytest
 from pytest_socket import SocketBlockedError
 
@@ -272,6 +273,94 @@ def test_vortex_track_no_internet():
     assert track_1 == track_3
 
     check_reference_directory(output_directory, reference_directory)
+
+
+def test_vortex_track_forecast_time_init_arg():
+    # Test __init__ to accept forecast_time argument
+    track = VortexTrack(
+        storm="al062018", advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
+    )
+
+    dates = track.data.track_start_time.unique()
+    assert len(dates) == 1
+    assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
+
+
+def test_vortex_track_forecast_time_fromname_arg():
+    # Test from_storm_name to accept forecast_time argument
+    track = VortexTrack.from_storm_name(
+        "Florence", 2018, advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
+    )
+
+    dates = track.data.track_start_time.unique()
+    assert len(dates) == 1
+    assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
+
+
+def test_vortex_track_forecast_time_fromfile_arg():
+    # Test from_file to accept forecast_time argument
+    input_directory = INPUT_DIRECTORY / "test_vortex_track_from_file"
+
+    track = VortexTrack.from_file(
+        input_directory / "AL062018.dat", file_deck="a", forecast_time="09-10-2018"
+    )
+
+    dates = track.data.track_start_time.unique()
+    assert len(dates) == 1
+    assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
+
+
+# def test_vortex_track_forecast_time_outofbound_date():
+#     # Test it raises if forecast time is not between start and end
+#     msg = ""
+#     try:
+#         VortexTrack(
+#             "al062018", advisories=["OFCL"], file_deck="a", forecast_time="07-15-2018"
+#         )
+#     except ValueError as e:
+#         msg = str(e)
+#
+#     assert "forecast time is outside available" in msg
+
+
+def test_vortex_track_forecast_time_nonforecast_track():
+    # Test it raises if a non-forecast track is requested but forecast
+    # time is specified
+    msg = ""
+    try:
+        VortexTrack(
+            "al062018", advisories=["OFCL"], file_deck="b", forecast_time="07-15-2018"
+        )
+    except ValueError as e:
+        msg = str(e)
+
+    assert "only applies to forecast" in msg
+
+
+def test_vortex_track_forecast_time_set_value():
+    track = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        advisories=["OFCL"],
+        file_deck="a",
+    )
+    track.forecast_time = "09-10-2018"
+
+    dates = track.data.track_start_time.unique()
+
+    assert len(dates) == 1
+    assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
+
+
+def test_vortex_track_forecast_time_unset_value():
+    track = VortexTrack.from_storm_name(
+        "Florence", 2018, advisories=["OFCL"], file_deck="a", forecast_time="09-10-2018"
+    )
+    track.forecast_time = None
+
+    dates = track.data.track_start_time.unique()
+
+    assert len(dates) > 1
 
 
 def test_carq_autofix_ofcl():
