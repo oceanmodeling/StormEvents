@@ -18,7 +18,7 @@ from urllib.request import urlopen
 import numpy
 import pandas
 import typepigeon
-from pandas import DataFrame
+from pandas import DataFrame, Timedelta
 from pyproj import Geod
 from shapely import ops
 from shapely.geometry import LineString
@@ -720,6 +720,17 @@ class VortexTrack:
         fort22["record_number"] = (
             (self.data.groupby(["datetime"]).ngroup() + 1).astype("string").str.pad(4)
         )
+
+        if advisory == ATCF_Advisory.BEST or advisory == ATCF_Advisory.BEST.value:
+            fort22["forecast_hours"] = (
+                (
+                    (self.data["datetime"] - self.data["datetime"].iloc[0])
+                    / Timedelta("1 hour")
+                )
+                .astype(int)
+                .astype("string")
+                .str.pad(4)
+            )
 
         return fort22
 
