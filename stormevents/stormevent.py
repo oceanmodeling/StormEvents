@@ -443,7 +443,7 @@ class StormEvent:
         :param start_date: start date
         :param end_date: end date
         :param status: either ``current`` or ``historical``
-        :param datum: tidal datum
+        :param datum: tidal datum, one of ``STND``, ``MSL``, ``MHHW``, ``MHW``, ``MTL``, ``MLW``, ``MLLW``, ``NAVD``
         :param units: either ``metric`` or ``english``
         :param time_zone: time zone
         :param interval: time interval
@@ -467,6 +467,8 @@ class StormEvent:
             f        (nos_id, t) object '0,0,0,0' '0,0,0,0' ... '0,0,0,0' '0,0,0,0'
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'p' 'p' 'p' 'p' 'p'
         """
+        if datum is None:
+            datum = 'MSL'  # change the default from STND to MSL
 
         if not isinstance(region, BaseGeometry):
             region = shapely_shape(region)
