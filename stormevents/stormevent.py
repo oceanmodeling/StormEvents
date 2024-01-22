@@ -468,7 +468,7 @@ class StormEvent:
             q        (nos_id, t) object 'v' 'v' 'v' 'v' 'v' 'v' ... 'p' 'p' 'p' 'p' 'p'
         """
         if datum is None:
-            datum = 'MSL'  # change the default from STND to MSL
+            datum = "MSL"  # change the default from STND to MSL
 
         if not isinstance(region, BaseGeometry):
             region = shapely_shape(region)
