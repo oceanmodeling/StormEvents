@@ -1,7 +1,7 @@
 usgs_id,name,year,description,event_type,event_status,coordinator,instruments,last_updated,last_updated_by,start_date,end_date
 7,FEMA 2013 exercise,2013,Ardent/Sentry 2013 FEMA Exercise,HURRICANE,COMPLETED,36,[],,,2013-05-15 04:00:00,2013-05-23 04:00:00
-8,2005 Wilma,2005,"Category 3 in west FL. 
-Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin. Part of the record breaking 2005 Atlantic hurricane season.",HURRICANE,COMPLETED,515,[],2022-09-08 20:02:25.510152,1.0,2005-10-20 04:00:00,2005-10-31 05:00:00
+8,2005 Wilma,2005,"Category 3 in west FL.
+Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlantic basin. Part of the record breaking 2005 Atlantic hurricane season.",HURRICANE,COMPLETED,515,[],2023-12-19 20:47:51.435776,1.0,2005-10-20 04:00:00,2005-10-31 05:00:00
 18,2012 Isaac,2012,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,36,[],2022-09-09 14:57:23.815290,2062.0,2012-08-27 04:00:00,2012-09-02 04:00:00
 19,2005 Rita,2005,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,515,[],2022-09-08 20:10:38.533682,1.0,2005-09-23 04:00:00,2005-09-25 04:00:00
 23,2011 Irene,2011,historical hurricane data loaded by the data archive team,HURRICANE,COMPLETED,36,[],2022-09-09 15:04:03.637296,2062.0,2011-08-26 04:00:00,2011-08-29 04:00:00
