@@ -66,9 +66,11 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
         header=0,
         names=columns,
         parse_dates=["start_date", "end_date"],
-        date_parser=lambda x: pandas.to_datetime(x.strip(), format="%Y%m%d%H")
-        if x.strip() != "9999999999"
-        else numpy.nan,
+        date_parser=lambda x: (
+            pandas.to_datetime(x.strip(), format="%Y%m%d%H")
+            if x.strip() != "9999999999"
+            else numpy.nan
+        ),
     )
 
     storms = storms.astype(
