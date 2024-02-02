@@ -14,6 +14,10 @@ on:
       - '.github/workflows/test*.yml'
       - 'pyproject.toml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   style:
     runs-on: ubuntu-latest
