@@ -33,7 +33,6 @@ jobs:
       - uses: actions/checkout@v4
       - run: ruff check .
   test:
-    needs: [ style ]
     name: test Python ${{ matrix.python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -58,7 +57,6 @@ jobs:
       - run: pip install ".[test]"
       - run: pytest -n auto
   test_with_coverage:
-    needs: [ style, test ]
     name: test with code coverage
     runs-on: ubuntu-latest
     steps:
