@@ -3,44 +3,42 @@ name: build
 on:
   release:
     types:
-      - published
+      - released
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
 
 jobs:
   build:
     name: build package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - uses: actions/setup-python@main
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: '3.x'
-      - uses: actions/cache@main
+          condarc: |
+            channels:
+              - conda-forge
+          environment-name: build
+          create-args: >-
+            build
+          cache-downloads: true
+          cache-environment: true
+          init-shell: >-
+            bash
+      - uses: actions/checkout@v4
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
         with:
-          path: ${{ env.pythonLocation }}
-          key: build-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
-      - run: pip wheel . --no-deps -w dist
-      - uses: actions/upload-artifact@main
-        with:
-          name: package
+          name: stormevents
           path: dist/
-  publish:
-    name: publish package
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@main
-      - uses: actions/setup-python@main
-        with:
-          python-version: '3.x'
-      - uses: actions/cache@main
-        with:
-          path: ${{ env.pythonLocation }}
-          key: build-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
-      - uses: actions/download-artifact@main
-        with:
-          name: package
-          path: dist/
-      - uses: pypa/gh-action-pypi-publish@master
+      - if: github.event_name == 'release' && github.event.action == 'released'
+        uses: pypa/gh-action-pypi-publish@v1.8.11
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}

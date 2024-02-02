@@ -14,28 +14,33 @@ on:
       - '.github/workflows/test*.yml'
       - 'pyproject.toml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
+
 jobs:
   style:
-    name: check code style
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - uses: actions/setup-python@main
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: '3.x'
-      - uses: actions/cache@main
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: style-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
-      - run: pip install flake8 black
-      # stop the build if there are Python syntax errors or undefined names
-      - run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-      # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-      - run: flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      - run: black . --check
+          condarc: |
+            channels:
+              - conda-forge
+          environment-name: style
+          create-args: >-
+            ruff
+          cache-downloads: true
+          cache-environment: true
+          init-shell: >-
+            bash
+      - uses: actions/checkout@v4
+      - run: ruff check .
   test:
-    needs: [ style ]
     name: test Python ${{ matrix.python }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -43,35 +48,44 @@ jobs:
         os: [ ubuntu-latest, macos-latest ]
         python: [ '3.9', '3.10' ]
     steps:
-      - uses: actions/checkout@main
-      - uses: actions/setup-python@main
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: ${{ matrix.python }}
-      - uses: actions/cache@main
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
-      - run: pip install ".[test]" pytest-xdist
-      - run: pytest -n auto
+          condarc: |
+            channels:
+              - conda-forge
+          environment-name: test
+          create-args: >-
+            python=${{ matrix.python }}
+            pytest-xdist
+          cache-downloads: true
+          cache-environment: true
+          init-shell: >-
+            bash
+      - uses: actions/checkout@v4
+      - run: pip install ".[test]"
+      - run: pytest -n auto --verbose
   test_with_coverage:
-    needs: [ style, test ]
     name: test with code coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@main
-      - uses: actions/setup-python@main
+      - uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: '3.x'
-      - uses: actions/cache@main
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
-      - run: pip install ".[test]" pytest-cov pytest-xdist
-      - run: pytest --cov . --cov-report xml:coverage.xml
-      - run: coverage report -m
-      - uses: codecov/codecov-action@main
+          condarc: |
+            channels:
+              - conda-forge
+          environment-name: coverage
+          create-args: >-
+            python=${{ matrix.python }}
+            pytest-xdist
+            pytest-cov
+          cache-downloads: true
+          cache-environment: true
+          init-shell: >-
+            bash
+      - uses: actions/checkout@v4
+      - run: pip install ".[test]"
+      - run: pytest --cov . --cov-report xml:coverage.xml --cov-report term-missing -n auto --verbose
+      - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
