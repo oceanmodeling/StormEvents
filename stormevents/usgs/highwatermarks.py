@@ -135,7 +135,7 @@ class HighWaterMarksQuery:
 
     @us_states.setter
     def us_states(self, us_states: List[str]):
-        self.__us_states = typepigeon.convert_value(us_states, [str])
+        self.__us_states = typepigeon.to_type(us_states, [str])
 
     @property
     def us_counties(self) -> List[str]:
@@ -143,7 +143,7 @@ class HighWaterMarksQuery:
 
     @us_counties.setter
     def us_counties(self, us_counties: List[str]):
-        self.__us_counties = typepigeon.convert_value(us_counties, [str])
+        self.__us_counties = typepigeon.to_type(us_counties, [str])
 
     @property
     def hwm_type(self) -> List[HighWaterMarkType]:
@@ -152,7 +152,7 @@ class HighWaterMarksQuery:
     @hwm_type.setter
     def hwm_type(self, hwm_type: HighWaterMarkType):
         if hwm_type is not None:
-            self.__hwm_type = typepigeon.convert_value(hwm_type, [HighWaterMarkType])
+            self.__hwm_type = typepigeon.to_type(hwm_type, [HighWaterMarkType])
         else:
             self.__hwm_type = None
 
@@ -163,7 +163,7 @@ class HighWaterMarksQuery:
     @quality.setter
     def quality(self, quality: HighWaterMarkQuality):
         if quality is not None:
-            self.__quality = typepigeon.convert_value(quality, [HighWaterMarkQuality])
+            self.__quality = typepigeon.to_type(quality, [HighWaterMarkQuality])
         else:
             self.__quality = None
 
@@ -174,7 +174,7 @@ class HighWaterMarksQuery:
     @environment.setter
     def environment(self, environment: HighWaterMarkEnvironment):
         if environment is not None:
-            self.__environment = typepigeon.convert_value(
+            self.__environment = typepigeon.to_type(
                 environment, [HighWaterMarkEnvironment]
             )
         else:
@@ -204,7 +204,7 @@ class HighWaterMarksQuery:
                         entry.value if isinstance(entry, Enum) else entry
                         for entry in value
                     ]
-                    value = typepigeon.convert_value(value, [str])
+                    value = typepigeon.to_type(value, [str])
 
                     if len(value) > 0:
                         value = ",".join(value)
