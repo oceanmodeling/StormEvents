@@ -38,7 +38,7 @@ jobs:
           name: stormevents
           path: dist/
       - if: github.event_name == 'release' && github.event.action == 'released'
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@v1.8.11
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
