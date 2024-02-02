@@ -63,7 +63,7 @@ jobs:
             bash
       - uses: actions/checkout@v4
       - run: pip install ".[test]"
-      - run: pytest -n auto
+      - run: pytest -n auto --verbose
   test_with_coverage:
     name: test with code coverage
     runs-on: ubuntu-latest
@@ -84,7 +84,7 @@ jobs:
             bash
       - uses: actions/checkout@v4
       - run: pip install ".[test]"
-      - run: pytest --cov . --cov-report xml:coverage.xml --cov-report term-missing -n auto
+      - run: pytest --cov . --cov-report xml:coverage.xml --cov-report term-missing -n auto --verbose
       - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
