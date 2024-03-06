@@ -86,6 +86,7 @@ def test_storm_event_lookup():
     assert eta2020.name == "ETA"
     assert beta2020.name == "BETA"
 
+
 def test_storm_event_time_interval():
     florence2018 = StormEvent("florence", 2018, start_date=timedelta(days=-2))
     paine2016 = StormEvent.from_nhc_code("EP172016", end_date=timedelta(days=1))
