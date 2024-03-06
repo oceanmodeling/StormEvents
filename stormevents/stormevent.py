@@ -74,7 +74,7 @@ class StormEvent:
         """
 
         storms = nhc_storms(year=year)
-        storms = storms[storms["name"].str.contains(name.upper())]
+        storms = storms[storms["name"].str.fullmatch(name.upper())]
         if len(storms) > 0:
             self.__entry = storms.iloc[0]
         else:
