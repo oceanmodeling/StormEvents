@@ -29,6 +29,8 @@ def test_storm_event_lookup():
     paine2016 = StormEvent.from_nhc_code("EP172016")
     henri2021 = StormEvent.from_usgs_id(310)
     ida2021 = StormEvent("ida", 2021)
+    eta2020 = StormEvent("eta", 2020)
+    beta2020 = StormEvent("beta", 2020)
 
     with pytest.raises(ValueError):
         StormEvent("nonexistent", 2021)
@@ -80,6 +82,9 @@ def test_storm_event_lookup():
     assert ida2021.start_date == datetime(2021, 8, 27, 18)
     assert ida2021.end_date == datetime(2021, 9, 4, 18)
 
+    # Similar names are not swapped (like [B]ETA)
+    assert eta2020.name == "ETA"
+    assert beta2020.name == "BETA"
 
 def test_storm_event_time_interval():
     florence2018 = StormEvent("florence", 2018, start_date=timedelta(days=-2))
