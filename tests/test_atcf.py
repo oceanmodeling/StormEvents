@@ -54,5 +54,9 @@ def test_atcf_entry():
     with pytest.raises(ValueError):
         get_atcf_entry(year=2018, basin="EP", storm_number=99)
 
+    assert get_atcf_entry(year=2020, storm_name='BETA')['name'] == 'BETA'
+    assert get_atcf_entry(year=2020, storm_name='ETA')['name'] == 'ETA'
+
+
     assert storm_1["name"] == "FLORENCE"
     assert storm_2["basin"] == "AL" and storm_2["number"] == 6
