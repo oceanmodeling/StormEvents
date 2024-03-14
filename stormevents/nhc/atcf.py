@@ -235,7 +235,7 @@ def get_atcf_entry(
     if storm_number is not None:
         storms = storms[storms["number"] == storm_number]
     if storm_name is not None:
-        storms = storms[storms["name"].str.contains(storm_name.upper())]
+        storms = storms[storms["name"].str.fullmatch(storm_name.upper())]
 
     if len(storms) > 0:
         storms["name"] = storms["name"].str.strip()
