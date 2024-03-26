@@ -121,7 +121,7 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
-    ) -> "VortexTrack":
+    ) -> 'VortexTrack':
         """
         :param name: storm name
         :param year: storm year
@@ -155,7 +155,7 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
-    ) -> "VortexTrack":
+    ) -> 'VortexTrack':
         """
         :param path: file path to ATCF data
         :param start_date: start date of track
@@ -171,7 +171,7 @@ class VortexTrack:
 
         if file_deck is None and advisories is None:
             warnings.warn(
-                "It is recommended to specify the file_deck and/or advisories when reading from file"
+                'It is recommended to specify the file_deck and/or advisories when reading from file'
             )
 
         try:
@@ -200,7 +200,7 @@ class VortexTrack:
 
         if self.__name is None:
             # get the most frequently-used storm name in the data
-            names = self.data["name"].value_counts()
+            names = self.data['name'].value_counts()
             if len(names) > 0:
                 name = names.index[0]
             else:
@@ -210,7 +210,7 @@ class VortexTrack:
                 storms = nhc_storms(year=self.year)
                 if self.nhc_code.upper() in storms.index:
                     storm = storms.loc[self.nhc_code.upper()]
-                    name = storm["name"].lower()
+                    name = storm['name'].lower()
 
             self.__name = name
 
@@ -226,7 +226,7 @@ class VortexTrack:
         'AL'
         """
 
-        return self.data["basin"].iloc[0]
+        return self.data['basin'].iloc[0]
 
     @property
     def storm_number(self) -> str:
@@ -238,7 +238,7 @@ class VortexTrack:
         11
         """
 
-        return self.data["storm_number"].iloc[0]
+        return self.data['storm_number'].iloc[0]
 
     @property
     def year(self) -> int:
@@ -250,7 +250,7 @@ class VortexTrack:
         2017
         """
 
-        return self.data["datetime"].iloc[0].year
+        return self.data['datetime'].iloc[0].year
 
     @property
     def nhc_code(self) -> str:
@@ -274,8 +274,8 @@ class VortexTrack:
                 except ValueError:
                     try:
                         nhc_code = get_atcf_entry(
-                            storm_name=self.__unfiltered_data["name"].tolist()[-1],
-                            year=self.__unfiltered_data["datetime"].tolist()[-1].year,
+                            storm_name=self.__unfiltered_data['name'].tolist()[-1],
+                            year=self.__unfiltered_data['datetime'].tolist()[-1].year,
                         ).name
                         self.nhc_code = nhc_code
                     except ValueError:
@@ -293,7 +293,7 @@ class VortexTrack:
                     storm_name=nhc_code[:-4], year=int(nhc_code[-4:])
                 ).name
                 if atcf_nhc_code is None:
-                    raise ValueError(f"No storm with id: {nhc_code}")
+                    raise ValueError(f'No storm with id: {nhc_code}')
                 nhc_code = atcf_nhc_code
         self.__nhc_code = nhc_code
 
@@ -321,17 +321,15 @@ class VortexTrack:
 
     @start_date.setter
     def start_date(self, start_date: datetime):
-        data_start = self.unfiltered_data["datetime"].iloc[0]
+        data_start = self.unfiltered_data['datetime'].iloc[0]
 
         if start_date is None:
             start_date = data_start
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_end = self.unfiltered_data["datetime"].iloc[-1]
+            data_end = self.unfiltered_data['datetime'].iloc[-1]
             start_date, _ = subset_time_interval(
-                start=data_start,
-                end=data_end,
-                subset_start=start_date,
+                start=data_start, end=data_end, subset_start=start_date,
             )
             if not isinstance(start_date, pandas.Timestamp):
                 start_date = pandas.to_datetime(start_date)
@@ -362,17 +360,15 @@ class VortexTrack:
 
     @end_date.setter
     def end_date(self, end_date: datetime):
-        data_end = self.unfiltered_data["datetime"].iloc[-1]
+        data_end = self.unfiltered_data['datetime'].iloc[-1]
 
         if end_date is None:
             end_date = data_end
         else:
             # interpret timedelta as a temporal movement around start / end
-            data_start = self.unfiltered_data["datetime"].iloc[0]
+            data_start = self.unfiltered_data['datetime'].iloc[0]
             _, end_date = subset_time_interval(
-                start=data_start,
-                end=data_end,
-                subset_end=end_date,
+                start=data_start, end=data_end, subset_end=end_date,
             )
             if not isinstance(end_date, pandas.Timestamp):
                 end_date = pandas.to_datetime(end_date)
@@ -393,7 +389,7 @@ class VortexTrack:
             forecast_time = pandas.to_datetime(forecast_time)
 
             if self.file_deck != ATCF_FileDeck.ADVISORY:
-                raise ValueError("Forecast time only applies to forecast advisories")
+                raise ValueError('Forecast time only applies to forecast advisories')
 
             # NOTE: Cannot cleanly check forecast_time against
             # start and end date, since the first is on `track_start_time`
@@ -465,9 +461,7 @@ class VortexTrack:
         elif self.file_deck == ATCF_FileDeck.FIXED:
             valid_advisories = [entry.value for entry in ATCF_Advisory]
         else:
-            raise NotImplementedError(
-                f"file deck {self.file_deck.value} not implemented"
-            )
+            raise NotImplementedError(f'file deck {self.file_deck.value} not implemented')
 
         return valid_advisories
 
@@ -525,18 +519,16 @@ class VortexTrack:
 
         if self.forecast_time is not None:
             return self.unfiltered_data.loc[
-                (self.unfiltered_data["track_start_time"] == self.forecast_time)
-                & (self.unfiltered_data["datetime"] >= self.start_date)
-                & (self.unfiltered_data["datetime"] <= self.end_date)
+                (self.unfiltered_data['track_start_time'] == self.forecast_time)
+                & (self.unfiltered_data['datetime'] >= self.start_date)
+                & (self.unfiltered_data['datetime'] <= self.end_date)
             ]
         return self.unfiltered_data.loc[
-            (self.unfiltered_data["datetime"] >= self.start_date)
-            & (self.unfiltered_data["datetime"] <= self.end_date)
+            (self.unfiltered_data['datetime'] >= self.start_date)
+            & (self.unfiltered_data['datetime'] <= self.end_date)
         ]
 
-    def to_file(
-        self, path: PathLike, advisory: ATCF_Advisory = None, overwrite: bool = False
-    ):
+    def to_file(self, path: PathLike, advisory: ATCF_Advisory = None, overwrite: bool = False):
         """
         write track to file path
 
@@ -549,14 +541,14 @@ class VortexTrack:
             path = pathlib.Path(path)
 
         if overwrite or not path.exists():
-            if path.suffix == ".dat":
+            if path.suffix == '.dat':
                 data = self.atcf(advisory=advisory)
                 data.to_csv(path, index=False, header=False)
-            elif path.suffix == ".22":
+            elif path.suffix == '.22':
                 data = self.fort_22(advisory=advisory)
                 data.to_csv(path, index=False, header=False)
             else:
-                raise NotImplementedError(f"writing to `*{path.suffix}` not supported")
+                raise NotImplementedError(f'writing to `*{path.suffix}` not supported')
         else:
             logging.warning(f'skipping existing file "{path}"')
 
@@ -571,21 +563,19 @@ class VortexTrack:
         """
 
         atcf = self.data.copy(deep=True)
-        atcf.loc[atcf["advisory"] != "BEST", "datetime"] = atcf.loc[
-            atcf["advisory"] != "BEST", "track_start_time"
+        atcf.loc[atcf['advisory'] != 'BEST', 'datetime'] = atcf.loc[
+            atcf['advisory'] != 'BEST', 'track_start_time'
         ]
-        atcf.drop(columns=["geometry", "track_start_time"], inplace=True)
+        atcf.drop(columns=['geometry', 'track_start_time'], inplace=True)
 
         if advisory is not None:
             if isinstance(advisory, ATCF_Advisory):
                 advisory = advisory.value
-            atcf = atcf[atcf["advisory"] == advisory]
+            atcf = atcf[atcf['advisory'] == advisory]
 
-        atcf.loc[:, ["longitude", "latitude"]] = (
-            atcf.loc[:, ["longitude", "latitude"]] * 10
-        )
+        atcf.loc[:, ['longitude', 'latitude']] = atcf.loc[:, ['longitude', 'latitude']] * 10
 
-        float_columns = atcf.select_dtypes(include=["float"]).columns
+        float_columns = atcf.select_dtypes(include=['float']).columns
         integer_na_value = -99999
         for column in float_columns:
             atcf.loc[pandas.isna(atcf[column]), column] = integer_na_value
@@ -593,107 +583,103 @@ class VortexTrack:
             atcf.loc[:, column] = atcf.loc[:, column].round(0)
         atcf = atcf.astype({col: int for col in float_columns})
 
-        atcf["basin"] = atcf["basin"].str.pad(2)
-        atcf["storm_number"] = atcf["storm_number"].astype("string").str.pad(3)
-        atcf["datetime"] = atcf["datetime"].dt.strftime("%Y%m%d%H").str.pad(11)
-        atcf["advisory_number"] = atcf["advisory_number"].str.pad(3)
-        atcf["advisory"] = atcf["advisory"].str.pad(5)
-        atcf["forecast_hours"] = atcf["forecast_hours"].astype("string").str.pad(4)
+        atcf['basin'] = atcf['basin'].str.pad(2)
+        atcf['storm_number'] = atcf['storm_number'].astype('string').str.pad(3)
+        atcf['datetime'] = atcf['datetime'].dt.strftime('%Y%m%d%H').str.pad(11)
+        atcf['advisory_number'] = atcf['advisory_number'].str.pad(3)
+        atcf['advisory'] = atcf['advisory'].str.pad(5)
+        atcf['forecast_hours'] = atcf['forecast_hours'].astype('string').str.pad(4)
 
-        atcf["latitude"] = atcf["latitude"].astype("string")
-        atcf.loc[~atcf["latitude"].str.contains("-"), "latitude"] = (
-            atcf.loc[~atcf["latitude"].str.contains("-"), "latitude"] + "N"
+        atcf['latitude'] = atcf['latitude'].astype('string')
+        atcf.loc[~atcf['latitude'].str.contains('-'), 'latitude'] = (
+            atcf.loc[~atcf['latitude'].str.contains('-'), 'latitude'] + 'N'
         )
-        atcf.loc[atcf["latitude"].str.contains("-"), "latitude"] = (
-            atcf.loc[atcf["latitude"].str.contains("-"), "latitude"] + "S"
+        atcf.loc[atcf['latitude'].str.contains('-'), 'latitude'] = (
+            atcf.loc[atcf['latitude'].str.contains('-'), 'latitude'] + 'S'
         )
-        atcf["latitude"] = atcf["latitude"].str.strip("-").str.pad(5)
+        atcf['latitude'] = atcf['latitude'].str.strip('-').str.pad(5)
 
-        atcf["longitude"] = atcf["longitude"].astype("string")
-        atcf.loc[~atcf["longitude"].str.contains("-"), "longitude"] = (
-            atcf.loc[~atcf["longitude"].str.contains("-"), "longitude"] + "E"
+        atcf['longitude'] = atcf['longitude'].astype('string')
+        atcf.loc[~atcf['longitude'].str.contains('-'), 'longitude'] = (
+            atcf.loc[~atcf['longitude'].str.contains('-'), 'longitude'] + 'E'
         )
-        atcf.loc[atcf["longitude"].str.contains("-"), "longitude"] = (
-            atcf.loc[atcf["longitude"].str.contains("-"), "longitude"] + "W"
+        atcf.loc[atcf['longitude'].str.contains('-'), 'longitude'] = (
+            atcf.loc[atcf['longitude'].str.contains('-'), 'longitude'] + 'W'
         )
-        atcf["longitude"] = atcf["longitude"].str.strip("-").str.pad(6)
+        atcf['longitude'] = atcf['longitude'].str.strip('-').str.pad(6)
 
-        atcf["max_sustained_wind_speed"] = (
-            atcf["max_sustained_wind_speed"].astype("string").str.pad(4)
+        atcf['max_sustained_wind_speed'] = (
+            atcf['max_sustained_wind_speed'].astype('string').str.pad(4)
         )
-        atcf["development_level"] = atcf["development_level"].str.pad(3)
-        atcf["isotach_radius"] = atcf["isotach_radius"].astype("string").str.pad(4)
-        atcf["isotach_quadrant_code"] = atcf["isotach_quadrant_code"].str.pad(4)
-        atcf["isotach_radius_for_NEQ"] = (
-            atcf["isotach_radius_for_NEQ"].astype("string").str.pad(5)
+        atcf['development_level'] = atcf['development_level'].str.pad(3)
+        atcf['isotach_radius'] = atcf['isotach_radius'].astype('string').str.pad(4)
+        atcf['isotach_quadrant_code'] = atcf['isotach_quadrant_code'].str.pad(4)
+        atcf['isotach_radius_for_NEQ'] = (
+            atcf['isotach_radius_for_NEQ'].astype('string').str.pad(5)
         )
-        atcf["isotach_radius_for_SEQ"] = (
-            atcf["isotach_radius_for_SEQ"].astype("string").str.pad(5)
+        atcf['isotach_radius_for_SEQ'] = (
+            atcf['isotach_radius_for_SEQ'].astype('string').str.pad(5)
         )
-        atcf["isotach_radius_for_NWQ"] = (
-            atcf["isotach_radius_for_NWQ"].astype("string").str.pad(5)
+        atcf['isotach_radius_for_NWQ'] = (
+            atcf['isotach_radius_for_NWQ'].astype('string').str.pad(5)
         )
-        atcf["isotach_radius_for_SWQ"] = (
-            atcf["isotach_radius_for_SWQ"].astype("string").str.pad(5)
-        )
-
-        atcf["background_pressure"].fillna(method="ffill", inplace=True)
-        atcf["background_pressure"] = atcf["background_pressure"].astype(int)
-        atcf["central_pressure"] = atcf["central_pressure"].astype(int)
-
-        press_cond_nobg = ~atcf["central_pressure"].isna() & (
-            (atcf["background_pressure"] <= atcf["central_pressure"])
-            | (atcf["background_pressure"].isna())
-        )
-        atcf.loc[press_cond_nobg, "background_pressure"] = 1013
-
-        press_cond_nobg_hieye = press_cond_nobg & (atcf["central_pressure"] >= 1013)
-        atcf.loc[press_cond_nobg_hieye, "background_pressure"] = (
-            atcf.loc[press_cond_nobg_hieye, "central_pressure"] + 1
-        )
-        atcf["central_pressure"] = atcf["central_pressure"].astype("string").str.pad(5)
-        atcf["background_pressure"] = (
-            atcf["background_pressure"].astype("string").str.pad(5)
+        atcf['isotach_radius_for_SWQ'] = (
+            atcf['isotach_radius_for_SWQ'].astype('string').str.pad(5)
         )
 
-        atcf["radius_of_last_closed_isobar"] = (
-            atcf["radius_of_last_closed_isobar"].astype("string").str.pad(5)
-        )
-        atcf["radius_of_maximum_winds"] = (
-            atcf["radius_of_maximum_winds"].astype("string").str.pad(4)
-        )
-        atcf["gust_speed"] = atcf["gust_speed"].astype("string").str.pad(4)
-        atcf["eye_diameter"] = atcf["eye_diameter"].astype("string").str.pad(4)
-        atcf["subregion_code"] = atcf["subregion_code"].str.pad(4)
-        atcf["maximum_wave_height"] = (
-            atcf["maximum_wave_height"].astype("string").str.pad(4)
-        )
-        atcf["forecaster_initials"] = atcf["forecaster_initials"].str.pad(4)
+        atcf['background_pressure'].fillna(method='ffill', inplace=True)
+        atcf['background_pressure'] = atcf['background_pressure'].astype(int)
+        atcf['central_pressure'] = atcf['central_pressure'].astype(int)
 
-        atcf["direction"] = atcf["direction"].astype("string").str.pad(4)
-        atcf["speed"] = atcf["speed"].astype("string").str.pad(4)
-        atcf["name"] = atcf["name"].astype("string").str.pad(11)
+        press_cond_nobg = ~atcf['central_pressure'].isna() & (
+            (atcf['background_pressure'] <= atcf['central_pressure'])
+            | (atcf['background_pressure'].isna())
+        )
+        atcf.loc[press_cond_nobg, 'background_pressure'] = 1013
 
-        if "depth_code" in atcf.columns:
-            atcf["depth_code"] = atcf["depth_code"].astype("string").str.pad(2)
-            atcf["isowave"] = atcf["isowave"].astype("string").str.pad(3)
-            atcf["isowave_quadrant_code"] = (
-                atcf["isowave_quadrant_code"].astype("string").str.pad(4)
+        press_cond_nobg_hieye = press_cond_nobg & (atcf['central_pressure'] >= 1013)
+        atcf.loc[press_cond_nobg_hieye, 'background_pressure'] = (
+            atcf.loc[press_cond_nobg_hieye, 'central_pressure'] + 1
+        )
+        atcf['central_pressure'] = atcf['central_pressure'].astype('string').str.pad(5)
+        atcf['background_pressure'] = atcf['background_pressure'].astype('string').str.pad(5)
+
+        atcf['radius_of_last_closed_isobar'] = (
+            atcf['radius_of_last_closed_isobar'].astype('string').str.pad(5)
+        )
+        atcf['radius_of_maximum_winds'] = (
+            atcf['radius_of_maximum_winds'].astype('string').str.pad(4)
+        )
+        atcf['gust_speed'] = atcf['gust_speed'].astype('string').str.pad(4)
+        atcf['eye_diameter'] = atcf['eye_diameter'].astype('string').str.pad(4)
+        atcf['subregion_code'] = atcf['subregion_code'].str.pad(4)
+        atcf['maximum_wave_height'] = atcf['maximum_wave_height'].astype('string').str.pad(4)
+        atcf['forecaster_initials'] = atcf['forecaster_initials'].str.pad(4)
+
+        atcf['direction'] = atcf['direction'].astype('string').str.pad(4)
+        atcf['speed'] = atcf['speed'].astype('string').str.pad(4)
+        atcf['name'] = atcf['name'].astype('string').str.pad(11)
+
+        if 'depth_code' in atcf.columns:
+            atcf['depth_code'] = atcf['depth_code'].astype('string').str.pad(2)
+            atcf['isowave'] = atcf['isowave'].astype('string').str.pad(3)
+            atcf['isowave_quadrant_code'] = (
+                atcf['isowave_quadrant_code'].astype('string').str.pad(4)
             )
-            atcf["isowave_radius_for_NEQ"] = (
-                atcf["isowave_radius_for_NEQ"].astype("string").str.pad(5)
+            atcf['isowave_radius_for_NEQ'] = (
+                atcf['isowave_radius_for_NEQ'].astype('string').str.pad(5)
             )
-            atcf["isowave_radius_for_SEQ"] = (
-                atcf["isowave_radius_for_SEQ"].astype("string").str.pad(5)
+            atcf['isowave_radius_for_SEQ'] = (
+                atcf['isowave_radius_for_SEQ'].astype('string').str.pad(5)
             )
-            atcf["isowave_radius_for_NWQ"] = (
-                atcf["isowave_radius_for_NWQ"].astype("string").str.pad(5)
+            atcf['isowave_radius_for_NWQ'] = (
+                atcf['isowave_radius_for_NWQ'].astype('string').str.pad(5)
             )
-            atcf["isowave_radius_for_SWQ"] = (
-                atcf["isowave_radius_for_SWQ"].astype("string").str.pad(5)
+            atcf['isowave_radius_for_SWQ'] = (
+                atcf['isowave_radius_for_SWQ'].astype('string').str.pad(5)
             )
 
-        for column in atcf.select_dtypes(include=["string"]).columns:
+        for column in atcf.select_dtypes(include=['string']).columns:
             atcf[column] = atcf[column].str.replace(
                 re.compile(str(integer_na_value)), "", regex=True
             )
@@ -711,24 +697,19 @@ class VortexTrack:
         fort22 = self.atcf(advisory=advisory)
 
         fort22.drop(
-            columns=[
-                field for field in EXTRA_ATCF_FIELDS.values() if field in fort22.columns
-            ],
+            columns=[field for field in EXTRA_ATCF_FIELDS.values() if field in fort22.columns],
             inplace=True,
         )
 
-        fort22["record_number"] = (
-            (self.data.groupby(["datetime"]).ngroup() + 1).astype("string").str.pad(4)
+        fort22['record_number'] = (
+            (self.data.groupby(['datetime']).ngroup() + 1).astype('string').str.pad(4)
         )
 
         if advisory == ATCF_Advisory.BEST or advisory == ATCF_Advisory.BEST.value:
-            fort22["forecast_hours"] = (
-                (
-                    (self.data["datetime"] - self.data["datetime"].iloc[0])
-                    / Timedelta("1 hour")
-                )
+            fort22['forecast_hours'] = (
+                ((self.data['datetime'] - self.data['datetime'].iloc[0]) / Timedelta('1 hour'))
                 .astype(int)
-                .astype("string")
+                .astype('string')
                 .str.pad(4)
             )
 
@@ -754,7 +735,7 @@ class VortexTrack:
             for advisory, advisory_tracks in tracks.items():
                 linestrings[advisory] = {}
                 for track_start_time, track in advisory_tracks.items():
-                    geometries = track["geometry"]
+                    geometries = track['geometry']
                     if len(geometries) > 1:
                         geometries = geometries.drop_duplicates()
                         if len(geometries) > 1:
@@ -780,7 +761,7 @@ class VortexTrack:
             or len(self.__distances) == 0
             or configuration != self.__previous_configuration
         ):
-            geodetic = Geod(ellps="WGS84")
+            geodetic = Geod(ellps='WGS84')
 
             linestrings = self.linestrings
 
@@ -789,12 +770,7 @@ class VortexTrack:
                 distances[advisory] = {}
                 for track_start_time, linestring in advisory_tracks.items():
                     x, y = linestring.xy
-                    _, _, track_distances = geodetic.inv(
-                        x[:-1],
-                        y[:-1],
-                        x[1:],
-                        y[1:],
-                    )
+                    _, _, track_distances = geodetic.inv(x[:-1], y[:-1], x[1:], y[1:],)
                     distances[advisory][track_start_time] = numpy.sum(track_distances)
 
             self.__distances = distances
@@ -815,23 +791,23 @@ class VortexTrack:
         valid_isotach_values = [34, 50, 64]
         assert (
             wind_speed in valid_isotach_values
-        ), f"isotach must be one of {valid_isotach_values}"
+        ), f'isotach must be one of {valid_isotach_values}'
 
         # collect the attributes needed from the forcing to generate swath
-        data = self.data[self.data["isotach_radius"] == wind_speed]
+        data = self.data[self.data['isotach_radius'] == wind_speed]
 
         # enumerate quadrants
         quadrant_names = [
-            "isotach_radius_for_NEQ",
-            "isotach_radius_for_NWQ",
-            "isotach_radius_for_SWQ",
-            "isotach_radius_for_SEQ",
+            'isotach_radius_for_NEQ',
+            'isotach_radius_for_NWQ',
+            'isotach_radius_for_SWQ',
+            'isotach_radius_for_SEQ',
         ]
 
         # convert quadrant radii from nautical miles to meters
         data[quadrant_names] *= 1852.0
 
-        geodetic = Geod(ellps="WGS84")
+        geodetic = Geod(ellps='WGS84')
 
         tracks = separate_tracks(data)
 
@@ -843,7 +819,7 @@ class VortexTrack:
                 track_isotachs = {}
                 for index, row in track_data.iterrows():
                     # get the starting angle range for NEQ based on storm direction
-                    rotation_angle = 360 - row["direction"]
+                    rotation_angle = 360 - row['direction']
                     start_angle = 0 + rotation_angle
                     end_angle = 90 + rotation_angle
 
@@ -863,22 +839,20 @@ class VortexTrack:
                             vectorized_forward_geodetic = numpy.vectorize(
                                 partial(
                                     geodetic.fwd,
-                                    lons=row["longitude"],
-                                    lats=row["latitude"],
+                                    lons=row['longitude'],
+                                    lats=row['latitude'],
                                     dist=row[quadrant_name],
                                 )
                             )
-                            x, y, reverse_azimuth = vectorized_forward_geodetic(
-                                az=theta
-                            )
+                            x, y, reverse_azimuth = vectorized_forward_geodetic(az=theta)
                             vertices = numpy.stack([x, y], axis=1)
 
                             # insert center point at beginning and end of list
                             vertices = numpy.concatenate(
                                 [
-                                    row[["longitude", "latitude"]].values[None, :],
+                                    row[['longitude', 'latitude']].values[None, :],
                                     vertices,
-                                    row[["longitude", "latitude"]].values[None, :],
+                                    row[['longitude', 'latitude']].values[None, :],
                                 ],
                                 axis=0,
                             ).astype(float)
@@ -928,9 +902,7 @@ class VortexTrack:
 
                 if len(convex_hulls) > 0:
                     # get the union of polygons
-                    advisory_wind_swaths[track_start_time] = ops.unary_union(
-                        convex_hulls
-                    )
+                    advisory_wind_swaths[track_start_time] = ops.unary_union(convex_hulls)
             if len(advisory_isotachs) > 0:
                 wind_swaths[advisory] = advisory_wind_swaths
 
@@ -949,7 +921,7 @@ class VortexTrack:
         :return: duration of current track
         """
 
-        return self.data["datetime"].diff().sum()
+        return self.data['datetime'].diff().sum()
 
     @property
     def unfiltered_data(self) -> DataFrame:
@@ -966,67 +938,57 @@ class VortexTrack:
             or configuration != self.__previous_configuration
         ):
             advisories = self.advisories
-            if configuration["filename"] is not None:
-                atcf_file = configuration["filename"]
+            if configuration['filename'] is not None:
+                atcf_file = configuration['filename']
             else:
                 url = atcf_url(self.nhc_code, self.file_deck)
                 try:
                     response = urlopen(url)
                 except URLError:
-                    url = atcf_url(
-                        self.nhc_code, self.file_deck, mode=ATCF_Mode.HISTORICAL
-                    )
+                    url = atcf_url(self.nhc_code, self.file_deck, mode=ATCF_Mode.HISTORICAL)
                     try:
                         response = urlopen(url)
                     except URLError:
-                        raise ConnectionError(f"could not connect to {url}")
+                        raise ConnectionError(f'could not connect to {url}')
                 atcf_file = io.BytesIO()
                 atcf_file.write(response.read())
                 atcf_file.seek(0)
-                if url.endswith(".gz"):
-                    atcf_file = gzip.GzipFile(fileobj=atcf_file, mode="rb")
+                if url.endswith('.gz'):
+                    atcf_file = gzip.GzipFile(fileobj=atcf_file, mode='rb')
 
-            if "OFCL" in advisories and "CARQ" not in advisories:
+            if 'OFCL' in advisories and 'CARQ' not in advisories:
                 self.__advisories_to_remove.append(ATCF_Advisory.CARQ)
 
             dataframe = read_atcf(
                 atcf_file, advisories=advisories + self.__advisories_to_remove
             )
-            dataframe.sort_values(["datetime", "advisory"], inplace=True)
+            dataframe.sort_values(['datetime', 'advisory'], inplace=True)
             dataframe.reset_index(inplace=True, drop=True)
 
-            dataframe["track_start_time"] = dataframe["datetime"].copy()
+            dataframe['track_start_time'] = dataframe['datetime'].copy()
             if ATCF_Advisory.BEST in self.advisories:
-                dataframe.loc[dataframe["advisory"] == "BEST", "track_start_time"] = (
-                    dataframe.loc[dataframe["advisory"] == "BEST", "datetime"]
+                dataframe.loc[dataframe['advisory'] == 'BEST', 'track_start_time'] = (
+                    dataframe.loc[dataframe['advisory'] == 'BEST', 'datetime']
                     .sort_values()
                     .iloc[0]
                 )
 
-            dataframe.loc[
-                dataframe["advisory"] != "BEST", "datetime"
-            ] += pandas.to_timedelta(
-                dataframe.loc[dataframe["advisory"] != "BEST", "forecast_hours"].astype(
-                    int
-                ),
-                unit="hours",
+            dataframe.loc[dataframe['advisory'] != 'BEST', 'datetime'] += pandas.to_timedelta(
+                dataframe.loc[dataframe['advisory'] != 'BEST', 'forecast_hours'].astype(int),
+                unit='hours',
             )
 
             self.unfiltered_data = dataframe
             self.__previous_configuration = configuration
 
         # if location values have changed, recompute velocity
-        location_hash = pandas.util.hash_pandas_object(
-            self.__unfiltered_data["geometry"]
-        )
+        location_hash = pandas.util.hash_pandas_object(self.__unfiltered_data['geometry'])
 
-        if self.__location_hash is None or len(location_hash) != len(
-            self.__location_hash
-        ):
+        if self.__location_hash is None or len(location_hash) != len(self.__location_hash):
             updated_locations = ~self.__unfiltered_data.index.isnull()
         else:
             updated_locations = location_hash != self.__location_hash
-        updated_locations |= pandas.isna(self.__unfiltered_data["speed"])
+        updated_locations |= pandas.isna(self.__unfiltered_data['speed'])
 
         if updated_locations.any():
             self.__unfiltered_data.loc[updated_locations] = self.__compute_velocity(
@@ -1039,15 +1001,15 @@ class VortexTrack:
     @unfiltered_data.setter
     def unfiltered_data(self, dataframe: DataFrame):
         # fill missing values of MRD and MSLP in the OFCL advisory
-        if "OFCL" in self.advisories:
+        if 'OFCL' in self.advisories:
             tracks = separate_tracks(dataframe)
-            if all(adv in tracks for adv in ["OFCL", "CARQ"]):
+            if all(adv in tracks for adv in ['OFCL', 'CARQ']):
                 tracks = correct_ofcl_based_on_carq_n_hollandb(tracks)
                 dataframe = combine_tracks(tracks)
 
         if len(self.__advisories_to_remove) > 0:
             dataframe = dataframe[
-                ~dataframe["advisory"].isin(
+                ~dataframe['advisory'].isin(
                     [value.value for value in self.__advisories_to_remove]
                 )
             ]
@@ -1058,23 +1020,23 @@ class VortexTrack:
     @property
     def __configuration(self) -> Dict[str, Any]:
         return {
-            "id": self.nhc_code,
-            "file_deck": self.file_deck,
-            "advisories": self.advisories,
-            "filename": self.filename,
+            'id': self.nhc_code,
+            'file_deck': self.file_deck,
+            'advisories': self.advisories,
+            'filename': self.filename,
         }
 
     @staticmethod
     def __compute_velocity(data: DataFrame) -> DataFrame:
-        geodetic = Geod(ellps="WGS84")
+        geodetic = Geod(ellps='WGS84')
 
-        for advisory in pandas.unique(data["advisory"]):
-            advisory_data = data.loc[data["advisory"] == advisory]
+        for advisory in pandas.unique(data['advisory']):
+            advisory_data = data.loc[data['advisory'] == advisory]
 
             indices = numpy.array(
                 [
-                    numpy.where(advisory_data["datetime"] == unique_datetime)[0][0]
-                    for unique_datetime in pandas.unique(advisory_data["datetime"])
+                    numpy.where(advisory_data['datetime'] == unique_datetime)[0][0]
+                    for unique_datetime in pandas.unique(advisory_data['datetime'])
                 ]
             )
             shifted_indices = numpy.roll(indices, 1)
@@ -1084,32 +1046,32 @@ class VortexTrack:
             shifted_indices = advisory_data.index[shifted_indices]
 
             _, inverse_azimuths, distances = geodetic.inv(
-                advisory_data.loc[indices, "longitude"],
-                advisory_data.loc[indices, "latitude"],
-                advisory_data.loc[shifted_indices, "longitude"],
-                advisory_data.loc[shifted_indices, "latitude"],
+                advisory_data.loc[indices, 'longitude'],
+                advisory_data.loc[indices, 'latitude'],
+                advisory_data.loc[shifted_indices, 'longitude'],
+                advisory_data.loc[shifted_indices, 'latitude'],
             )
 
-            intervals = advisory_data.loc[indices, "datetime"].diff()
-            speeds = distances / (intervals / pandas.to_timedelta(1, "s"))
+            intervals = advisory_data.loc[indices, 'datetime'].diff()
+            speeds = distances / (intervals / pandas.to_timedelta(1, 's'))
             bearings = pandas.Series(inverse_azimuths % 360, index=speeds.index)
 
             for index in indices:
                 cluster_index = (
-                    advisory_data["datetime"] == advisory_data.loc[index, "datetime"]
+                    advisory_data['datetime'] == advisory_data.loc[index, 'datetime']
                 )
-                advisory_data.loc[cluster_index, "speed"] = speeds[index]
-                advisory_data.loc[cluster_index, "direction"] = bearings[index]
+                advisory_data.loc[cluster_index, 'speed'] = speeds[index]
+                advisory_data.loc[cluster_index, 'direction'] = bearings[index]
 
-            data.loc[data["advisory"] == advisory] = advisory_data
+            data.loc[data['advisory'] == advisory] = advisory_data
 
-        data.loc[pandas.isna(data["speed"]), "speed"] = 0
+        data.loc[pandas.isna(data['speed']), 'speed'] = 0
 
         return data
 
     @property
     def __file_end_date(self):
-        unique_dates = numpy.unique(self.unfiltered_data["datetime"])
+        unique_dates = numpy.unique(self.unfiltered_data['datetime'])
         for date in unique_dates:
             if date >= numpy.datetime64(self.end_date):
                 return date
@@ -1117,7 +1079,7 @@ class VortexTrack:
     def __len__(self) -> int:
         return len(self.data)
 
-    def __copy__(self) -> "VortexTrack":
+    def __copy__(self) -> 'VortexTrack':
         instance = self.__class__(
             storm=self.unfiltered_data.copy(),
             start_date=self.start_date,
@@ -1129,7 +1091,7 @@ class VortexTrack:
             instance.filename = self.filename
         return instance
 
-    def __eq__(self, other: "VortexTrack") -> bool:
+    def __eq__(self, other: 'VortexTrack') -> bool:
         return self.data.equals(other.data)
 
     def __str__(self) -> str:
@@ -1151,30 +1113,22 @@ class HollandBRelation:
         background_pressure: float,
         central_pressure: float,
     ) -> float:
-        return ((max_sustained_wind_speed**2) * self.rho * numpy.exp(1)) / (
+        return ((max_sustained_wind_speed ** 2) * self.rho * numpy.exp(1)) / (
             background_pressure - central_pressure
         )
 
     def central_pressure(
-        self,
-        max_sustained_wind_speed: float,
-        background_pressure: float,
-        holland_b: float,
+        self, max_sustained_wind_speed: float, background_pressure: float, holland_b: float,
     ) -> float:
         return (
-            -(max_sustained_wind_speed**2) * self.rho * numpy.exp(1)
+            -(max_sustained_wind_speed ** 2) * self.rho * numpy.exp(1)
         ) / holland_b + background_pressure
 
     def max_sustained_wind_speed(
-        self,
-        holland_b: float,
-        background_pressure: float,
-        central_pressure: float,
+        self, holland_b: float, background_pressure: float, central_pressure: float,
     ) -> float:
         return numpy.sqrt(
-            holland_b
-            * (background_pressure - central_pressure)
-            / (self.rho * numpy.exp(1))
+            holland_b * (background_pressure - central_pressure) / (self.rho * numpy.exp(1))
         )
 
 
@@ -1187,27 +1141,26 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
     """
 
     tracks = {}
-    for advisory in pandas.unique(data["advisory"]):
-        advisory_data = data[data["advisory"] == advisory]
-        advisory_data["forecast_hours"] = advisory_data.forecast_hours.astype(int)
+    for advisory in pandas.unique(data['advisory']):
+        advisory_data = data[data['advisory'] == advisory]
+        advisory_data['forecast_hours'] = advisory_data.forecast_hours.astype(int)
 
-        if advisory == "BEST":
-            advisory_data = advisory_data.sort_values("datetime")
+        if advisory == 'BEST':
+            advisory_data = advisory_data.sort_values('datetime')
 
-        track_start_times = pandas.unique(advisory_data["track_start_time"])
+        track_start_times = pandas.unique(advisory_data['track_start_time'])
 
         tracks[advisory] = {}
         for track_start_time in track_start_times:
-            if advisory == "BEST":
+            if advisory == 'BEST':
                 track_data = advisory_data
             else:
                 track_data = advisory_data[
-                    advisory_data["track_start_time"]
-                    == pandas.to_datetime(track_start_time)
-                ].sort_values("forecast_hours")
+                    advisory_data['track_start_time'] == pandas.to_datetime(track_start_time)
+                ].sort_values('forecast_hours')
 
             tracks[advisory][
-                f"{pandas.to_datetime(track_start_time):%Y%m%dT%H%M%S}"
+                f'{pandas.to_datetime(track_start_time):%Y%m%dT%H%M%S}'
             ] = track_data
 
     return tracks
@@ -1235,8 +1188,51 @@ def correct_ofcl_based_on_carq_n_hollandb(
     :return: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast) with corrected OFCL
     """
 
-    ofcl_tracks = tracks["OFCL"]
-    carq_tracks = tracks["CARQ"]
+    # Regression coefficients for the Rmax forecast
+    # ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
+    def get_regression_coefs(fcst_hr, radii_values):
+        fhrs = [12, 24, 36, 48, 72, 96, 120]
+        regression_coefs = {
+            3: [  # a0    #a1      #a2     #a3      #a4     #a5     #a6
+                [3.1894, 0.3524, 0.1208, -0.1091, 0.5862, -0.8070, 0.0057],
+                [4.4373, 0.1473, 0.1045, -0.1112, 0.7566, -1.0689, 0.0061],
+                [4.9447, 0.0784, 0.1168, -0.1448, 0.8246, -1.1709, 0.0059],
+                [5.1818, 0.0549, 0.1335, -0.2345, 0.8972, -1.2038, 0.0063],
+            ],
+            2: [  # a0    #a1      #a2     #a3      #a5     #a6
+                [3.1131, 0.3680, 0.1589, 0.4710, -0.9111, 0.0068],
+                [4.1567, 0.1834, 0.2085, 0.5873, -1.1841, 0.0073],
+                [4.6694, 0.1062, 0.2330, 0.6295, -1.3122, 0.0074],
+                [4.9434, 0.0459, 0.3027, 0.5828, -1.3675, 0.0079],
+                [4.7906, 0.0157, 0.3953, 0.5321, -1.3617, 0.0067],
+            ],
+            1: [  # a0    #a1      #a2     #a5      #a6
+                [2.6272, 0.4230, 0.6320, -0.9117, 0.0064],
+                [3.6525, 0.2142, 0.8222, -1.2158, 0.0082],
+                [4.2822, 0.0884, 0.9059, -1.3656, 0.0091],
+                [4.7700, -0.0042, 0.9225, -1.4349, 0.0102],
+                [4.7307, -0.0365, 0.9153, -1.3882, 0.0086],
+            ],
+            0: [  # a0    #a1      #a5     #a6
+                [2.1633, 0.6360, -0.3314, 0.0154],
+                [3.7884, 0.3953, -0.5738, 0.0219],
+                [5.0213, 0.1999, -0.7481, 0.0276],
+                [5.8092, 0.0615, -0.8508, 0.0318],
+                [6.3321, -0.0362, -0.9079, 0.0343],
+                [6.6181, 0.0041, -0.9599, 0.0295],
+                [6.7073, -0.0028, -0.9478, 0.0257],
+            ],
+        }
+        num_radii_available = (~numpy.isnan(radii_values)).sum()
+        coefs_by_radii_available = numpy.array(regression_coefs[num_radii_available])
+        fcst_index = numpy.argwhere(fhrs == fcst_hr)
+        if fcst_index.size == 0 or fcst_index > coefs_by_radii_available.shape[0] - 1:
+            return coefs_by_radii_available[-1].flatten()
+        else:
+            return coefs_by_radii_available[fcst_index].flatten()
+
+    ofcl_tracks = tracks['OFCL']
+    carq_tracks = tracks['CARQ']
 
     corr_ofcl_tracks = dict()
 
@@ -1248,9 +1244,9 @@ def correct_ofcl_based_on_carq_n_hollandb(
 
         relation = HollandBRelation()
         holland_b = relation.holland_b(
-            max_sustained_wind_speed=carq_forecast["max_sustained_wind_speed"],
-            background_pressure=carq_forecast["background_pressure"],
-            central_pressure=carq_forecast["central_pressure"],
+            max_sustained_wind_speed=carq_forecast['max_sustained_wind_speed'],
+            background_pressure=carq_forecast['background_pressure'],
+            central_pressure=carq_forecast['central_pressure'],
         )
 
         holland_b[holland_b == numpy.inf] = numpy.nan
@@ -1260,7 +1256,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
         carq_ref = carq_forecast.loc[carq_forecast.forecast_hours == 0].iloc[0]
 
         columns_of_interest = forecast[
-            ["radius_of_maximum_winds", "central_pressure", "background_pressure"]
+            ['radius_of_maximum_winds', 'central_pressure', 'background_pressure']
         ]
         columns_of_interest[columns_of_interest == 0] = pandas.NA
         missing = columns_of_interest.isna()
@@ -1269,27 +1265,52 @@ def correct_ofcl_based_on_carq_n_hollandb(
         mslp_missing = missing.iloc[:, 1]
         radp_missing = missing.iloc[:, 2]
 
-        # fill OFCL maximum wind radius with the first entry from 0-hr CARQ
-        forecast.loc[mrd_missing, "radius_of_maximum_winds"] = carq_ref[
-            "radius_of_maximum_winds"
+        ## if rmax_persistence:
+        ## fill OFCL maximum wind radius with the first entry from 0-hr CARQ
+        ##    forecast.loc[mrd_missing, 'radius_of_maximum_winds'] = carq_ref[
+        ##        'radius_of_maximum_winds'
+        ##    ]
+
+        # fill OFCL maximum wind radius based on regression method from
+        # Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
+        isotach_radii = forecast[
+            [
+                'isotach_radius_for_NEQ',
+                'isotach_radius_for_SEQ',
+                'isotach_radius_for_NWQ',
+                'isotach_radius_for_SWQ',
+            ]
         ]
+        isotach_radii[isotach_radii == 0] = pandas.NA
+        rmw0 = carq_ref['radius_of_maximum_winds']
+        fcst_hrs = (forecast.loc[mrd_missing, 'forecast_hours']).unique()
+        for fcst_hr in fcst_hrs:
+            fcst_index = forecast['forecast_hours'] == fcst_hr
+            if fcst_hr < 12:
+                rmw_ = rmw0
+            else:
+                rads = numpy.nanmean(isotach_radii.loc[fcst_index].to_numpy(), axis=1)
+                coefs = get_regression_coefs(fcst_hr, rads)
+                vmax = forecast.loc[fcst_index, 'max_sustained_wind_speed'].iloc[0]
+                lat = forecast.loc[fcst_index, 'latitude'].iloc[0]
+                bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
+                rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
+                    (coefs[[0, -1]] * bases[[0, -1]]).sum()
+                )
+            forecast.loc[fcst_index, 'radius_of_maximum_winds'] = rmw_
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
-        forecast.loc[radp_missing, "background_pressure"] = carq_ref[
-            "background_pressure"
-        ]
+        forecast.loc[radp_missing, 'background_pressure'] = carq_ref['background_pressure']
 
         # fill OFCL central pressure (at sea level), preserving Holland B from 0-hr CARQ
-        forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
-            max_sustained_wind_speed=forecast.loc[
-                mslp_missing, "max_sustained_wind_speed"
-            ],
-            background_pressure=forecast.loc[mslp_missing, "background_pressure"],
+        forecast.loc[mslp_missing, 'central_pressure'] = relation.central_pressure(
+            max_sustained_wind_speed=forecast.loc[mslp_missing, 'max_sustained_wind_speed'],
+            background_pressure=forecast.loc[mslp_missing, 'background_pressure'],
             holland_b=holland_b,
         )
 
         corr_ofcl_tracks[initial_time] = forecast
 
-    tracks["OFCL"] = corr_ofcl_tracks
+    tracks['OFCL'] = corr_ofcl_tracks
 
     return tracks
