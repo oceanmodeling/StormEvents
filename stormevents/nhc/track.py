@@ -1235,6 +1235,52 @@ def correct_ofcl_based_on_carq_n_hollandb(
     :return: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast) with corrected OFCL
     """
 
+    def clamp(n, minn, maxn):
+        return max(min(maxn, n), minn)
+
+    # Regression coefficients for the Rmax forecast
+    # ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
+    def get_regression_coefs(fcst_hr, radii_values):
+        fhrs = [12, 24, 36, 48, 72, 96, 120]
+        regression_coefs = {
+            3: [  # a0    #a1      #a2     #a3      #a4     #a5     #a6
+                [3.1894, 0.3524, 0.1208, -0.1091, 0.5862, -0.8070, 0.0057],
+                [4.4373, 0.1473, 0.1045, -0.1112, 0.7566, -1.0689, 0.0061],
+                [4.9447, 0.0784, 0.1168, -0.1448, 0.8246, -1.1709, 0.0059],
+                [5.1818, 0.0549, 0.1335, -0.2345, 0.8972, -1.2038, 0.0063],
+            ],
+            2: [  # a0    #a1      #a2     #a3      #a5     #a6
+                [3.1131, 0.3680, 0.1589, 0.4710, -0.9111, 0.0068],
+                [4.1567, 0.1834, 0.2085, 0.5873, -1.1841, 0.0073],
+                [4.6694, 0.1062, 0.2330, 0.6295, -1.3122, 0.0074],
+                [4.9434, 0.0459, 0.3027, 0.5828, -1.3675, 0.0079],
+                [4.7906, 0.0157, 0.3953, 0.5321, -1.3617, 0.0067],
+            ],
+            1: [  # a0    #a1      #a2     #a5      #a6
+                [2.6272, 0.4230, 0.6320, -0.9117, 0.0064],
+                [3.6525, 0.2142, 0.8222, -1.2158, 0.0082],
+                [4.2822, 0.0884, 0.9059, -1.3656, 0.0091],
+                [4.7700, -0.0042, 0.9225, -1.4349, 0.0102],
+                [4.7307, -0.0365, 0.9153, -1.3882, 0.0086],
+            ],
+            0: [  # a0    #a1      #a5     #a6
+                [2.1633, 0.6360, -0.3314, 0.0154],
+                [3.7884, 0.3953, -0.5738, 0.0219],
+                [5.0213, 0.1999, -0.7481, 0.0276],
+                [5.8092, 0.0615, -0.8508, 0.0318],
+                [6.3321, -0.0362, -0.9079, 0.0343],
+                [6.6181, 0.0041, -0.9599, 0.0295],
+                [6.7073, -0.0028, -0.9478, 0.0257],
+            ],
+        }
+        num_radii_available = (~numpy.isnan(radii_values)).sum()
+        coefs_by_radii_available = numpy.array(regression_coefs[num_radii_available])
+        fcst_index = numpy.argwhere(fhrs == fcst_hr)
+        if fcst_index.size == 0 or fcst_index > coefs_by_radii_available.shape[0] - 1:
+            return coefs_by_radii_available[-1].flatten()
+        else:
+            return coefs_by_radii_available[fcst_index].flatten()
+
     ofcl_tracks = tracks["OFCL"]
     carq_tracks = tracks["CARQ"]
 
@@ -1269,10 +1315,41 @@ def correct_ofcl_based_on_carq_n_hollandb(
         mslp_missing = missing.iloc[:, 1]
         radp_missing = missing.iloc[:, 2]
 
-        # fill OFCL maximum wind radius with the first entry from 0-hr CARQ
-        forecast.loc[mrd_missing, "radius_of_maximum_winds"] = carq_ref[
-            "radius_of_maximum_winds"
+        ## if rmax_persistence:
+        ## fill OFCL maximum wind radius with the first entry from 0-hr CARQ
+        ##    forecast.loc[mrd_missing, 'radius_of_maximum_winds'] = carq_ref[
+        ##        'radius_of_maximum_winds'
+        ##    ]
+
+        # fill OFCL maximum wind radius based on regression method from
+        # Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
+        isotach_radii = forecast[
+            [
+                "isotach_radius_for_NEQ",
+                "isotach_radius_for_SEQ",
+                "isotach_radius_for_NWQ",
+                "isotach_radius_for_SWQ",
+            ]
         ]
+        isotach_radii[isotach_radii == 0] = pandas.NA
+        rmw0 = carq_ref["radius_of_maximum_winds"]
+        fcst_hrs = (forecast.loc[mrd_missing, "forecast_hours"]).unique()
+        for fcst_hr in fcst_hrs:
+            fcst_index = forecast["forecast_hours"] == fcst_hr
+            if fcst_hr < 12:
+                rmw_ = rmw0
+            else:
+                rads = numpy.nanmean(isotach_radii.loc[fcst_index].to_numpy(), axis=1)
+                coefs = get_regression_coefs(fcst_hr, rads)
+                vmax = forecast.loc[fcst_index, "max_sustained_wind_speed"].iloc[0]
+                lat = forecast.loc[fcst_index, "latitude"].iloc[0]
+                bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
+                rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
+                    (coefs[[0, -1]] * bases[[0, -1]]).sum()
+                )  # bound RMW as per Penny et al. (2023)
+            forecast.loc[fcst_index, "radius_of_maximum_winds"] = clamp(
+                rmw_, 5.0, 120.0
+            )
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
         forecast.loc[radp_missing, "background_pressure"] = carq_ref[
