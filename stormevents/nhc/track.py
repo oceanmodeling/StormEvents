@@ -1235,6 +1235,9 @@ def correct_ofcl_based_on_carq_n_hollandb(
     :return: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast) with corrected OFCL
     """
 
+    def clamp(n, minn, maxn):
+        return max(min(maxn, n), minn)
+
     # Regression coefficients for the Rmax forecast
     # ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
     def get_regression_coefs(fcst_hr, radii_values):
@@ -1343,8 +1346,10 @@ def correct_ofcl_based_on_carq_n_hollandb(
                 bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
                 rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
                     (coefs[[0, -1]] * bases[[0, -1]]).sum()
-                )
-            forecast.loc[fcst_index, "radius_of_maximum_winds"] = rmw_
+                )  # bound RMW as per Penny et al. (2023)
+            forecast.loc[fcst_index, "radius_of_maximum_winds"] = clamp(
+                rmw_, 5.0, 120.0
+            )
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
         forecast.loc[radp_missing, "background_pressure"] = carq_ref[
