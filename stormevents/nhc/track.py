@@ -1315,12 +1315,6 @@ def correct_ofcl_based_on_carq_n_hollandb(
         mslp_missing = missing.iloc[:, 1]
         radp_missing = missing.iloc[:, 2]
 
-        ## if rmax_persistence:
-        ## fill OFCL maximum wind radius with the first entry from 0-hr CARQ
-        ##    forecast.loc[mrd_missing, 'radius_of_maximum_winds'] = carq_ref[
-        ##        'radius_of_maximum_winds'
-        ##    ]
-
         # fill OFCL maximum wind radius based on regression method from
         # Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
         isotach_radii = forecast[
@@ -1348,7 +1342,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
                     (coefs[[0, -1]] * bases[[0, -1]]).sum()
                 )  # bound RMW as per Penny et al. (2023)
             forecast.loc[fcst_index, "radius_of_maximum_winds"] = clamp(
-                rmw_, 5.0, 120.0
+                rmw_, 5.0, max(120.0, rmw0)
             )
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
