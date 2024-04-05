@@ -1344,6 +1344,20 @@ def correct_ofcl_based_on_carq_n_hollandb(
             forecast.loc[fcst_index, "radius_of_maximum_winds"] = clamp(
                 rmw_, 5.0, max(120.0, rmw0)
             )
+        # apply 3-point moving mean
+        fcsthr_index = forecast["forecast_hours"].drop_duplicates().index
+        forecast.loc[fcsthr_index, "radius_of_maximum_winds"] = (
+            forecast.loc[fcsthr_index]
+            .rolling(window=3, center=True, min_periods=1)["radius_of_maximum_winds"]
+            .mean()  # ensure rolling mean only conducted on unique forecast times
+        )
+        fcst_hrs = forecast["forecast_hours"].unique()
+        # broadcast computed rolling mean to all rows of unique forecast times
+        for fcst_hr in fcst_hrs:
+            fcst_index = forecast["forecast_hours"] == fcst_hr
+            forecast.loc[fcst_index, "radius_of_maximum_winds"] = forecast.loc[
+                fcst_index, "radius_of_maximum_winds"
+            ].iloc[0]
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
         forecast.loc[radp_missing, "background_pressure"] = carq_ref[
