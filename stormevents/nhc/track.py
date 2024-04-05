@@ -1204,7 +1204,7 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
                 track_data = advisory_data[
                     advisory_data["track_start_time"]
                     == pandas.to_datetime(track_start_time)
-                ].sort_values("forecast_hours")
+                ].sort_index()
 
             tracks[advisory][
                 f"{pandas.to_datetime(track_start_time):%Y%m%dT%H%M%S}"
