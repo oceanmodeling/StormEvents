@@ -1344,20 +1344,34 @@ def correct_ofcl_based_on_carq_n_hollandb(
             forecast.loc[fcst_index, "radius_of_maximum_winds"] = clamp(
                 rmw_, 5.0, max(120.0, rmw0)
             )
-        # apply 3-point moving mean
+        # apply 24-HR moving mean to unique datetimes
         fcsthr_index = forecast["forecast_hours"].drop_duplicates().index
-        forecast.loc[fcsthr_index, "radius_of_maximum_winds"] = (
-            forecast.loc[fcsthr_index]
-            .rolling(window=3, center=True, min_periods=1)["radius_of_maximum_winds"]
-            .mean()  # ensure rolling mean only conducted on unique forecast times
+        df_temp = forecast.loc[fcsthr_index].copy()
+        # make sure 60, 84, and 108 are added
+        fcsthrs_12hr = numpy.unique(
+            numpy.append(df_temp["forecast_hours"].values, [60, 84, 108])
         )
-        fcst_hrs = forecast["forecast_hours"].unique()
-        # broadcast computed rolling mean to all rows of unique forecast times
-        for fcst_hr in fcst_hrs:
-            fcst_index = forecast["forecast_hours"] == fcst_hr
-            forecast.loc[fcst_index, "radius_of_maximum_winds"] = forecast.loc[
-                fcst_index, "radius_of_maximum_winds"
-            ].iloc[0]
+        rmw_12hr = numpy.interp(
+            fcsthrs_12hr, df_temp["forecast_hours"], df_temp["radius_of_maximum_winds"]
+        )
+        dt_12hr = pandas.to_datetime(
+            fcsthrs_12hr, unit="h", origin=df_temp["datetime"].iloc[0]
+        )
+        df_temp = DataFrame(
+            data={"forecast_hours": fcsthrs_12hr, "radius_of_maximum_winds": rmw_12hr},
+            index=dt_12hr,
+        )
+        rmw_rolling = df_temp.rolling(window="24.01 H", center=True, min_periods=1)[
+            "radius_of_maximum_winds"
+        ].mean()
+        for valid_time, rmw in rmw_rolling.items():
+            valid_index = forecast["datetime"] == valid_time
+            if (
+                valid_index.sum() == 0
+                or forecast.loc[valid_index, "forecast_hours"].iloc[0] == 0
+            ):
+                continue
+            forecast.loc[valid_index, "radius_of_maximum_winds"] = rmw
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
         forecast.loc[radp_missing, "background_pressure"] = carq_ref[
