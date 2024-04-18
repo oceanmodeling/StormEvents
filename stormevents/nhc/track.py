@@ -1333,9 +1333,18 @@ def correct_ofcl_based_on_carq_n_hollandb(
             if fcst_hr < 12:
                 rmw_ = rmw0
             else:
-                rads = numpy.nanmean(isotach_radii.loc[fcst_index].to_numpy(), axis=1)
-                coefs = get_regression_coefs(fcst_hr, rads)
                 vmax = forecast.loc[fcst_index, "max_sustained_wind_speed"].iloc[0]
+                if numpy.isnan(isotach_radii.loc[fcst_index].to_numpy()).all():
+                    # if no isotach's are found, preserve the 34-kt isotach if Vmax is strong
+                    if vmax > 34:
+                        rads = rads[[0]]
+                    else:
+                        rads = numpy.array([numpy.nan])
+                else:
+                    rads = numpy.nanmean(
+                        isotach_radii.loc[fcst_index].to_numpy(), axis=1
+                    )
+                coefs = get_regression_coefs(fcst_hr, rads)
                 lat = forecast.loc[fcst_index, "latitude"].iloc[0]
                 bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
                 rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
