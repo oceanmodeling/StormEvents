@@ -1328,6 +1328,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
         isotach_radii[isotach_radii == 0] = pandas.NA
         rmw0 = carq_ref["radius_of_maximum_winds"]
         fcst_hrs = (forecast.loc[mrd_missing, "forecast_hours"]).unique()
+        rads = numpy.array([numpy.nan])  # initializing to make sure available
         for fcst_hr in fcst_hrs:
             fcst_index = forecast["forecast_hours"] == fcst_hr
             if fcst_hr < 12:
@@ -1336,7 +1337,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
                 vmax = forecast.loc[fcst_index, "max_sustained_wind_speed"].iloc[0]
                 if numpy.isnan(isotach_radii.loc[fcst_index].to_numpy()).all():
                     # if no isotach's are found, preserve the 34-kt isotach if Vmax is strong
-                    if vmax > 34 and "rads" in locals():
+                    if vmax > 34:
                         rads = rads[[0]]
                     else:
                         rads = numpy.array([numpy.nan])
