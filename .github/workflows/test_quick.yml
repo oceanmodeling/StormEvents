@@ -44,4 +44,4 @@ jobs:
           path: ${{ env.pythonLocation }}
           key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: pip install ".[test]" pytest-xdist
-      - run: pytest -n auto
+      - run: pytest
