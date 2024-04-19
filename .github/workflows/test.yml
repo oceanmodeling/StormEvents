@@ -53,7 +53,7 @@ jobs:
           path: ${{ env.pythonLocation }}
           key: test-${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml', 'setup.*') }}
       - run: pip install ".[test]" pytest-xdist
-      - run: pytest
+      - run: pytest -n auto
   test_with_coverage:
     needs: [ style, test ]
     name: test with code coverage
