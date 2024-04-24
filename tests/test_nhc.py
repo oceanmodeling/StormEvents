@@ -9,6 +9,7 @@ from pytest_socket import SocketBlockedError
 from stormevents.nhc.storms import nhc_storms
 from stormevents.nhc.storms import nhc_storms_gis_archive
 from stormevents.nhc.track import VortexTrack
+from stormevents.nhc.const import get_RMW_regression_coefs
 from tests import check_reference_directory
 from tests import INPUT_DIRECTORY
 from tests import OUTPUT_DIRECTORY
@@ -376,3 +377,11 @@ def test_carq_autofix_ofcl():
 
     assert not (track.data[variables_of_interest] == 0).any(axis=None)
     assert not (track.data[variables_of_interest].isna()).any(axis=None)
+
+
+def test_RMW_regression_coefs():
+    fcst_hrs = [0, 60, 120, 144]
+    rads = [[40, 62], [16, 25, 36], [70], [numpy.nan]]
+    for fcst_hr, rad in zip(fcst_hrs, rads):
+        coefs = get_RMW_regression_coefs(fcst_hr, numpy.array(rad))
+        assert len(coefs) == (~numpy.isnan(rad)).sum() + 4
