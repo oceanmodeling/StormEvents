@@ -1294,8 +1294,10 @@ def correct_ofcl_based_on_carq_n_hollandb(
             else:
                 vmax = forecast.loc[fcst_index, "max_sustained_wind_speed"].iloc[0]
                 if numpy.isnan(isotach_radii.loc[fcst_index].to_numpy()).all():
-                    # if no isotach's are found, preserve the 34-kt isotach if Vmax is strong
-                    if vmax > 34:
+                    # if no isotach's are found, preserve the isotach(s) if Vmax is greater
+                    if vmax > 50:
+                        rads = rads[0 : min(2, len(rads))]
+                    elif vmax > 34:
                         rads = rads[[0]]
                     else:
                         rads = numpy.array([numpy.nan])
