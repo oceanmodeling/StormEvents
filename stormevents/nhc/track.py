@@ -33,6 +33,7 @@ from stormevents.nhc.atcf import EXTRA_ATCF_FIELDS
 from stormevents.nhc.atcf import get_atcf_entry
 from stormevents.nhc.atcf import read_atcf
 from stormevents.nhc.storms import nhc_storms
+from stormevents.nhc.const import get_RMW_regression_coefs
 from stormevents.utilities import subset_time_interval
 
 
@@ -1204,7 +1205,7 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
                 track_data = advisory_data[
                     advisory_data["track_start_time"]
                     == pandas.to_datetime(track_start_time)
-                ].sort_values("forecast_hours")
+                ].sort_index()
 
             tracks[advisory][
                 f"{pandas.to_datetime(track_start_time):%Y%m%dT%H%M%S}"
@@ -1234,6 +1235,9 @@ def correct_ofcl_based_on_carq_n_hollandb(
     :param tracks: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast)
     :return: dictionary of forecasts for each advisory (aside from best track ``BEST``, which only has one hindcast) with corrected OFCL
     """
+
+    def clamp(n, minn, maxn):
+        return max(min(maxn, n), minn)
 
     ofcl_tracks = tracks["OFCL"]
     carq_tracks = tracks["CARQ"]
@@ -1269,10 +1273,75 @@ def correct_ofcl_based_on_carq_n_hollandb(
         mslp_missing = missing.iloc[:, 1]
         radp_missing = missing.iloc[:, 2]
 
-        # fill OFCL maximum wind radius with the first entry from 0-hr CARQ
-        forecast.loc[mrd_missing, "radius_of_maximum_winds"] = carq_ref[
-            "radius_of_maximum_winds"
+        # fill OFCL maximum wind radius based on regression method from
+        # Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
+        isotach_radii = forecast[
+            [
+                "isotach_radius_for_NEQ",
+                "isotach_radius_for_SEQ",
+                "isotach_radius_for_NWQ",
+                "isotach_radius_for_SWQ",
+            ]
         ]
+        isotach_radii[isotach_radii == 0] = pandas.NA
+        rmw0 = carq_ref["radius_of_maximum_winds"]
+        fcst_hrs = (forecast.loc[mrd_missing, "forecast_hours"]).unique()
+        rads = numpy.array([numpy.nan])  # initializing to make sure available
+        for fcst_hr in fcst_hrs:
+            fcst_index = forecast["forecast_hours"] == fcst_hr
+            if fcst_hr < 12:
+                rmw_ = rmw0
+            else:
+                vmax = forecast.loc[fcst_index, "max_sustained_wind_speed"].iloc[0]
+                if numpy.isnan(isotach_radii.loc[fcst_index].to_numpy()).all():
+                    # if no isotach's are found, preserve the isotach(s) if Vmax is greater
+                    if vmax > 50:
+                        rads = rads[0 : min(2, len(rads))]
+                    elif vmax > 34:
+                        rads = rads[[0]]
+                    else:
+                        rads = numpy.array([numpy.nan])
+                else:
+                    rads = numpy.nanmean(
+                        isotach_radii.loc[fcst_index].to_numpy(), axis=1
+                    )
+                coefs = get_RMW_regression_coefs(fcst_hr, rads)
+                lat = forecast.loc[fcst_index, "latitude"].iloc[0]
+                bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
+                rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
+                    (coefs[[0, -1]] * bases[[0, -1]]).sum()
+                )  # bound RMW as per Penny et al. (2023)
+            forecast.loc[fcst_index, "radius_of_maximum_winds"] = clamp(
+                rmw_, 5.0, max(120.0, rmw0)
+            )
+        # apply 24-HR moving mean to unique datetimes
+        fcsthr_index = forecast["forecast_hours"].drop_duplicates().index
+        df_temp = forecast.loc[fcsthr_index].copy()
+        # make sure 60, 84, and 108 are added
+        fcsthrs_12hr = numpy.unique(
+            numpy.append(df_temp["forecast_hours"].values, [60, 84, 108])
+        )
+        rmw_12hr = numpy.interp(
+            fcsthrs_12hr, df_temp["forecast_hours"], df_temp["radius_of_maximum_winds"]
+        )
+        dt_12hr = pandas.to_datetime(
+            fcsthrs_12hr, unit="h", origin=df_temp["datetime"].iloc[0]
+        )
+        df_temp = DataFrame(
+            data={"forecast_hours": fcsthrs_12hr, "radius_of_maximum_winds": rmw_12hr},
+            index=dt_12hr,
+        )
+        rmw_rolling = df_temp.rolling(window="24.01 H", center=True, min_periods=1)[
+            "radius_of_maximum_winds"
+        ].mean()
+        for valid_time, rmw in rmw_rolling.items():
+            valid_index = forecast["datetime"] == valid_time
+            if (
+                valid_index.sum() == 0
+                or forecast.loc[valid_index, "forecast_hours"].iloc[0] == 0
+            ):
+                continue
+            forecast.loc[valid_index, "radius_of_maximum_winds"] = rmw
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
         forecast.loc[radp_missing, "background_pressure"] = carq_ref[
