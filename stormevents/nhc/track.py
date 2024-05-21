@@ -1310,18 +1310,15 @@ def correct_ofcl_based_on_carq_n_hollandb(
                     rads = numpy.nanmean(
                         isotach_radii.loc[fcst_index].to_numpy(), axis=1
                     )
-                rads_bc = (
-                    rads
-                    - RMW_bias_correction[rads_bias_names[0 : rads.size]]
-                    .loc[fcst_hr_bc]
-                    .values
-                )
+                    rads -= (
+                        RMW_bias_correction[rads_bias_names[0 : rads.size]]
+                        .loc[fcst_hr_bc]
+                        .values
+                    )
                 coefs = get_RMW_regression_coefs(fcst_hr, rads)
                 lat = forecast.loc[fcst_index, "latitude"].iloc[0]
                 lat -= RMW_bias_correction["latitude"][fcst_hr_bc]
-                bases = numpy.hstack(
-                    (1.0, rmw0, rads_bc[~numpy.isnan(rads)], vmax, lat)
-                )
+                bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
                 rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
                     (coefs[[0, -1]] * bases[[0, -1]]).sum()
                 )  # bound RMW as per Penny et al. (2023)
