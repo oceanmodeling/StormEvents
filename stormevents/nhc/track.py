@@ -33,7 +33,7 @@ from stormevents.nhc.atcf import EXTRA_ATCF_FIELDS
 from stormevents.nhc.atcf import get_atcf_entry
 from stormevents.nhc.atcf import read_atcf
 from stormevents.nhc.storms import nhc_storms
-from stormevents.nhc.const import get_RMW_regression_coefs
+from stormevents.nhc.const import get_RMW_regression_coefs, RMW_bias_correction
 from stormevents.utilities import subset_time_interval
 
 
@@ -1287,12 +1287,17 @@ def correct_ofcl_based_on_carq_n_hollandb(
         rmw0 = carq_ref["radius_of_maximum_winds"]
         fcst_hrs = (forecast.loc[mrd_missing, "forecast_hours"]).unique()
         rads = numpy.array([numpy.nan])  # initializing to make sure available
+        rads_bias_names = [
+            c for c in RMW_bias_correction.columns if "isotach_radius" in c
+        ]
         for fcst_hr in fcst_hrs:
             fcst_index = forecast["forecast_hours"] == fcst_hr
             if fcst_hr < 12:
                 rmw_ = rmw0
             else:
+                fcst_hr_bc = min(fcst_hr, 120)
                 vmax = forecast.loc[fcst_index, "max_sustained_wind_speed"].iloc[0]
+                vmax -= RMW_bias_correction["max_sustained_wind_speed"][fcst_hr_bc]
                 if numpy.isnan(isotach_radii.loc[fcst_index].to_numpy()).all():
                     # if no isotach's are found, preserve the isotach(s) if Vmax is greater
                     if vmax > 50:
@@ -1305,9 +1310,18 @@ def correct_ofcl_based_on_carq_n_hollandb(
                     rads = numpy.nanmean(
                         isotach_radii.loc[fcst_index].to_numpy(), axis=1
                     )
+                rads_bc = (
+                    rads
+                    - RMW_bias_correction[rads_bias_names[0 : rads.size]]
+                    .loc[fcst_hr_bc]
+                    .values
+                )
                 coefs = get_RMW_regression_coefs(fcst_hr, rads)
                 lat = forecast.loc[fcst_index, "latitude"].iloc[0]
-                bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
+                lat -= RMW_bias_correction["latitude"][fcst_hr_bc]
+                bases = numpy.hstack(
+                    (1.0, rmw0, rads_bc[~numpy.isnan(rads)], vmax, lat)
+                )
                 rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
                     (coefs[[0, -1]] * bases[[0, -1]]).sum()
                 )  # bound RMW as per Penny et al. (2023)

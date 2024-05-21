@@ -74,11 +74,13 @@ bias_r64 = [
 ]
 
 RMW_bias_correction = DataFrame(
-    index=range(12, 132, 12),
+    index=range(0, 132, 12),
     data={
         "latitude": bias_lat,
         "max_sustained_wind_speed": bias_vmax,
-        "isotach_radius": [bias_r34, bias_r50, bias_r64],
+        "isotach_radius_34": bias_r34,
+        "isotach_radius_50": bias_r50,
+        "isotach_radius_64": bias_r64,
     },
 )
 
