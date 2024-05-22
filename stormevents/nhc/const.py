@@ -1,4 +1,88 @@
 from numpy import isnan, array, argwhere
+from pandas import DataFrame
+
+# Bias correction values for the Rmax forecast
+# ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
+bias_lat = [
+    0.0063,
+    0.0301,
+    0.0299,
+    0.0085,
+    -0.0199,
+    -0.0354,
+    -0.0799,
+    -0.1240,
+    -0.1572,
+    -0.1982,
+    -0.1706,
+]
+
+bias_vmax = [
+    -0.8047,
+    -0.2003,
+    -0.2001,
+    -0.4070,
+    -0.6271,
+    -0.7515,
+    -0.3369,
+    -0.3338,
+    -0.3930,
+    -0.8167,
+    -1.4322,
+]
+
+bias_r34 = [
+    -2.0503,
+    -5.5195,
+    -7.7374,
+    -8.4337,
+    -8.1458,
+    -10.2065,
+    -12.6435,
+    0,
+    0,
+    0,
+    0,
+]
+
+bias_r50 = [
+    -0.7659,
+    -3.2270,
+    -4.5476,
+    -6.2219,
+    -7.7406,
+    -8.5449,
+    -10.0759,
+    0,
+    0,
+    0,
+    0,
+]
+
+bias_r64 = [
+    -0.5082,
+    -2.4170,
+    -3.6993,
+    -4.7795,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+]
+
+RMW_bias_correction = DataFrame(
+    index=range(0, 132, 12),
+    data={
+        "latitude": bias_lat,
+        "max_sustained_wind_speed": bias_vmax,
+        "isotach_radius_34": bias_r34,
+        "isotach_radius_50": bias_r50,
+        "isotach_radius_64": bias_r64,
+    },
+)
 
 # Regression coefficients for the Rmax forecast
 # ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
