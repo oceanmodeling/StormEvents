@@ -631,11 +631,11 @@ class VortexTrack:
         atcf["isotach_radius_for_SEQ"] = (
             atcf["isotach_radius_for_SEQ"].astype("string").str.pad(5)
         )
-        atcf["isotach_radius_for_NWQ"] = (
-            atcf["isotach_radius_for_NWQ"].astype("string").str.pad(5)
-        )
         atcf["isotach_radius_for_SWQ"] = (
             atcf["isotach_radius_for_SWQ"].astype("string").str.pad(5)
+        )
+        atcf["isotach_radius_for_NWQ"] = (
+            atcf["isotach_radius_for_NWQ"].astype("string").str.pad(5)
         )
 
         atcf["background_pressure"].fillna(method="ffill", inplace=True)
@@ -687,11 +687,11 @@ class VortexTrack:
             atcf["isowave_radius_for_SEQ"] = (
                 atcf["isowave_radius_for_SEQ"].astype("string").str.pad(5)
             )
-            atcf["isowave_radius_for_NWQ"] = (
-                atcf["isowave_radius_for_NWQ"].astype("string").str.pad(5)
-            )
             atcf["isowave_radius_for_SWQ"] = (
                 atcf["isowave_radius_for_SWQ"].astype("string").str.pad(5)
+            )
+            atcf["isowave_radius_for_NWQ"] = (
+                atcf["isowave_radius_for_NWQ"].astype("string").str.pad(5)
             )
 
         for column in atcf.select_dtypes(include=["string"]).columns:
@@ -824,9 +824,9 @@ class VortexTrack:
         # enumerate quadrants
         quadrant_names = [
             "isotach_radius_for_NEQ",
-            "isotach_radius_for_NWQ",
-            "isotach_radius_for_SWQ",
             "isotach_radius_for_SEQ",
+            "isotach_radius_for_SWQ",
+            "isotach_radius_for_NWQ",
         ]
 
         # convert quadrant radii from nautical miles to meters
@@ -848,7 +848,7 @@ class VortexTrack:
                     start_angle = 0 + rotation_angle
                     end_angle = 90 + rotation_angle
 
-                    # append quadrants in counter-clockwise direction from NEQ
+                    # append quadrants in clockwise direction from NEQ
                     quadrants = []
                     for quadrant_name in quadrant_names:
                         # skip if quadrant radius is zero

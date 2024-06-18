@@ -57,9 +57,9 @@ ATCF_FIELDS = {
     # RAD2 - If full circle this field not used, If semicicle, radius (nm) of specified wind intensity for semicircle not specified in radius code, If quadrant, radius (nm) of specified wind intensity for 2nd quadrant (counting clockwise from quadrant specified in radius code). 0 through 1200 nm.
     "RAD2": "isotach_radius_for_SEQ",
     # RAD3 - If full circle or semicircle this field not used, If quadrant, radius (nm) of specified wind intensity for 3rd quadrant (counting clockwise from quadrant specified in radius code). 0 through 1200 nm.
-    "RAD3": "isotach_radius_for_NWQ",
+    "RAD3": "isotach_radius_for_SWQ",
     # RAD4 - If full circle or semicircle this field not used, If quadrant, radius (nm) of specified wind intensity for 4th quadrant (counting clockwise from quadrant specified in radius code). 0 through 1200 nm.
-    "RAD4": "isotach_radius_for_SWQ",
+    "RAD4": "isotach_radius_for_NWQ",
     # RADP - pressure in millibars of the last closed isobar, 900 - 1050 mb.
     "RADP": "background_pressure",
     # RRP - radius of the last closed isobar in nm, 0 - 9999 nm.
@@ -127,9 +127,9 @@ EXTRA_ATCF_FIELDS = {
     # SEAS2 - second quadrant seas radius as defined by SEASCODE, 0 through 999 nm.
     "SEAS2": "isowave_radius_for_SEQ",
     # SEAS3 - third quadrant seas radius as defined by SEASCODE, 0 through 999 nm.
-    "SEAS3": "isowave_radius_for_NWQ",
+    "SEAS3": "isowave_radius_for_SWQ",
     # SEAS4 - fourth quadrant seas radius as defined by SEASCODE, 0 through 999 nm.
-    "SEAS4": "isowave_radius_for_SWQ",
+    "SEAS4": "isowave_radius_for_NWQ",
     # user data section as indicated by USERDEFINED parameter.
     "USERDEFINED": "extra_values",
 }
