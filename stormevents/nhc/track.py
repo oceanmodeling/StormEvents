@@ -1352,7 +1352,10 @@ def correct_ofcl_based_on_carq_n_hollandb(
                 or forecast.loc[valid_index, "forecast_hours"].iloc[0] == 0
             ):
                 continue
-            forecast.loc[valid_index, "radius_of_maximum_winds"] = rmw
+            # make sure rolling rmw is not larger than the maximum radii of the strongest isotach
+            max_isotach_radii = isotach_radii.loc[valid_index].values[-1].max()
+            if rmw < max_isotach_radii:
+                forecast.loc[valid_index, "radius_of_maximum_winds"] = rmw
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
         forecast.loc[radp_missing, "background_pressure"] = carq_ref[
