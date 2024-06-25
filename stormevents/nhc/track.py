@@ -1072,17 +1072,20 @@ class VortexTrack:
         for advisory in pandas.unique(data["advisory"]):
             advisory_data = data.loc[data["advisory"] == advisory]
 
-            indices = numpy.array(
-                [
-                    numpy.where(advisory_data["datetime"] == unique_datetime)[0][0]
-                    for unique_datetime in pandas.unique(advisory_data["datetime"])
-                ]
-            )
+            indices = advisory_data.index
             shifted_indices = numpy.roll(indices, 1)
-            shifted_indices[0] = 0
+            shifted_indices[0] = indices[0]
 
-            indices = advisory_data.index[indices]
-            shifted_indices = advisory_data.index[shifted_indices]
+            # check for negative time shifts which indicate new forecasts
+            # and update this with the last previously available time
+            for counter, ind in enumerate(zip(indices, shifted_indices)):
+                this_time = advisory_data.loc[ind[0], "datetime"]
+                shift_time = advisory_data.loc[ind[1], "datetime"]
+                if shift_time > this_time:
+                    # update shift index
+                    shifted_indices[counter] = advisory_data["datetime"][
+                        advisory_data["datetime"] < this_time
+                    ].index[-1]
 
             _, inverse_azimuths, distances = geodetic.inv(
                 advisory_data.loc[indices, "longitude"],
@@ -1091,20 +1094,28 @@ class VortexTrack:
                 advisory_data.loc[shifted_indices, "latitude"],
             )
 
-            intervals = advisory_data.loc[indices, "datetime"].diff()
-            speeds = distances / (intervals / pandas.to_timedelta(1, "s"))
-            bearings = pandas.Series(inverse_azimuths % 360, index=speeds.index)
-
-            for index in indices:
-                cluster_index = (
-                    advisory_data["datetime"] == advisory_data.loc[index, "datetime"]
+            intervals = (
+                (
+                    advisory_data.loc[indices, "datetime"].values
+                    - advisory_data.loc[shifted_indices, "datetime"].values
                 )
-                advisory_data.loc[cluster_index, "speed"] = speeds[index]
-                advisory_data.loc[cluster_index, "direction"] = bearings[index]
+                .astype("timedelta64[s]")
+                .astype(float)
+            )
+            speeds = pandas.Series(distances / intervals, index=indices)
+            bearings = pandas.Series(inverse_azimuths % 360, index=indices)
+            bearings[pandas.isna(speeds)] = numpy.nan
+            # fill in nans carrying forward, because it is same valid time
+            # and forecast but different isotach.
+            # then fill nans backwards to handle the first time
+            speeds.ffill(inplace=True)
+            bearings.ffill(inplace=True)
+            speeds.bfill(inplace=True)
+            bearings.bfill(inplace=True)
+            advisory_data["speed"] = speeds
+            advisory_data["direction"] = bearings
 
             data.loc[data["advisory"] == advisory] = advisory_data
-
-        data.loc[pandas.isna(data["speed"]), "speed"] = 0
 
         return data
 
