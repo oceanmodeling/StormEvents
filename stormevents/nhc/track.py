@@ -1083,9 +1083,14 @@ class VortexTrack:
                 shift_time = advisory_data.loc[ind[1], "datetime"]
                 if shift_time > this_time:
                     # update shift index
-                    shifted_indices[counter] = advisory_data["datetime"][
-                        advisory_data["datetime"] < this_time
-                    ].index[-1]
+                    if (advisory_data["datetime"] < this_time).sum() == 0:
+                        shifted_indices[counter] = advisory_data["datetime"][
+                            advisory_data["datetime"] > this_time
+                        ].index[0]
+                    else:
+                        shifted_indices[counter] = advisory_data["datetime"][
+                            advisory_data["datetime"] < this_time
+                        ].index[-1]
 
             _, inverse_azimuths, distances = geodetic.inv(
                 advisory_data.loc[indices, "longitude"],
@@ -1096,8 +1101,10 @@ class VortexTrack:
 
             intervals = (
                 (
-                    advisory_data.loc[indices, "datetime"].values
-                    - advisory_data.loc[shifted_indices, "datetime"].values
+                    abs(
+                        advisory_data.loc[indices, "datetime"].values
+                        - advisory_data.loc[shifted_indices, "datetime"].values
+                    )
                 )
                 .astype("timedelta64[s]")
                 .astype(float)
