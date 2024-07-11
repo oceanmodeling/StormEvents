@@ -1376,7 +1376,10 @@ def correct_ofcl_based_on_carq_n_hollandb(
             if rmw < max_isotach_radii or numpy.isnan(max_isotach_radii):
                 forecast.loc[valid_index, "radius_of_maximum_winds"] = rmw
             # in case it does not come from rolling average just set to be Vr/Vmax ratio of max_isotach_radii
-            if forecast.loc[valid_index, "radius_of_maximum_winds"].iloc[-1] > max_isotach_radii:
+            if (
+                forecast.loc[valid_index, "radius_of_maximum_winds"].iloc[-1]
+                > max_isotach_radii
+            ):
                 forecast.loc[valid_index, "radius_of_maximum_winds"] = (
                     max_isotach_radii
                     * forecast.loc[valid_index, "isotach_radius"].iloc[-1]
