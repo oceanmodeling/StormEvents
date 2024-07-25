@@ -516,7 +516,7 @@ class StormEvent:
         return (
             f"{self.__class__.__name__}("
             f"name={repr(self.name)}, "
-            f"year={repr(self.year)}, "
+            f"year={int(self.year)}, "
             f"start_date={repr(self.start_date)}, "
             f"end_date={repr(self.end_date)}"
             f")"
