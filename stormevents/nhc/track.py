@@ -1092,7 +1092,7 @@ class VortexTrack:
                             advisory_data["datetime"] < this_time
                         ].index[-1]
 
-            _, inverse_azimuths, distances = geodetic.inv(
+            forward_azimuths, inverse_azimuths, distances = geodetic.inv(
                 advisory_data.loc[indices, "longitude"],
                 advisory_data.loc[indices, "latitude"],
                 advisory_data.loc[shifted_indices, "longitude"],
@@ -1101,16 +1101,18 @@ class VortexTrack:
 
             intervals = (
                 (
-                    abs(
-                        advisory_data.loc[indices, "datetime"].values
-                        - advisory_data.loc[shifted_indices, "datetime"].values
-                    )
+                    advisory_data.loc[indices, "datetime"].values
+                    - advisory_data.loc[shifted_indices, "datetime"].values
                 )
                 .astype("timedelta64[s]")
                 .astype(float)
             )
-            speeds = pandas.Series(distances / intervals, index=indices)
+            speeds = pandas.Series(distances / abs(intervals), index=indices)
             bearings = pandas.Series(inverse_azimuths % 360, index=indices)
+            # use forward azimuths for negative intervals
+            bearings[intervals < 0] = pandas.Series(
+                forward_azimuths[intervals < 0] % 360, index=indices[intervals < 0]
+            )
             bearings[pandas.isna(speeds)] = numpy.nan
             # fill in nans carrying forward, because it is same valid time
             # and forecast but different isotach.
