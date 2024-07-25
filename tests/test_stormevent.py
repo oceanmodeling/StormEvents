@@ -140,8 +140,8 @@ def test_storm_event_track(florence2018, ida2021):
     florence_track = florence2018.track()
     ida_track = ida2021.track()
 
-    florence_track.to_file(output_directory / "florence2018.fort.22")
-    ida_track.to_file(output_directory / "ida2021.fort.22")
+    florence_track.to_file(output_directory / "florence2018.fort.22", overwrite=True)
+    ida_track.to_file(output_directory / "ida2021.fort.22", overwrite=True)
 
     check_reference_directory(output_directory, reference_directory)
 
