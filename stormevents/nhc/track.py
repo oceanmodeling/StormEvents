@@ -1309,9 +1309,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
             central_pressure=carq_ref["central_pressure"],
         )
 
-        # Get CARQ from forecast hour 0 and isotach 34kt (i.e. the first item)
-        carq_ref = carq_forecast.loc[carq_forecast.forecast_hours == 0].iloc[0]
-
+        # find locations where the pertinent variables are missing
         columns_of_interest = forecast[
             ["radius_of_maximum_winds", "central_pressure", "background_pressure"]
         ]
