@@ -1298,15 +1298,16 @@ def correct_ofcl_based_on_carq_n_hollandb(
         else:
             carq_forecast = carq_tracks[list(carq_tracks)[0]]
 
+        # Get CARQ from forecast hour 0 and isotach 34kt (i.e. the first item)
+        carq_ref = carq_forecast.loc[carq_forecast.forecast_hours == 0].iloc[0]
+
+        # get the Holland B parameter for filling in central pressure
         relation = HollandBRelation()
         holland_b = relation.holland_b(
-            max_sustained_wind_speed=carq_forecast["max_sustained_wind_speed"],
-            background_pressure=carq_forecast["background_pressure"],
-            central_pressure=carq_forecast["central_pressure"],
+            max_sustained_wind_speed=carq_ref["max_sustained_wind_speed"],
+            background_pressure=carq_ref["background_pressure"],
+            central_pressure=carq_ref["central_pressure"],
         )
-
-        holland_b[holland_b == numpy.inf] = numpy.nan
-        holland_b = numpy.nanmean(holland_b)
 
         # Get CARQ from forecast hour 0 and isotach 34kt (i.e. the first item)
         carq_ref = carq_forecast.loc[carq_forecast.forecast_hours == 0].iloc[0]
