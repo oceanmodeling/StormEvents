@@ -638,8 +638,7 @@ class VortexTrack:
             atcf["isotach_radius_for_NWQ"].astype("string").str.pad(5)
         )
 
-        atcf["background_pressure"].fillna(method="ffill", inplace=True)
-        atcf["background_pressure"] = atcf["background_pressure"].astype(int)
+        atcf["background_pressure"] = atcf["background_pressure"].ffill().astype(int)
         atcf["central_pressure"] = atcf["central_pressure"].astype(int)
 
         press_cond_nobg = ~atcf["central_pressure"].isna() & (
@@ -1362,7 +1361,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
             data={"forecast_hours": fcsthrs_12hr, "radius_of_maximum_winds": rmw_12hr},
             index=dt_12hr,
         )
-        rmw_rolling = df_temp.rolling(window="24.01 H", center=True, min_periods=1)[
+        rmw_rolling = df_temp.rolling(window="24.01 h", center=True, min_periods=1)[
             "radius_of_maximum_winds"
         ].mean()
         for valid_time, rmw in rmw_rolling.items():

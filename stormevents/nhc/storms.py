@@ -65,13 +65,9 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
         url,
         header=0,
         names=columns,
-        parse_dates=["start_date", "end_date"],
-        date_parser=lambda x: (
-            pandas.to_datetime(x.strip(), format="%Y%m%d%H")
-            if x.strip() != "9999999999"
-            else numpy.nan
-        ),
     )
+    for i in ['start_date', 'end_date']:
+        storms[i] = pandas.to_datetime(storms[i], errors='coerce', format='%Y%m%d%H')
 
     storms = storms.astype(
         {"start_date": "datetime64[s]", "end_date": "datetime64[s]"},
@@ -107,7 +103,9 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
     )
     if len(gis_archive_storms) > 0:
         gis_archive_storms[["start_date", "end_date"]] = pandas.to_datetime(numpy.nan)
-        storms = pandas.concat([storms, gis_archive_storms[storms.columns]])
+        storms = pandas.concat(
+            [storms, gis_archive_storms[storms.columns].astype(storms.dtypes.to_dict())]
+        )
 
     for string_column in ["name", "class", "source"]:
         storms.loc[storms[string_column].str.len() == 0, string_column] = pandas.NA
@@ -211,7 +209,7 @@ def nhc_storms_gis_archive(year: int = None) -> pandas.DataFrame:
         year = list(range(NHC_GIS_ARCHIVE_START_YEAR, datetime.today().year + 1))
 
     if isinstance(year, Iterable) and not isinstance(year, str):
-        years = sorted(pandas.unique(year))
+        years = sorted(pandas.unique(numpy.array(year)))
         return pandas.concat(
             [
                 nhc_storms_gis_archive(year)
