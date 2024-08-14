@@ -17,7 +17,7 @@ dependencies = [
     "pandas",
     "pyproj >=2.6",
     "requests",
-    "searvey >=0.2.0,<1.0",
+    "searvey >=0.3.11",
     "shapely >=1.8",
     "typepigeon >=1.0.5, <2",
     "xarray",

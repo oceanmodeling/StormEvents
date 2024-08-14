@@ -1,3 +1,5 @@
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from datetime import timedelta
 from enum import Enum
@@ -8,10 +10,10 @@ from typing import List
 import geopandas as gpd
 import pandas
 import xarray
+from searvey import get_coops_stations, fetch_coops_station
 from searvey.coops import COOPS_Interval
 from searvey.coops import COOPS_Product
 from searvey.coops import COOPS_Station
-from searvey.coops import coops_stations_within_region
 from searvey.coops import COOPS_TidalDatum
 from searvey.coops import COOPS_TimeZone
 from searvey.coops import COOPS_Units
@@ -31,6 +33,85 @@ from stormevents.usgs import usgs_flood_storms
 from stormevents.usgs import USGS_StormEvent
 from stormevents.utilities import relative_to_time_interval
 from stormevents.utilities import subset_time_interval
+
+
+# TODO: Move up to searvey?
+StationDataCompat = {
+    COOPS_Product.WATER_LEVEL: [
+        "waterlevelsandmet",
+        "waterlevels",
+        "historicwl",
+    ],
+    COOPS_Product.AIR_TEMPERATURE: [
+        "waterlevelsandmet",
+        "met",
+        "historicmet",
+    ],
+    COOPS_Product.WATER_TEMPERATURE: [
+        "watertemp",
+        "physocean",
+        "historicphysocean",
+    ],
+    COOPS_Product.WIND: [
+        "waterlevelsandmet",
+        "met",
+        "historicmet",
+    ],
+    COOPS_Product.AIR_PRESSURE: [
+        "waterlevelsandmet",
+        "met",
+        "historicmet",
+    ],
+    COOPS_Product.AIR_GAP: [
+        "airgap",
+    ],
+    COOPS_Product.CONDUCTIVITY: [
+        "cond",
+        "physocean",
+        "historicphysocean",
+    ],
+    COOPS_Product.VISIBILITY: [
+        "visibility",
+    ],
+    COOPS_Product.HUMIDITY: [
+        "waterlevelsandmet",
+        "met",
+        "historicmet",
+    ],
+    COOPS_Product.HOURLY_HEIGHT: [
+        "waterlevelsandmet",
+        "waterlevels",
+        "historicwl",
+    ],
+    COOPS_Product.HIGH_LOW: [
+        "waterlevelsandmet",
+        "waterlevels",
+        "historicwl",
+    ],
+    COOPS_Product.MONTHLY_MEAN: [
+        "waterlevelsandmet",
+        "waterlevels",
+        "historicwl",
+    ],
+    COOPS_Product.ONE_MINUTE_WATER_LEVEL: [
+        "1minute",
+    ],
+    COOPS_Product.PREDICTIONS: [
+        "tidepredictions",
+    ],
+    COOPS_Product.DATUMS: [
+        "datums",
+        "supersededdatums",
+    ],
+    COOPS_Product.CURRENTS: [
+        "currents",
+        "surveycurrents",
+        "historiccurrents",
+    ],
+    COOPS_Product.CURRENTS_PREDICTIONS: [
+        "currentpredictions",
+    ],
+}
 
 
 class StormStatus(Enum):
@@ -351,7 +432,7 @@ class StormEvent:
         product: COOPS_Product,
         wind_speed: int,
         advisories: List[ATCF_Advisory] = None,
-        status: StationStatus = None,
+        status: StationStatus = StationStatus.ACTIVE,
         start_date: datetime = None,
         end_date: datetime = None,
         datum: COOPS_TidalDatum = None,
@@ -429,7 +510,7 @@ class StormEvent:
         region: Polygon,
         start_date: datetime = None,
         end_date: datetime = None,
-        status: StationStatus = None,
+        status: StationStatus = StationStatus.ACTIVE,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -488,26 +569,37 @@ class StormEvent:
 
         stations = gpd.GeoDataFrame()
         if not region.is_empty:
-            stations = coops_stations_within_region(
-                region=region, station_status=status
+            stations = get_coops_stations(
+                region=region, metadata_source="main",
             )
+            stations = stations[stations.status == StationStatus(status).value]
+
+            types = StationDataCompat[COOPS_Product(product)]
+            stations = stations[stations.station_type.isin(types)]
+            stations = stations.drop(columns='station_type').drop_duplicates()
 
         if len(stations) > 0:
             stations_data = []
             for station in stations.index:
-                station_data = COOPS_Station(station).product(
-                    product=product,
-                    start_date=start_date,
-                    end_date=end_date,
-                    interval=interval,
-                    datum=datum,
-                )
-                if len(station_data["t"]) > 0:
+                with ThreadPoolExecutor(max_workers=1) as tp, ProcessPoolExecutor(max_workers=1) as pp:
+                    station_data = fetch_coops_station(
+                        station_id=station,
+                        start_date=start_date,
+                        end_date=end_date,
+                        product=product,
+                        datum=datum,
+                        interval=interval,
+                        multiprocessing_executor=pp,
+                        multithreading_executor=tp,
+                    )
+                if not station_data.empty:
                     stations_data.append(station_data)
-            stations_data = xarray.combine_nested(stations_data, concat_dim="nos_id")
+            stations_data = pandas.concat(stations_data, keys=stations.index)
+            stations_data = xarray.Dataset.from_dataframe(stations_data)
+
         else:
             stations_data = Dataset(
-                coords={"t": None, "nos_id": None, "nws_id": None, "x": None, "y": None}
+                coords={"time": None, "nos_id": None}
             )
 
         return stations_data
