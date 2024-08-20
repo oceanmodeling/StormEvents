@@ -66,8 +66,8 @@ def nhc_storms(year: int = None) -> pandas.DataFrame:
         header=0,
         names=columns,
     )
-    for i in ['start_date', 'end_date']:
-        storms[i] = pandas.to_datetime(storms[i], errors='coerce', format='%Y%m%d%H')
+    for i in ["start_date", "end_date"]:
+        storms[i] = pandas.to_datetime(storms[i], errors="coerce", format="%Y%m%d%H")
 
     storms = storms.astype(
         {"start_date": "datetime64[s]", "end_date": "datetime64[s]"},
