@@ -181,11 +181,11 @@ def test_storm_event_coops_product_within_isotach(florence2018):
     )
 
     assert len(null_data.data_vars) == 0
-    assert list(tidal_data.data_vars) == ["v", "s", "f", "q"]
+    assert list(tidal_data.data_vars) == ["value", "sigma", "flags", "quality"]
 
-    assert null_data["t"].sizes == {}
+    assert null_data["time"].sizes == {}
     assert tidal_data.sizes["nos_id"] > 0
-    assert tidal_data.sizes["t"] > 0
+    assert tidal_data.sizes["time"] > 0
 
 
 def test_storm_event_coops_product_within_region(florence2018):
@@ -206,11 +206,11 @@ def test_storm_event_coops_product_within_region(florence2018):
     )
 
     assert len(null_tidal_data.data_vars) == 0
-    assert list(east_coast_tidal_data.data_vars) == ["v", "s", "f", "q"]
+    assert list(null_tidal_data.data_vars) == ["value", "sigma", "flags", "quality"]
 
-    assert null_tidal_data["t"].sizes == {}
+    assert null_tidal_data["time"].sizes == {}
     assert east_coast_tidal_data.sizes["nos_id"] > 0
-    assert east_coast_tidal_data.sizes["t"] > 0
+    assert east_coast_tidal_data.sizes["time"] > 0
 
 
 def test_status():
