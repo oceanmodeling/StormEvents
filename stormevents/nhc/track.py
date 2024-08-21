@@ -33,7 +33,11 @@ from stormevents.nhc.atcf import EXTRA_ATCF_FIELDS
 from stormevents.nhc.atcf import get_atcf_entry
 from stormevents.nhc.atcf import read_atcf
 from stormevents.nhc.storms import nhc_storms
-from stormevents.nhc.const import get_RMW_regression_coefs, RMW_bias_correction
+from stormevents.nhc.const import (
+    get_RMW_regression_coefs,
+    RMW_bias_correction,
+    RMWFillMethod
+)
 from stormevents.utilities import subset_time_interval
 
 
@@ -50,6 +54,7 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
+        rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -104,6 +109,7 @@ class VortexTrack:
 
         self.advisories = advisories
         self.file_deck = file_deck
+        self.rmw_fill = rmw_fill
 
         self.__previous_configuration = self.__configuration
 
@@ -122,6 +128,7 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
+        rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
     ) -> "VortexTrack":
         """
         :param name: storm name
@@ -145,6 +152,7 @@ class VortexTrack:
             file_deck=file_deck,
             advisories=advisories,
             forecast_time=forecast_time,
+            rmw_fill=rmw_fill,
         )
 
     @classmethod
@@ -156,6 +164,7 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
+        rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
@@ -187,6 +196,7 @@ class VortexTrack:
             file_deck=file_deck,
             advisories=advisories,
             forecast_time=forecast_time,
+            rmw_fill=rmw_fill,
         )
 
     @property
@@ -485,6 +495,21 @@ class VortexTrack:
         if filename is not None and not isinstance(filename, pathlib.Path):
             filename = pathlib.Path(filename)
         self.__filename = filename
+
+    @property
+    def rmw_fill(self) -> RMWFillMethod:
+        """
+        :return: file path to read file (optional)
+        """
+
+        return self.__rmw_fill
+
+    @rmw_fill.setter
+    def rmw_fill(self, rmw_fill: RMWFillMethod):
+        if rmw_fill is None or not isinstance(rmw_fill,RMWFillMethod):
+            rmw_fill = RMWFillMethod.none
+
+        self.__rmw_fill = rmw_fill
 
     @property
     def data(self) -> DataFrame:
@@ -1042,7 +1067,9 @@ class VortexTrack:
         if "OFCL" in self.advisories:
             tracks = separate_tracks(dataframe)
             if all(adv in tracks for adv in ["OFCL", "CARQ"]):
-                tracks = correct_ofcl_based_on_carq_n_hollandb(tracks)
+                tracks = correct_ofcl_based_on_carq_n_hollandb(
+                    tracks, rmw_fill=self.rmw_fill
+                )
                 dataframe = combine_tracks(tracks)
 
         if len(self.__advisories_to_remove) > 0:
@@ -1062,6 +1089,7 @@ class VortexTrack:
             "file_deck": self.file_deck,
             "advisories": self.advisories,
             "filename": self.filename,
+            "rmw_fill": self.rmw_fill,
         }
 
     @staticmethod
@@ -1245,7 +1273,8 @@ def combine_tracks(tracks: Dict[str, Dict[str, DataFrame]]) -> DataFrame:
 
 
 def correct_ofcl_based_on_carq_n_hollandb(
-    tracks: Dict[str, Dict[str, DataFrame]]
+    tracks: Dict[str, Dict[str, DataFrame]],
+    rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
 ) -> Dict[str, Dict[str, DataFrame]]:
     """
     Correct official forecast using consensus track along with holland-b
@@ -1292,100 +1321,108 @@ def correct_ofcl_based_on_carq_n_hollandb(
         mslp_missing = missing.iloc[:, 1]
         radp_missing = missing.iloc[:, 2]
 
-        # fill OFCL maximum wind radius based on regression method from
-        # Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
-        isotach_radii = forecast[
-            [
-                "isotach_radius_for_NEQ",
-                "isotach_radius_for_SEQ",
-                "isotach_radius_for_NWQ",
-                "isotach_radius_for_SWQ",
+        if rmw_fill == RMWFillMethod.persistent:
+            # fill OFCL maximum wind radius with the first entry from
+            # 0-hr CARQ
+            forecast.loc[mrd_missing, "radius_of_maximum_winds"] = carq_ref[
+                "radius_of_maximum_winds"
             ]
-        ]
-        isotach_radii[isotach_radii == 0] = pandas.NA
-        rmw0 = carq_ref["radius_of_maximum_winds"]
-        fcst_hrs = (forecast.loc[mrd_missing, "forecast_hours"]).unique()
-        rads = numpy.array([numpy.nan])  # initializing to make sure available
-        rads_bias_names = [
-            c for c in RMW_bias_correction.columns if "isotach_radius" in c
-        ]
-        for fcst_hr in fcst_hrs:
-            fcst_index = forecast["forecast_hours"] == fcst_hr
-            if fcst_hr < 12:
-                rmw_ = rmw0
-            else:
-                fcst_hr_bc = min(fcst_hr, 120)
-                vmax = forecast.loc[fcst_index, "max_sustained_wind_speed"].iloc[0]
-                vmax -= RMW_bias_correction["max_sustained_wind_speed"][fcst_hr_bc]
-                if numpy.isnan(isotach_radii.loc[fcst_index].to_numpy()).all():
-                    # if no isotach's are found, preserve the isotach(s) if Vmax is greater
-                    if vmax > 50:
-                        rads = rads[0 : min(2, len(rads))]
-                    elif vmax > 34:
-                        rads = rads[[0]]
-                    else:
-                        rads = numpy.array([numpy.nan])
+
+        elif rmw_fill == RMWFillMethod.psurge_v2_9:
+            # fill OFCL maximum wind radius based on regression method from
+            # Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
+            isotach_radii = forecast[
+                [
+                    "isotach_radius_for_NEQ",
+                    "isotach_radius_for_SEQ",
+                    "isotach_radius_for_NWQ",
+                    "isotach_radius_for_SWQ",
+                ]
+            ]
+            isotach_radii[isotach_radii == 0] = pandas.NA
+            rmw0 = carq_ref["radius_of_maximum_winds"]
+            fcst_hrs = (forecast.loc[mrd_missing, "forecast_hours"]).unique()
+            rads = numpy.array([numpy.nan])  # initializing to make sure available
+            rads_bias_names = [
+                c for c in RMW_bias_correction.columns if "isotach_radius" in c
+            ]
+            for fcst_hr in fcst_hrs:
+                fcst_index = forecast["forecast_hours"] == fcst_hr
+                if fcst_hr < 12:
+                    rmw_ = rmw0
                 else:
-                    rads = numpy.nanmean(
-                        isotach_radii.loc[fcst_index].to_numpy(), axis=1
-                    )
-                    rads -= (
-                        RMW_bias_correction[rads_bias_names[0 : rads.size]]
-                        .loc[fcst_hr_bc]
-                        .values
-                    )
-                coefs = get_RMW_regression_coefs(fcst_hr, rads)
-                lat = forecast.loc[fcst_index, "latitude"].iloc[0]
-                lat -= RMW_bias_correction["latitude"][fcst_hr_bc]
-                bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
-                rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
-                    (coefs[[0, -1]] * bases[[0, -1]]).sum()
-                )  # bound RMW as per Penny et al. (2023)
-            forecast.loc[fcst_index, "radius_of_maximum_winds"] = clamp(
-                rmw_, 5.0, max(120.0, rmw0)
-            )
-        # apply 24-HR moving mean to unique datetimes
-        fcsthr_index = forecast["forecast_hours"].drop_duplicates().index
-        df_temp = forecast.loc[fcsthr_index].copy()
-        # make sure 60, 84, and 108 are added
-        fcsthrs_12hr = numpy.unique(
-            numpy.append(df_temp["forecast_hours"].values, [60, 84, 108])
-        )
-        rmw_12hr = numpy.interp(
-            fcsthrs_12hr, df_temp["forecast_hours"], df_temp["radius_of_maximum_winds"]
-        )
-        dt_12hr = pandas.to_datetime(
-            fcsthrs_12hr, unit="h", origin=df_temp["datetime"].iloc[0]
-        )
-        df_temp = DataFrame(
-            data={"forecast_hours": fcsthrs_12hr, "radius_of_maximum_winds": rmw_12hr},
-            index=dt_12hr,
-        )
-        rmw_rolling = df_temp.rolling(window="24.01 h", center=True, min_periods=1)[
-            "radius_of_maximum_winds"
-        ].mean()
-        for valid_time, rmw in rmw_rolling.items():
-            valid_index = forecast["datetime"] == valid_time
-            if (
-                valid_index.sum() == 0
-                or forecast.loc[valid_index, "forecast_hours"].iloc[0] == 0
-            ):
-                continue
-            # make sure rolling rmw is not larger than the maximum radii of the strongest isotach
-            # this problem usually comes from the rolling average
-            max_isotach_radii = isotach_radii.loc[valid_index].iloc[-1].max()
-            if rmw < max_isotach_radii or numpy.isnan(max_isotach_radii):
-                forecast.loc[valid_index, "radius_of_maximum_winds"] = rmw
-            # in case it does not come from rolling average just set to be Vr/Vmax ratio of max_isotach_radii
-            if (
-                forecast.loc[valid_index, "radius_of_maximum_winds"].iloc[-1]
-                > max_isotach_radii
-            ):
-                forecast.loc[valid_index, "radius_of_maximum_winds"] = (
-                    max_isotach_radii
-                    * forecast.loc[valid_index, "isotach_radius"].iloc[-1]
-                    / forecast.loc[valid_index, "max_sustained_wind_speed"].iloc[-1]
+                    fcst_hr_bc = min(fcst_hr, 120)
+                    vmax = forecast.loc[fcst_index, "max_sustained_wind_speed"].iloc[0]
+                    vmax -= RMW_bias_correction["max_sustained_wind_speed"][fcst_hr_bc]
+                    if numpy.isnan(isotach_radii.loc[fcst_index].to_numpy()).all():
+                        # if no isotach's are found, preserve the isotach(s) if Vmax is greater
+                        if vmax > 50:
+                            rads = rads[0 : min(2, len(rads))]
+                        elif vmax > 34:
+                            rads = rads[[0]]
+                        else:
+                            rads = numpy.array([numpy.nan])
+                    else:
+                        rads = numpy.nanmean(
+                            isotach_radii.loc[fcst_index].to_numpy(), axis=1
+                        )
+                        rads -= (
+                            RMW_bias_correction[rads_bias_names[0 : rads.size]]
+                            .loc[fcst_hr_bc]
+                            .values
+                        )
+                    coefs = get_RMW_regression_coefs(fcst_hr, rads)
+                    lat = forecast.loc[fcst_index, "latitude"].iloc[0]
+                    lat -= RMW_bias_correction["latitude"][fcst_hr_bc]
+                    bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
+                    rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
+                        (coefs[[0, -1]] * bases[[0, -1]]).sum()
+                    )  # bound RMW as per Penny et al. (2023)
+                forecast.loc[fcst_index, "radius_of_maximum_winds"] = clamp(
+                    rmw_, 5.0, max(120.0, rmw0)
                 )
+            # apply 24-HR moving mean to unique datetimes
+            fcsthr_index = forecast["forecast_hours"].drop_duplicates().index
+            df_temp = forecast.loc[fcsthr_index].copy()
+            # make sure 60, 84, and 108 are added
+            fcsthrs_12hr = numpy.unique(
+                numpy.append(df_temp["forecast_hours"].values, [60, 84, 108])
+            )
+            rmw_12hr = numpy.interp(
+                fcsthrs_12hr, df_temp["forecast_hours"], df_temp["radius_of_maximum_winds"]
+            )
+            dt_12hr = pandas.to_datetime(
+                fcsthrs_12hr, unit="h", origin=df_temp["datetime"].iloc[0]
+            )
+            df_temp = DataFrame(
+                data={"forecast_hours": fcsthrs_12hr, "radius_of_maximum_winds": rmw_12hr},
+                index=dt_12hr,
+            )
+            rmw_rolling = df_temp.rolling(window="24.01 h", center=True, min_periods=1)[
+                "radius_of_maximum_winds"
+            ].mean()
+            for valid_time, rmw in rmw_rolling.items():
+                valid_index = forecast["datetime"] == valid_time
+                if (
+                    valid_index.sum() == 0
+                    or forecast.loc[valid_index, "forecast_hours"].iloc[0] == 0
+                ):
+                    continue
+                # make sure rolling rmw is not larger than the maximum radii of the strongest isotach
+                # this problem usually comes from the rolling average
+                max_isotach_radii = isotach_radii.loc[valid_index].iloc[-1].max()
+                if rmw < max_isotach_radii or numpy.isnan(max_isotach_radii):
+                    forecast.loc[valid_index, "radius_of_maximum_winds"] = rmw
+                # in case it does not come from rolling average just set to be Vr/Vmax ratio of max_isotach_radii
+                if (
+                    forecast.loc[valid_index, "radius_of_maximum_winds"].iloc[-1]
+                    > max_isotach_radii
+                ):
+                    forecast.loc[valid_index, "radius_of_maximum_winds"] = (
+                        max_isotach_radii
+                        * forecast.loc[valid_index, "isotach_radius"].iloc[-1]
+                        / forecast.loc[valid_index, "max_sustained_wind_speed"].iloc[-1]
+                    )
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
         forecast.loc[radp_missing, "background_pressure"] = carq_ref[

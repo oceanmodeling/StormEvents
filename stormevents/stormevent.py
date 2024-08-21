@@ -27,6 +27,7 @@ from stormevents.nhc import nhc_storms
 from stormevents.nhc import VortexTrack
 from stormevents.nhc.atcf import ATCF_Advisory
 from stormevents.nhc.atcf import ATCF_FileDeck
+from stormevents.nhc.const import RMWFillMethod
 from stormevents.usgs import usgs_flood_storms
 from stormevents.usgs import USGS_StormEvent
 from stormevents.utilities import relative_to_time_interval
@@ -279,6 +280,7 @@ class StormEvent:
         advisories: List[ATCF_Advisory] = None,
         filename: PathLike = None,
         forecast_time: datetime = None,
+        rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
     ) -> VortexTrack:
         """
         retrieve NHC ATCF track data
@@ -311,6 +313,7 @@ class StormEvent:
                 file_deck=file_deck,
                 advisories=advisories,
                 forecast_time=forecast_time,
+                rmw_fill=rmw_fill
             )
         return track
 

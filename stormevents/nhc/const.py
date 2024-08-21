@@ -1,5 +1,14 @@
+from enum import Enum, auto
+
 from numpy import isnan, array, argwhere
 from pandas import DataFrame
+
+
+class RMWFillMethod(Enum):
+    none = None
+    persistent = auto()
+    psurge_v2_9 = auto()
+
 
 # Bias correction values for the Rmax forecast
 # ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
