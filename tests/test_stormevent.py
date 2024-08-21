@@ -72,14 +72,14 @@ def test_storm_event_lookup():
     assert henri2021.year == 2021
     assert henri2021.nhc_code == "AL082021"
     assert henri2021.usgs_id == 310
-    assert henri2021.start_date == datetime(2021, 8, 20, 18)
+    assert henri2021.start_date == datetime(2021, 8, 20, 4)
     assert henri2021.end_date == datetime(2021, 8, 24, 18)
 
     assert ida2021.name == "IDA"
     assert ida2021.year == 2021
     assert ida2021.nhc_code == "AL092021"
     assert ida2021.usgs_id == 312
-    assert ida2021.start_date == datetime(2021, 8, 27, 18)
+    assert ida2021.start_date == datetime(2021, 8, 26, 12)
     assert ida2021.end_date == datetime(2021, 9, 4, 18)
 
     # Similar names are not swapped (like [B]ETA)

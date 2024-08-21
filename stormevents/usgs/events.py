@@ -176,7 +176,7 @@ def usgs_flood_storms(year: int = None) -> DataFrame:
     storm_names = sorted(pandas.unique(storms["name"].str.strip()))
     for storm_name in storm_names:
         event_storms = events[
-            events["usgs_name"].str.contains(storm_name, flags=re.IGNORECASE)
+            events["usgs_name"].str.contains(f"\\b{storm_name}\\b", flags=re.IGNORECASE)
         ]
         for _, event in event_storms.iterrows():
             storms_matching = storms[
@@ -188,13 +188,8 @@ def usgs_flood_storms(year: int = None) -> DataFrame:
                 matching_event = events.loc[events["usgs_id"] == event["usgs_id"]].iloc[
                     0
                 ]
-                if matching_event["nhc_code"] is None:
-                    events.at[matching_event.name, "nhc_name"] = storm["name"]
-                    events.at[matching_event.name, "nhc_code"] = storm.name
-                else:
-                    matching_event["nhc_name"] = storm["name"]
-                    matching_event["nhc_code"] = storm.name
-                    events.loc[len(events)] = matching_event
+                events.at[matching_event.name, "nhc_name"] = storm["name"]
+                events.at[matching_event.name, "nhc_code"] = storm.name
 
     events = events.loc[
         ~pandas.isna(events["nhc_code"]),
