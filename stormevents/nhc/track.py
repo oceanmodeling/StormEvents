@@ -36,7 +36,7 @@ from stormevents.nhc.storms import nhc_storms
 from stormevents.nhc.const import (
     get_RMW_regression_coefs,
     RMW_bias_correction,
-    RMWFillMethod
+    RMWFillMethod,
 )
 from stormevents.utilities import subset_time_interval
 
@@ -506,7 +506,7 @@ class VortexTrack:
 
     @rmw_fill.setter
     def rmw_fill(self, rmw_fill: RMWFillMethod):
-        if rmw_fill is None or not isinstance(rmw_fill,RMWFillMethod):
+        if rmw_fill is None or not isinstance(rmw_fill, RMWFillMethod):
             rmw_fill = RMWFillMethod.none
 
         self.__rmw_fill = rmw_fill
@@ -1374,7 +1374,9 @@ def correct_ofcl_based_on_carq_n_hollandb(
                     coefs = get_RMW_regression_coefs(fcst_hr, rads)
                     lat = forecast.loc[fcst_index, "latitude"].iloc[0]
                     lat -= RMW_bias_correction["latitude"][fcst_hr_bc]
-                    bases = numpy.hstack((1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat))
+                    bases = numpy.hstack(
+                        (1.0, rmw0, rads[~numpy.isnan(rads)], vmax, lat)
+                    )
                     rmw_ = (bases[1:-1] ** coefs[1:-1]).prod() * numpy.exp(
                         (coefs[[0, -1]] * bases[[0, -1]]).sum()
                     )  # bound RMW as per Penny et al. (2023)
@@ -1389,13 +1391,18 @@ def correct_ofcl_based_on_carq_n_hollandb(
                 numpy.append(df_temp["forecast_hours"].values, [60, 84, 108])
             )
             rmw_12hr = numpy.interp(
-                fcsthrs_12hr, df_temp["forecast_hours"], df_temp["radius_of_maximum_winds"]
+                fcsthrs_12hr,
+                df_temp["forecast_hours"],
+                df_temp["radius_of_maximum_winds"],
             )
             dt_12hr = pandas.to_datetime(
                 fcsthrs_12hr, unit="h", origin=df_temp["datetime"].iloc[0]
             )
             df_temp = DataFrame(
-                data={"forecast_hours": fcsthrs_12hr, "radius_of_maximum_winds": rmw_12hr},
+                data={
+                    "forecast_hours": fcsthrs_12hr,
+                    "radius_of_maximum_winds": rmw_12hr,
+                },
                 index=dt_12hr,
             )
             rmw_rolling = df_temp.rolling(window="24.01 h", center=True, min_periods=1)[

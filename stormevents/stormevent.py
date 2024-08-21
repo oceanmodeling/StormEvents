@@ -313,7 +313,7 @@ class StormEvent:
                 file_deck=file_deck,
                 advisories=advisories,
                 forecast_time=forecast_time,
-                rmw_fill=rmw_fill
+                rmw_fill=rmw_fill,
             )
         return track
 
