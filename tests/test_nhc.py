@@ -6,10 +6,11 @@ import pandas
 import pytest
 from pytest_socket import SocketBlockedError
 
+import stormevents
 from stormevents.nhc.storms import nhc_storms
 from stormevents.nhc.storms import nhc_storms_gis_archive
 from stormevents.nhc.track import VortexTrack
-from stormevents.nhc.const import get_RMW_regression_coefs
+from stormevents.nhc.const import get_RMW_regression_coefs, RMWFillMethod
 from tests import check_reference_directory
 from tests import INPUT_DIRECTORY
 from tests import OUTPUT_DIRECTORY
@@ -385,3 +386,147 @@ def test_RMW_regression_coefs():
     for fcst_hr, rad in zip(fcst_hrs, rads):
         coefs = get_RMW_regression_coefs(fcst_hr, numpy.array(rad))
         assert len(coefs) == (~numpy.isnan(rad)).sum() + 4
+
+
+def test_rmw_fill_from_event():
+    florence2018 = stormevents.StormEvent("Florence", 2018)
+    tr = florence2018.track(
+        file_deck="a", advisories=["OFCL"], rmw_fill=RMWFillMethod.persistent
+    )
+    data = tr.data
+    i_uq_row = 40
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
+    assert rmw.unique() == 10
+
+
+def test_rmw_fill_from_event_default_value():
+    florence2018 = stormevents.StormEvent("Florence", 2018)
+    tr = florence2018.track(file_deck="a", advisories=["OFCL"])
+
+    assert tr.rmw_fill == RMWFillMethod.regression_penny_2023
+
+
+def test_rmw_fill_from_track():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        rmw_fill=RMWFillMethod.persistent,
+    )
+    data = tr_florence2018.data
+    i_uq_row = 40
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
+    assert rmw.unique() == 10
+
+
+def test_rmw_fill_from_track_default_value():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+    )
+    assert tr_florence2018.rmw_fill == RMWFillMethod.regression_penny_2023
+
+
+def test_rmw_fill_method_none():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        rmw_fill=RMWFillMethod.none,
+    )
+    assert tr_florence2018.rmw_fill == RMWFillMethod.none
+    data = tr_florence2018.data
+    i_uq_row = 40
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
+    assert rmw.unique() == 0
+
+
+def test_rmw_fill_method_persistent():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        rmw_fill=RMWFillMethod.persistent,
+    )
+    assert tr_florence2018.rmw_fill == RMWFillMethod.persistent
+    data = tr_florence2018.data
+    i_uq_row = 40
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
+    assert rmw.unique() == 10
+
+
+def test_rmw_fill_method_regression_penny_2023():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        rmw_fill=RMWFillMethod.regression_penny_2023,
+    )
+    assert tr_florence2018.rmw_fill == RMWFillMethod.regression_penny_2023
+    data = tr_florence2018.data
+    i_uq_row = 40
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
+    assert len(rmw.unique()) > 1
+
+
+def test_rmw_fill_method_setvalue_invalid():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        rmw_fill=RMWFillMethod.regression_penny_2023,
+    )
+
+    assert tr_florence2018.rmw_fill == RMWFillMethod.regression_penny_2023
+
+    # Note str is NOT acceptable
+    tr_florence2018.rmw_fill = "persistent"
+    assert tr_florence2018.rmw_fill == RMWFillMethod.none
+
+    tr_florence2018.rmw_fill = 1
+    assert tr_florence2018.rmw_fill == RMWFillMethod.none
+
+    tr_florence2018.rmw_fill = None
+    assert tr_florence2018.rmw_fill == RMWFillMethod.none
+
+
+def test_rmw_fill_method_set_after_creation():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        rmw_fill=RMWFillMethod.regression_penny_2023,
+    )
+
+    i_uq_row = 40
+
+    data1 = tr_florence2018.data
+    rmw1 = data1.loc[
+        data1.track_start_time == data1.track_start_time.unique()[i_uq_row]
+    ]["radius_of_maximum_winds"]
+
+    tr_florence2018.rmw_fill = RMWFillMethod.persistent
+    data2 = tr_florence2018.data
+    rmw2 = data2.loc[
+        data2.track_start_time == data2.track_start_time.unique()[i_uq_row]
+    ]["radius_of_maximum_winds"]
+
+    assert (rmw1 != rmw2).any()
