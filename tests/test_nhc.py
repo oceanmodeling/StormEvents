@@ -395,7 +395,9 @@ def test_rmw_fill_from_event():
     )
     data = tr.data
     i_uq_row = 40
-    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]]['radius_of_maximum_winds']
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
     assert rmw.unique() == 10
 
 
@@ -412,11 +414,13 @@ def test_rmw_fill_from_track():
         2018,
         file_deck="a",
         advisories=["OFCL"],
-        rmw_fill=RMWFillMethod.persistent
+        rmw_fill=RMWFillMethod.persistent,
     )
     data = tr_florence2018.data
     i_uq_row = 40
-    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]]['radius_of_maximum_winds']
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
     assert rmw.unique() == 10
 
 
@@ -441,9 +445,11 @@ def test_rmw_fill_method_none():
     assert tr_florence2018.rmw_fill == RMWFillMethod.none
     data = tr_florence2018.data
     i_uq_row = 40
-    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]]['radius_of_maximum_winds']
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
     assert rmw.unique() == 0
-    
+
 
 def test_rmw_fill_method_persistent():
     tr_florence2018 = VortexTrack.from_storm_name(
@@ -456,7 +462,9 @@ def test_rmw_fill_method_persistent():
     assert tr_florence2018.rmw_fill == RMWFillMethod.persistent
     data = tr_florence2018.data
     i_uq_row = 40
-    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]]['radius_of_maximum_winds']
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
     assert rmw.unique() == 10
 
 
@@ -471,7 +479,9 @@ def test_rmw_fill_method_psurge_v29():
     assert tr_florence2018.rmw_fill == RMWFillMethod.psurge_v2_9
     data = tr_florence2018.data
     i_uq_row = 40
-    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]]['radius_of_maximum_winds']
+    rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "radius_of_maximum_winds"
+    ]
     assert len(rmw.unique()) > 1
 
 
@@ -487,10 +497,14 @@ def test_rmw_fill_method_set_after_creation():
     i_uq_row = 40
 
     data1 = tr_florence2018.data
-    rmw1 = data1.loc[data1.track_start_time == data1.track_start_time.unique()[i_uq_row]]['radius_of_maximum_winds']
+    rmw1 = data1.loc[
+        data1.track_start_time == data1.track_start_time.unique()[i_uq_row]
+    ]["radius_of_maximum_winds"]
 
     tr_florence2018.rmw_fill = RMWFillMethod.persistent
     data2 = tr_florence2018.data
-    rmw2 = data2.loc[data2.track_start_time == data2.track_start_time.unique()[i_uq_row]]['radius_of_maximum_winds']
+    rmw2 = data2.loc[
+        data2.track_start_time == data2.track_start_time.unique()[i_uq_row]
+    ]["radius_of_maximum_winds"]
 
     assert (rmw1 != rmw2).any()
