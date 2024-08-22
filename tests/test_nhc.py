@@ -405,7 +405,7 @@ def test_rmw_fill_from_event_default_value():
     florence2018 = stormevents.StormEvent("Florence", 2018)
     tr = florence2018.track(file_deck="a", advisories=["OFCL"])
 
-    assert tr.rmw_fill == RMWFillMethod.psurge_v2_9
+    assert tr.rmw_fill == RMWFillMethod.regression_penny_2023
 
 
 def test_rmw_fill_from_track():
@@ -431,7 +431,7 @@ def test_rmw_fill_from_track_default_value():
         file_deck="a",
         advisories=["OFCL"],
     )
-    assert tr_florence2018.rmw_fill == RMWFillMethod.psurge_v2_9
+    assert tr_florence2018.rmw_fill == RMWFillMethod.regression_penny_2023
 
 
 def test_rmw_fill_method_none():
@@ -468,15 +468,15 @@ def test_rmw_fill_method_persistent():
     assert rmw.unique() == 10
 
 
-def test_rmw_fill_method_psurge_v29():
+def test_rmw_fill_method_regression_penny_2023():
     tr_florence2018 = VortexTrack.from_storm_name(
         "Florence",
         2018,
         file_deck="a",
         advisories=["OFCL"],
-        rmw_fill=RMWFillMethod.psurge_v2_9,
+        rmw_fill=RMWFillMethod.regression_penny_2023,
     )
-    assert tr_florence2018.rmw_fill == RMWFillMethod.psurge_v2_9
+    assert tr_florence2018.rmw_fill == RMWFillMethod.regression_penny_2023
     data = tr_florence2018.data
     i_uq_row = 40
     rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
@@ -491,7 +491,7 @@ def test_rmw_fill_method_set_after_creation():
         2018,
         file_deck="a",
         advisories=["OFCL"],
-        rmw_fill=RMWFillMethod.psurge_v2_9,
+        rmw_fill=RMWFillMethod.regression_penny_2023,
     )
 
     i_uq_row = 40

@@ -54,7 +54,7 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
-        rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
+        rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -128,7 +128,7 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
-        rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
+        rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
     ) -> "VortexTrack":
         """
         :param name: storm name
@@ -164,7 +164,7 @@ class VortexTrack:
         file_deck: ATCF_FileDeck = None,
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
-        rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
+        rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
@@ -1274,7 +1274,7 @@ def combine_tracks(tracks: Dict[str, Dict[str, DataFrame]]) -> DataFrame:
 
 def correct_ofcl_based_on_carq_n_hollandb(
     tracks: Dict[str, Dict[str, DataFrame]],
-    rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
+    rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
 ) -> Dict[str, Dict[str, DataFrame]]:
     """
     Correct official forecast using consensus track along with holland-b
@@ -1328,7 +1328,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
                 "radius_of_maximum_winds"
             ]
 
-        elif rmw_fill == RMWFillMethod.psurge_v2_9:
+        elif rmw_fill == RMWFillMethod.regression_penny_2023:
             # fill OFCL maximum wind radius based on regression method from
             # Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
             isotach_radii = forecast[

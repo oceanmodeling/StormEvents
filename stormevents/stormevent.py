@@ -280,7 +280,7 @@ class StormEvent:
         advisories: List[ATCF_Advisory] = None,
         filename: PathLike = None,
         forecast_time: datetime = None,
-        rmw_fill: RMWFillMethod = RMWFillMethod.psurge_v2_9,
+        rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
     ) -> VortexTrack:
         """
         retrieve NHC ATCF track data

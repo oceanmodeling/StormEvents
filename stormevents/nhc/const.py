@@ -7,7 +7,7 @@ from pandas import DataFrame
 class RMWFillMethod(Enum):
     none = None
     persistent = auto()
-    psurge_v2_9 = auto()
+    regression_penny_2023 = auto()
 
 
 # Bias correction values for the Rmax forecast
