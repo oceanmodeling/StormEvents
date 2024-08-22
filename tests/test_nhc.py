@@ -485,6 +485,28 @@ def test_rmw_fill_method_regression_penny_2023():
     assert len(rmw.unique()) > 1
 
 
+def test_rmw_fill_method_setvalue_invalid():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        rmw_fill=RMWFillMethod.regression_penny_2023,
+    )
+
+    assert tr_florence2018.rmw_fill == RMWFillMethod.regression_penny_2023
+
+    # Note str is NOT acceptable
+    tr_florence2018.rmw_fill = "persistent"
+    assert tr_florence2018.rmw_fill == RMWFillMethod.none
+
+    tr_florence2018.rmw_fill = 1
+    assert tr_florence2018.rmw_fill == RMWFillMethod.none
+
+    tr_florence2018.rmw_fill = None
+    assert tr_florence2018.rmw_fill == RMWFillMethod.none
+
+
 def test_rmw_fill_method_set_after_creation():
     tr_florence2018 = VortexTrack.from_storm_name(
         "Florence",
