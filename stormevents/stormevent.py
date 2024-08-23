@@ -10,8 +10,8 @@ import pandas
 import xarray
 from searvey.coops import COOPS_Interval
 from searvey.coops import COOPS_Product
-from searvey.coops import COOPS_Station
-from searvey.coops import coops_stations_within_region
+from searvey.coops import COOPS_Query
+from searvey.coops import get_coops_stations
 from searvey.coops import COOPS_TidalDatum
 from searvey.coops import COOPS_TimeZone
 from searvey.coops import COOPS_Units
@@ -432,7 +432,7 @@ class StormEvent:
         region: Polygon,
         start_date: datetime = None,
         end_date: datetime = None,
-        status: StationStatus = None,
+        status: StationStatus = StationStatus.ACTIVE,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -491,29 +491,52 @@ class StormEvent:
 
         stations = gpd.GeoDataFrame()
         if not region.is_empty:
-            stations = coops_stations_within_region(
-                region=region, station_status=status
+            stations = get_coops_stations(
+                region=region, metadata_source='main'
             )
+            stations = stations[stations.status == status.value]
 
         if len(stations) > 0:
             stations_data = []
-            for station in stations.index:
-                station_data = COOPS_Station(station).product(
+            for station in stations.itertuples():
+                station_data = COOPS_Query(
+                    int(station.Index),
                     product=product,
                     start_date=start_date,
                     end_date=end_date,
                     interval=interval,
                     datum=datum,
-                )
+                ).data
+
+
+                station_data["nos_id"] = station.Index
+                station_data.set_index(["nos_id", station_data.index], inplace=True)
+                station_data = station_data.to_xarray()
+
+
+                if len(station_data["t"]) > 0:
+                    station_data = station_data.assign_coords(
+                        nws_id=("nos_id", [station.nws_id]),
+                        x=("nos_id", [station.lon]),
+                        y=("nos_id", [station.lat]),
+                    )
+                else:
+                    station_data = station_data.assign_coords(
+                        nws_id=("nos_id", []),
+                        x=("nos_id", []),
+                        y=("nos_id", []),
+                    )
+
                 if len(station_data["t"]) > 0:
                     stations_data.append(station_data)
-            stations_data = xarray.combine_nested(stations_data, concat_dim="nos_id")
+            stations_ds = xarray.combine_nested(stations_data, concat_dim="nos_id")
         else:
-            stations_data = Dataset(
+            stations_ds = Dataset(
                 coords={"t": None, "nos_id": None, "nws_id": None, "x": None, "y": None}
             )
 
-        return stations_data
+
+        return stations_ds
 
     def __repr__(self) -> str:
         return (
