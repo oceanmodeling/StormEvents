@@ -432,7 +432,7 @@ class StormEvent:
         region: Polygon,
         start_date: datetime = None,
         end_date: datetime = None,
-        status: StationStatus = StationStatus.ACTIVE,
+        status: StationStatus = None,
         datum: COOPS_TidalDatum = None,
         units: COOPS_Units = None,
         time_zone: COOPS_TimeZone = None,
@@ -491,10 +491,9 @@ class StormEvent:
 
         stations = gpd.GeoDataFrame()
         if not region.is_empty:
-            stations = get_coops_stations(
-                region=region, metadata_source='main'
-            )
-            stations = stations[stations.status == status.value]
+            stations = get_coops_stations(region=region, metadata_source="main")
+            if status is not None:
+                stations = stations[stations.status == status.value]
 
         if len(stations) > 0:
             stations_data = []
@@ -508,11 +507,9 @@ class StormEvent:
                     datum=datum,
                 ).data
 
-
                 station_data["nos_id"] = station.Index
                 station_data.set_index(["nos_id", station_data.index], inplace=True)
                 station_data = station_data.to_xarray()
-
 
                 if len(station_data["t"]) > 0:
                     station_data = station_data.assign_coords(
@@ -534,7 +531,6 @@ class StormEvent:
             stations_ds = Dataset(
                 coords={"t": None, "nos_id": None, "nws_id": None, "x": None, "y": None}
             )
-
 
         return stations_ds
 

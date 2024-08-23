@@ -1134,7 +1134,7 @@ class VortexTrack:
                 .astype("timedelta64[s]")
                 .astype(float)
             )
-            with numpy.errstate(invalid='ignore'):
+            with numpy.errstate(invalid="ignore"):
                 speeds = pandas.Series(distances / abs(intervals), index=indices)
             bearings = pandas.Series(inverse_azimuths % 360, index=indices)
             # use forward azimuths for negative intervals
