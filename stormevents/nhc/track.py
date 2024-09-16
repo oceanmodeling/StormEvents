@@ -428,7 +428,7 @@ class VortexTrack:
     def file_deck(self, file_deck: ATCF_FileDeck):
         if file_deck is None and self.filename is None:
             if self.advisories is not None or len(self.advisories) > 0:
-                if ATCF_Advisory.BEST in typepigeon.convert_value(
+                if ATCF_Advisory.BEST in typepigeon.to_type(
                     self.advisories, [ATCF_Advisory]
                 ):
                     file_deck = ATCF_FileDeck.BEST
@@ -437,7 +437,7 @@ class VortexTrack:
             else:
                 file_deck = ATCF_FileDeck.BEST
         elif not isinstance(file_deck, ATCF_FileDeck):
-            file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
+            file_deck = typepigeon.to_type(file_deck, ATCF_FileDeck)
         self.__file_deck = file_deck
 
     @property
@@ -457,7 +457,7 @@ class VortexTrack:
         if advisories is None:
             advisories = self.__valid_advisories
         else:
-            advisories = typepigeon.convert_value(advisories, [str])
+            advisories = typepigeon.to_type(advisories, [str])
             advisories = [advisory.upper() for advisory in advisories]
         self.__advisories = advisories
 

@@ -159,10 +159,10 @@ def atcf_files(
         )
 
     if not isinstance(file_deck, ATCF_FileDeck):
-        file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
+        file_deck = typepigeon.to_type(file_deck, ATCF_FileDeck)
 
     if not isinstance(mode, ATCF_Mode):
-        mode = typepigeon.convert_value(mode, ATCF_Mode)
+        mode = typepigeon.to_type(mode, ATCF_Mode)
 
     if mode == ATCF_Mode.HISTORICAL and year is None or isinstance(year, Iterable):
         if year is None:
@@ -275,7 +275,7 @@ def atcf_url(
 
     if not isinstance(file_deck, ATCF_FileDeck):
         try:
-            file_deck = typepigeon.convert_value(file_deck, ATCF_FileDeck)
+            file_deck = typepigeon.to_type(file_deck, ATCF_FileDeck)
         except ValueError:
             file_deck = None
     if file_deck is None:
@@ -283,7 +283,7 @@ def atcf_url(
 
     if not isinstance(mode, ATCF_Mode):
         try:
-            mode = typepigeon.convert_value(mode, ATCF_Mode)
+            mode = typepigeon.to_type(mode, ATCF_Mode)
         except ValueError:
             mode = None
 
@@ -328,9 +328,7 @@ def read_atcf(
     """
 
     if advisories is not None:
-        advisories = [
-            typepigeon.convert_value(advisory, str) for advisory in advisories
-        ]
+        advisories = [typepigeon.to_type(advisory, str) for advisory in advisories]
 
     if isinstance(atcf, (str, PathLike, Path)):
         atcf = open(atcf)
