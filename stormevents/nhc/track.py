@@ -1405,7 +1405,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
                 },
                 index=dt_12hr,
             )
-            rmw_rolling = df_temp.rolling(window="24.01 h", center=True, min_periods=1)[
+            rmw_rolling = df_temp.rolling(window="24h1min", center=True, min_periods=1)[
                 "radius_of_maximum_winds"
             ].mean()
             for valid_time, rmw in rmw_rolling.items():
