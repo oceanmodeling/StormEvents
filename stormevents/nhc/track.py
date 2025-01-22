@@ -1377,7 +1377,10 @@ def correct_ofcl_based_on_carq_n_hollandb(
                 "radius_of_maximum_winds"
             ]
 
-        elif rmw_fill == RMWFillMethod.regression_penny_2023:
+        elif (
+            rmw_fill == RMWFillMethod.regression_penny_2023
+            or rmw_fill == RMWFillMethod.regression_penny_2023_no_smoothing
+        ):
             # fill OFCL maximum wind radius based on regression method from
             # Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
             isotach_radii = forecast[
