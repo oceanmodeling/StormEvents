@@ -8,6 +8,7 @@ class RMWFillMethod(Enum):
     none = None
     persistent = auto()
     regression_penny_2023 = auto()
+    regression_penny_2023_with_smoothing = auto()
     regression_penny_2023_no_smoothing = auto()
 
 

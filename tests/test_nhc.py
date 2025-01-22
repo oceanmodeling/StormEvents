@@ -468,15 +468,15 @@ def test_rmw_fill_method_persistent():
     assert rmw.unique() == 10
 
 
-def test_rmw_fill_method_regression_penny_2023():
+def test_rmw_fill_method_regression_penny_2023_with_smoothing():
     tr_florence2018 = VortexTrack.from_storm_name(
         "Florence",
         2018,
         file_deck="a",
         advisories=["OFCL"],
-        rmw_fill=RMWFillMethod.regression_penny_2023,
+        rmw_fill=RMWFillMethod.regression_penny_2023_with_smoothing,
     )
-    assert tr_florence2018.rmw_fill == RMWFillMethod.regression_penny_2023
+    assert tr_florence2018.rmw_fill == RMWFillMethod.regression_penny_2023_with_smoothing
     data = tr_florence2018.data
     i_uq_row = 40
     rmw = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][

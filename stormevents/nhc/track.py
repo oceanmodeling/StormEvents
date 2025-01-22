@@ -1379,6 +1379,7 @@ def correct_ofcl_based_on_carq_n_hollandb(
 
         elif (
             rmw_fill == RMWFillMethod.regression_penny_2023
+            or rmw_fill == RMWFillMethod.regression_penny_2023_with_smoothing
             or rmw_fill == RMWFillMethod.regression_penny_2023_no_smoothing
         ):
             # fill OFCL maximum wind radius based on regression method from
@@ -1436,7 +1437,10 @@ def correct_ofcl_based_on_carq_n_hollandb(
                     rmw_, 5.0, max(120.0, rmw0)
                 )
             # apply 24-HR moving mean to unique datetimes
-            if rmw_fill == RMWFillMethod.regression_penny_2023:
+            if (
+                rmw_fill == RMWFillMethod.regression_penny_2023
+                or rmw_fill == RMWFillMethod.regression_penny_2023_with_smoothing
+            ):
                 forecast = movingmean(forecast)
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
