@@ -1287,6 +1287,55 @@ def correct_ofcl_based_on_carq_n_hollandb(
     def clamp(n, minn, maxn):
         return max(min(maxn, n), minn)
 
+    def movingmean(dff):
+        fcsthr_index = dff["forecast_hours"].drop_duplicates().index
+        df_temp = dff.loc[fcsthr_index].copy()
+        # make sure 60, 84, and 108 are added
+        fcsthrs_12hr = numpy.unique(
+            numpy.append(df_temp["forecast_hours"].values, [60, 84, 108])
+        )
+        rmw_12hr = numpy.interp(
+            fcsthrs_12hr,
+            df_temp["forecast_hours"],
+            df_temp["radius_of_maximum_winds"],
+        )
+        dt_12hr = pandas.to_datetime(
+            fcsthrs_12hr, unit="h", origin=df_temp["datetime"].iloc[0]
+        )
+        df_temp = DataFrame(
+            data={
+                "forecast_hours": fcsthrs_12hr,
+                "radius_of_maximum_winds": rmw_12hr,
+            },
+            index=dt_12hr,
+        )
+        rmw_rolling = df_temp.rolling(window="24h1min", center=True, min_periods=1)[
+            "radius_of_maximum_winds"
+        ].mean()
+        for valid_time, rmw in rmw_rolling.items():
+            valid_index = dff["datetime"] == valid_time
+            if (
+                valid_index.sum() == 0
+                or dff.loc[valid_index, "forecast_hours"].iloc[0] == 0
+            ):
+                continue
+            # make sure rolling rmw is not larger than the maximum radii of the strongest isotach
+            # this problem usually comes from the rolling average
+            max_isotach_radii = isotach_radii.loc[valid_index].iloc[-1].max()
+            if rmw < max_isotach_radii or numpy.isnan(max_isotach_radii):
+                dff.loc[valid_index, "radius_of_maximum_winds"] = rmw
+            # in case it does not come from rolling average just set to be Vr/Vmax ratio of max_isotach_radii
+            if (
+                dff.loc[valid_index, "radius_of_maximum_winds"].iloc[-1]
+                > max_isotach_radii
+            ):
+                dff.loc[valid_index, "radius_of_maximum_winds"] = (
+                    max_isotach_radii
+                    * dff.loc[valid_index, "isotach_radius"].iloc[-1]
+                    / dff.loc[valid_index, "max_sustained_wind_speed"].iloc[-1]
+                )
+        return dff
+
     ofcl_tracks = tracks["OFCL"]
     carq_tracks = tracks["CARQ"]
 
@@ -1384,52 +1433,8 @@ def correct_ofcl_based_on_carq_n_hollandb(
                     rmw_, 5.0, max(120.0, rmw0)
                 )
             # apply 24-HR moving mean to unique datetimes
-            fcsthr_index = forecast["forecast_hours"].drop_duplicates().index
-            df_temp = forecast.loc[fcsthr_index].copy()
-            # make sure 60, 84, and 108 are added
-            fcsthrs_12hr = numpy.unique(
-                numpy.append(df_temp["forecast_hours"].values, [60, 84, 108])
-            )
-            rmw_12hr = numpy.interp(
-                fcsthrs_12hr,
-                df_temp["forecast_hours"],
-                df_temp["radius_of_maximum_winds"],
-            )
-            dt_12hr = pandas.to_datetime(
-                fcsthrs_12hr, unit="h", origin=df_temp["datetime"].iloc[0]
-            )
-            df_temp = DataFrame(
-                data={
-                    "forecast_hours": fcsthrs_12hr,
-                    "radius_of_maximum_winds": rmw_12hr,
-                },
-                index=dt_12hr,
-            )
-            rmw_rolling = df_temp.rolling(window="24h1min", center=True, min_periods=1)[
-                "radius_of_maximum_winds"
-            ].mean()
-            for valid_time, rmw in rmw_rolling.items():
-                valid_index = forecast["datetime"] == valid_time
-                if (
-                    valid_index.sum() == 0
-                    or forecast.loc[valid_index, "forecast_hours"].iloc[0] == 0
-                ):
-                    continue
-                # make sure rolling rmw is not larger than the maximum radii of the strongest isotach
-                # this problem usually comes from the rolling average
-                max_isotach_radii = isotach_radii.loc[valid_index].iloc[-1].max()
-                if rmw < max_isotach_radii or numpy.isnan(max_isotach_radii):
-                    forecast.loc[valid_index, "radius_of_maximum_winds"] = rmw
-                # in case it does not come from rolling average just set to be Vr/Vmax ratio of max_isotach_radii
-                if (
-                    forecast.loc[valid_index, "radius_of_maximum_winds"].iloc[-1]
-                    > max_isotach_radii
-                ):
-                    forecast.loc[valid_index, "radius_of_maximum_winds"] = (
-                        max_isotach_radii
-                        * forecast.loc[valid_index, "isotach_radius"].iloc[-1]
-                        / forecast.loc[valid_index, "max_sustained_wind_speed"].iloc[-1]
-                    )
+            if rmw_fill == RMWFillMethod.regression_penny_2023:
+                forecast = movingmean(forecast)
 
         # fill OFCL background pressure with the first entry from 0-hr CARQ background pressure (at sea level)
         forecast.loc[radp_missing, "background_pressure"] = carq_ref[
