@@ -7,8 +7,8 @@ from pandas import DataFrame
 class RMWFillMethod(Enum):
     none = None
     persistent = auto()
-    regression_penny_2023 = auto()
     regression_penny_2023_with_smoothing = auto()
+    regression_penny_2023 = regression_penny_2023_with_smoothing
     regression_penny_2023_no_smoothing = auto()
 
 
