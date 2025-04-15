@@ -312,6 +312,25 @@ def test_vortex_track_forecast_time_fromfile_arg():
     assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
 
 
+def test_vortex_track_forecast_time_fromfile_duplicated_forecast_hours():
+    # Test from_file to accept forecast_time argument
+    # this file has analysis times with several 0 forecast hours
+    # followed by hourly timestep forecasts from the forecast_time.
+    # One of the >0 forecast_hours is duplicated which creates and Inf
+    # trans speed which is then set to NaN by the code to avoid an error
+    input_directory = INPUT_DIRECTORY / "test_vortex_track_from_file"
+
+    track = VortexTrack.from_file(
+        input_directory / "helene2024_fort.22",
+        file_deck="a",
+        advisories="OFCL",
+        forecast_time="2024-09-24 12:00",
+    )
+
+    dates = track.data.track_start_time.unique()
+    assert len(dates) == 1
+
+
 # def test_vortex_track_forecast_time_outofbound_date():
 #     # Test it raises if forecast time is not between start and end
 #     msg = ""
