@@ -18,6 +18,13 @@ class PcFillMethod(Enum):
     regression_chavas_2025 = auto()
 
 
+# constants for the regression Pc fill method
+Omegai = 7.292e-5  # [1/s]
+beta_0 = -6.60
+beta_V2 = -0.0127
+beta_fR = -5.506
+beta_fRdV = 109.013
+
 # Bias correction values for the Rmax forecast
 # ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
 bias_lat = [

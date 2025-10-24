@@ -38,6 +38,11 @@ from stormevents.nhc.const import (
     RMW_bias_correction,
     RMWFillMethod,
     PcFillMethod,
+    Omega,
+    beta_0,
+    beta_V2,
+    beta_fR,
+    beta_fRdV,
 )
 from stormevents.utilities import subset_time_interval
 
@@ -1230,6 +1235,32 @@ class HollandBRelation:
         )
 
 
+def chavas_2025_Pc(data: DataFrame):
+    """
+    perform the Chavas et al. (2025) regression method for filling in central pressure
+    Ref:
+    Chavas, D. R., Knaff, J. A., & Klotzbach, P. (2025).
+    A Simple Model for Predicting Tropical Cyclone Minimum Central Pressure from Intensity and Size.
+    Weather and Forecasting, 40, 333–346.
+    https://doi.org/10.1175/WAF-D-24
+
+    :param data: data frame of track with missing entries
+    :return: central pressure values
+    """
+
+    f02 = Omega * numpy.sin(lat)  # half coriolis [1/s]
+    R34 = 0.85 * (R34s.nanmean())  # average R34 radius [m]
+    Vmax = Vmax - 0.55 * ts  # azimuthal mean Vmax [m/s]
+
+    Pc = (
+        beta_0
+        + beta_V2 * Vmax * Vmax
+        + beta_fR * fo2 * R34
+        + beta_fRdV * f02 * R34 / Vmax
+    )
+    return Pc  # units hPa
+
+
 def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
     """
     separate the given track data frame into advisories and tracks (forecasts / hindcasts)
@@ -1451,6 +1482,12 @@ def correct_ofcl_based_on_carq_n_hollandb(
         # fill OFCL central pressure (at sea level):
         if pc_fill == PcFillMethod.persistent_holland_b:
             # preserving Holland B from 0-hr CARQ
+            relation = HollandBRelation()
+            holland_b = relation.holland_b(
+                max_sustained_wind_speed=carq_ref["max_sustained_wind_speed"],
+                background_pressure=carq_ref["background_pressure"],
+                central_pressure=carq_ref["central_pressure"],
+            )
             forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
                 max_sustained_wind_speed=forecast.loc[
                     mslp_missing, "max_sustained_wind_speed"
@@ -1460,7 +1497,9 @@ def correct_ofcl_based_on_carq_n_hollandb(
             )
         elif pc_fill == PcFillMethod.regression_chavas_2025:
             # use the Chavas et al. (2025) regression method
-            breakpoint()
+            forecast.loc[mslp_missing, "central_pressure"] = chavas_2025_Pc(
+                forecast.loc[mslp_missing, :]
+            )
 
         corr_ofcl_tracks[initial_time] = forecast
 
