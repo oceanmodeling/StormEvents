@@ -20,10 +20,12 @@ class PcFillMethod(Enum):
 
 # constants for the regression Pc fill method
 OMEGA = 7.292e-5  # [1/s]
-BETA_0 = -6.60
-BETA_V2 = -0.0127
+BETA_00 = -6.60
+BETA_V20 = -0.0127
 BETA_fR = -5.506
 BETA_fRdV = 109.013
+BETA_01 = -13.37
+BETA_V21 = -0.0157
 
 # Bias correction values for the Rmax forecast
 # ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1

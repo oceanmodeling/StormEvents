@@ -39,10 +39,12 @@ from stormevents.nhc.const import (
     RMWFillMethod,
     PcFillMethod,
     OMEGA,
-    BETA_0,
-    BETA_V2,
+    BETA_00,
+    BETA_V20,
     BETA_fR,
     BETA_fRdV,
+    BETA_01,
+    BETA_V21,
 )
 from stormevents.utilities import subset_time_interval
 
@@ -1267,18 +1269,34 @@ def chavas_2025_Pc(data: DataFrame):
     :return: central pressure values
     """
 
-    breakpoint()
-    fo2 = OMEGA * numpy.sin(lat)  # half coriolis [1/s]
-    R34 = 0.85 * (R34s.nanmean())  # average R34 radius [m]
-    Vmax = Vmax - 0.55 * ts  # azimuthal mean Vmax [m/s]
-
+    fo2 = OMEGA * numpy.sin(numpy.deg2rad(data.latitude))  # half coriolis [1/s]
+    Vmax = (
+        data.max_sustained_wind_speed * 0.5144 - 0.55 * data.speed
+    )  # azimuthal mean Vmax [m/s]
+    isotach_radii = data[
+        [
+            "isotach_radius_for_NEQ",
+            "isotach_radius_for_SEQ",
+            "isotach_radius_for_NWQ",
+            "isotach_radius_for_SWQ",
+        ]
+    ]
+    # make any 0 value NaN
+    isotach_radii[isotach_radii == 0] = pandas.NA
+    R34 = 0.85 * isotach_radii.mean(axis=1) * 1852  # average R34 radius [m]
+    # forward fill to fill in 50-kt and 64-kt rows with the R34 value as
+    R34[data.isotach_radius > 35] = pandas.NA
+    R34[data.isotach_radius > 35] = R34.ffill()[data.isotach_radius > 35]
+    # equation where R34 is available
     deltaP = (
-        BETA_0
-        + BETA_V2 * Vmax * Vmax
+        BETA_00
+        + BETA_V20 * Vmax * Vmax
         + BETA_fR * fo2 * R34
         + BETA_fRdV * fo2 * R34 / Vmax
     )  # [hPa]
-    return data.background_pressure + 2 - deltaP  # Pc
+    # equation where R34 isn't available
+    deltaP[deltaP.isna()] = BETA_01 + BETA_V21 * Vmax * Vmax  # [hPa]
+    return data.background_pressure + 2 + deltaP  # Pc
 
 
 def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
