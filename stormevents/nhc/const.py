@@ -12,6 +12,12 @@ class RMWFillMethod(Enum):
     regression_penny_2023_no_smoothing = auto()
 
 
+class PcFillMethod(Enum):
+    none = None
+    persistentB = auto()
+    regression_chavas_2025 = auto()
+
+
 # Bias correction values for the Rmax forecast
 # ref: Penny et al. (2023). https://doi.org/10.1175/WAF-D-22-0209.1
 bias_lat = [

@@ -37,6 +37,7 @@ from stormevents.nhc.const import (
     get_RMW_regression_coefs,
     RMW_bias_correction,
     RMWFillMethod,
+    PcFillMethod,
 )
 from stormevents.utilities import subset_time_interval
 
@@ -55,6 +56,7 @@ class VortexTrack:
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
         rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+        pc_fill: PcFillMethod = PcFillMethod.persistentB,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -129,6 +131,7 @@ class VortexTrack:
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
         rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+        pc_fill: PcFillMethod = PcFillMethod.persistentB,
     ) -> "VortexTrack":
         """
         :param name: storm name
@@ -165,6 +168,7 @@ class VortexTrack:
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
         rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+        pc_fill: PcFillMethod = PcFillMethod.persistentB,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
@@ -1444,14 +1448,16 @@ def correct_ofcl_based_on_carq_n_hollandb(
             "background_pressure"
         ]
 
-        # fill OFCL central pressure (at sea level), preserving Holland B from 0-hr CARQ
-        forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
-            max_sustained_wind_speed=forecast.loc[
-                mslp_missing, "max_sustained_wind_speed"
-            ],
-            background_pressure=forecast.loc[mslp_missing, "background_pressure"],
-            holland_b=holland_b,
-        )
+        # fill OFCL central pressure (at sea level):
+        if pc_fill == PcFillMethod.persistentB:
+            # preserving Holland B from 0-hr CARQ
+            forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
+                max_sustained_wind_speed=forecast.loc[
+                    mslp_missing, "max_sustained_wind_speed"
+                ],
+                background_pressure=forecast.loc[mslp_missing, "background_pressure"],
+                holland_b=holland_b,
+            )
 
         corr_ofcl_tracks[initial_time] = forecast
 
