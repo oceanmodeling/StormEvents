@@ -38,11 +38,11 @@ from stormevents.nhc.const import (
     RMW_bias_correction,
     RMWFillMethod,
     PcFillMethod,
-    Omega,
-    beta_0,
-    beta_V2,
-    beta_fR,
-    beta_fRdV,
+    OMEGA,
+    BETA_0,
+    BETA_V2,
+    BETA_fR,
+    BETA_fRdV,
 )
 from stormevents.utilities import subset_time_interval
 
@@ -117,6 +117,7 @@ class VortexTrack:
         self.advisories = advisories
         self.file_deck = file_deck
         self.rmw_fill = rmw_fill
+        self.pc_fill = pc_fill
 
         self.__previous_configuration = self.__configuration
 
@@ -161,6 +162,7 @@ class VortexTrack:
             advisories=advisories,
             forecast_time=forecast_time,
             rmw_fill=rmw_fill,
+            pc_fill=pc_fill,
         )
 
     @classmethod
@@ -206,6 +208,7 @@ class VortexTrack:
             advisories=advisories,
             forecast_time=forecast_time,
             rmw_fill=rmw_fill,
+            pc_fill=pc_fill,
         )
 
     @property
@@ -508,7 +511,7 @@ class VortexTrack:
     @property
     def rmw_fill(self) -> RMWFillMethod:
         """
-        :return: file path to read file (optional)
+        :return: RMW filling method
         """
 
         return self.__rmw_fill
@@ -519,6 +522,21 @@ class VortexTrack:
             rmw_fill = RMWFillMethod.none
 
         self.__rmw_fill = rmw_fill
+
+    @property
+    def pc_fill(self) -> PcFillMethod:
+        """
+        :return: Pc filling method
+        """
+
+        return self.__pc_fill
+
+    @pc_fill.setter
+    def pc_fill(self, pc_fill: PcFillMethod):
+        if pc_fill is None or not isinstance(pc_fill, PcFillMethod):
+            pc_fill = PcFillMethod.none
+
+        self.__pc_fill = pc_fill
 
     @property
     def data(self) -> DataFrame:
@@ -1077,7 +1095,7 @@ class VortexTrack:
             tracks = separate_tracks(dataframe)
             if all(adv in tracks for adv in ["OFCL", "CARQ"]):
                 tracks = correct_ofcl_based_on_carq_n_hollandb(
-                    tracks, rmw_fill=self.rmw_fill
+                    tracks, rmw_fill=self.rmw_fill, pc_fill=self.pc_fill
                 )
                 dataframe = combine_tracks(tracks)
 
@@ -1099,6 +1117,7 @@ class VortexTrack:
             "advisories": self.advisories,
             "filename": self.filename,
             "rmw_fill": self.rmw_fill,
+            "pc_fill": self.pc_fill,
         }
 
     @staticmethod
@@ -1248,17 +1267,18 @@ def chavas_2025_Pc(data: DataFrame):
     :return: central pressure values
     """
 
-    f02 = Omega * numpy.sin(lat)  # half coriolis [1/s]
+    breakpoint()
+    fo2 = OMEGA * numpy.sin(lat)  # half coriolis [1/s]
     R34 = 0.85 * (R34s.nanmean())  # average R34 radius [m]
     Vmax = Vmax - 0.55 * ts  # azimuthal mean Vmax [m/s]
 
-    Pc = (
-        beta_0
-        + beta_V2 * Vmax * Vmax
-        + beta_fR * fo2 * R34
-        + beta_fRdV * f02 * R34 / Vmax
-    )
-    return Pc  # units hPa
+    deltaP = (
+        BETA_0
+        + BETA_V2 * Vmax * Vmax
+        + BETA_fR * fo2 * R34
+        + BETA_fRdV * fo2 * R34 / Vmax
+    )  # [hPa]
+    return data.background_pressure + 2 - deltaP  # Pc
 
 
 def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
@@ -1310,6 +1330,7 @@ def combine_tracks(tracks: Dict[str, Dict[str, DataFrame]]) -> DataFrame:
 def correct_ofcl_based_on_carq_n_hollandb(
     tracks: Dict[str, Dict[str, DataFrame]],
     rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+    pc_fill: PcFillMethod = PcFillMethod.persistent_holland_b,
 ) -> Dict[str, Dict[str, DataFrame]]:
     """
     Correct official forecast using consensus track along with holland-b
