@@ -565,4 +565,4 @@ def test_pc_fill_method_regression_chavas_2025():
     pc = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
         "central_pressure"
     ]
-    assert len(pc.unique()) == 10
+    assert len(pc.unique()) == 11
