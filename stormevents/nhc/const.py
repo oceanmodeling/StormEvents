@@ -14,7 +14,7 @@ class RMWFillMethod(Enum):
 
 class PcFillMethod(Enum):
     none = None
-    persistentB = auto()
+    persistent_holland_b = auto()
     regression_chavas_2025 = auto()
 
 
