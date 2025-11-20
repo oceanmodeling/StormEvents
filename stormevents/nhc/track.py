@@ -1263,7 +1263,7 @@ def chavas_2025_Pc(data: DataFrame):
     Chavas, D. R., Knaff, J. A., & Klotzbach, P. (2025).
     A Simple Model for Predicting Tropical Cyclone Minimum Central Pressure from Intensity and Size.
     Weather and Forecasting, 40, 333–346.
-    https://doi.org/10.1175/WAF-D-24
+    https://doi.org/10.1175/WAF-D-24-0031.1
 
     :param data: data frame of track with missing entries
     :return: central pressure values
