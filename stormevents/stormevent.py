@@ -27,7 +27,7 @@ from stormevents.nhc import nhc_storms
 from stormevents.nhc import VortexTrack
 from stormevents.nhc.atcf import ATCF_Advisory
 from stormevents.nhc.atcf import ATCF_FileDeck
-from stormevents.nhc.const import RMWFillMethod
+from stormevents.nhc.const import RMWFillMethod, PcFillMethod
 from stormevents.usgs import usgs_flood_storms
 from stormevents.usgs import USGS_StormEvent
 from stormevents.utilities import relative_to_time_interval
@@ -281,6 +281,7 @@ class StormEvent:
         filename: PathLike = None,
         forecast_time: datetime = None,
         rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+        pc_fill: PcFillMethod = PcFillMethod.persistent_holland_b,
     ) -> VortexTrack:
         """
         retrieve NHC ATCF track data
@@ -303,7 +304,7 @@ class StormEvent:
             end_date = self.end_date
 
         if filename is not None:
-            track = VortexTrack.from_file(filename)
+            track = VortexTrack.from_file(filename, rmw_fill=rmw_fill, pc_fill=pc_fill)
         else:
             track = VortexTrack.from_storm_name(
                 name=self.name,
@@ -314,6 +315,7 @@ class StormEvent:
                 advisories=advisories,
                 forecast_time=forecast_time,
                 rmw_fill=rmw_fill,
+                pc_fill=pc_fill,
             )
         return track
 
