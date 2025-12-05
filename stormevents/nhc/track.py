@@ -1270,8 +1270,8 @@ def chavas_2025_Pc(data: DataFrame):
     """
 
     fo2 = OMEGA * numpy.sin(numpy.deg2rad(data.latitude))  # half coriolis [1/s]
-    Vmax = (
-        data.max_sustained_wind_speed * 0.5144 - 0.55 * data.speed
+    Vmax = 0.5144 * (
+        data.max_sustained_wind_speed - 0.55 * data.speed
     )  # azimuthal mean Vmax [m/s]
     isotach_radii = data[
         [
@@ -1296,6 +1296,52 @@ def chavas_2025_Pc(data: DataFrame):
     )  # [hPa]
     # equation where R34 isn't available
     deltaP[deltaP.isna()] = BETA_01 + BETA_V21 * Vmax * Vmax  # [hPa]
+    return data.background_pressure + 2 + deltaP  # Pc
+
+
+def courtney_knaff_2009_Pc(data: DataFrame):
+    """
+    perform the Courtney & Knaff (2009) regression method for filling in central pressure
+    Ref:
+    Courtney, J. & Knaff, J. (2009).
+    Adapting the Knaff and Zehr wind-pressure relationship for operational use in Tropical Cyclone Warning Centers.
+    Australian Meteorological and Oceanographic Journal, 58, 167-179.
+    https://connectsci.au/es/article/58/3/167/264593/Adapting-the-Knaff-and-Zehr-wind-pressure
+
+    :param data: data frame of track with missing entries
+    :return: central pressure values
+    """
+
+    Vmax = data.max_sustained_wind_speed  # Vmax [kt]
+    Vsrm = Vmax - 1.5 * data.speed**0.63  # azimuthal mean Vmax [kt]
+    isotach_radii = data[
+        [
+            "isotach_radius_for_NEQ",
+            "isotach_radius_for_SEQ",
+            "isotach_radius_for_NWQ",
+            "isotach_radius_for_SWQ",
+        ]
+    ]
+    # make any 0 value NaN
+    isotach_radii[isotach_radii == 0] = pandas.NA
+    R34 = 0.85 * isotach_radii.mean(axis=1)  # average R34 radius [n mi]
+    # forward fill to fill in 50-kt and 64-kt rows with the R34 value as
+    R34[data.isotach_radius > 35] = pandas.NA
+    R34[data.isotach_radius > 35] = R34.ffill()[data.isotach_radius > 35]
+    V500 = R34 / 9 - 3  # wind speed at 500 km radius
+    lat = data.latitude  # latitude [deg]
+    x = 0.1147 + 0.0055 * Vmax - 0.001 * (lat - 25)
+    Rmax = 66.785 - 0.09102 * Vmax + 1.0619 * (lat - 25)
+    V500c = Vmax * (Rmax / 500) ** x  #  climatological wind speed at 500 km radius
+    S = V500 / V500c  # normalized storm size
+    S[(S < 0.4) | (S.isna())] = 0.4  # lower bound/default value of 0.4
+    # equation for lat >= 18 deg
+    deltaP = (
+        23.286 - 0.483 * Vsrm - (Vsrm / 24.524) ** 2 - 12.587 * S - 0.483 * lat
+    )  # [hPa]
+    # equation for lat < 18 deg
+    deltaP_lo = 5.962 - 0.267 * Vsrm - (Vsrm / 18.26) ** 2 - 6.8 * S  # [hPa]
+    deltaP[lat < 18] = deltaP_lo[lat < 18]
     return data.background_pressure + 2 + deltaP  # Pc
 
 
@@ -1537,6 +1583,11 @@ def correct_ofcl_based_on_carq_n_hollandb(
         elif pc_fill == PcFillMethod.regression_chavas_2025:
             # use the Chavas et al. (2025) regression method
             forecast.loc[mslp_missing, "central_pressure"] = chavas_2025_Pc(
+                forecast.loc[mslp_missing, :]
+            )
+        elif pc_fill == PcFillMethod.regression_courtney_knaff_2009:
+            # use the Courtney & Knaff (2009) regression method
+            forecast.loc[mslp_missing, "central_pressure"] = courtney_knaff_2009_Pc(
                 forecast.loc[mslp_missing, :]
             )
 

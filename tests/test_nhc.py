@@ -566,3 +566,20 @@ def test_pc_fill_method_regression_chavas_2025():
         "central_pressure"
     ]
     assert len(pc.unique()) == 11
+
+
+def test_pc_fill_method_regression_courtney_knaff_2009():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        pc_fill=PcFillMethod.regression_courtney_knaff_2009,
+    )
+    assert tr_florence2018.pc_fill == PcFillMethod.regression_courtney_knaff_2009
+    data = tr_florence2018.data
+    i_uq_row = 40
+    pc = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "central_pressure"
+    ]
+    assert len(pc.unique()) == 11

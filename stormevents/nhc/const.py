@@ -16,9 +16,10 @@ class PcFillMethod(Enum):
     none = None
     persistent_holland_b = auto()
     regression_chavas_2025 = auto()
+    regression_courtney_knaff_2009 = auto()
 
 
-# constants for the regression Pc fill method
+# constants for the Chavas et al. (2025) regression Pc fill method
 OMEGA = 7.292e-5  # [1/s]
 BETA_00 = -6.60
 BETA_V20 = -0.0127
