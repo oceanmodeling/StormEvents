@@ -1313,7 +1313,7 @@ def courtney_knaff_2009_Pc(data: DataFrame):
     """
 
     Vmax = data.max_sustained_wind_speed  # Vmax [kt]
-    Vsrm = Vmax - 1.5 * (data.speed * 1.9438)**0.63  # azimuthal mean Vmax [kt]
+    Vsrm = Vmax - 1.5 * (data.speed * 1.9438) ** 0.63  # azimuthal mean Vmax [kt]
     isotach_radii = data[
         [
             "isotach_radius_for_NEQ",
