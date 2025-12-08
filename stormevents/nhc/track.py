@@ -1178,7 +1178,7 @@ class VortexTrack:
             bearings.ffill(inplace=True)
             speeds.bfill(inplace=True)
             bearings.bfill(inplace=True)
-            advisory_data["speed"] = speeds
+            advisory_data["speed"] = speeds * 1.9438  # m/s to kt
             advisory_data["direction"] = bearings
 
             data.loc[data["advisory"] == advisory] = advisory_data
@@ -1270,8 +1270,8 @@ def chavas_2025_Pc(data: DataFrame):
     """
 
     fo2 = OMEGA * numpy.sin(numpy.deg2rad(data.latitude))  # half coriolis [1/s]
-    Vmax = (
-        data.max_sustained_wind_speed * 0.5144 - 0.55 * data.speed
+    Vmax = 0.5144 * (
+        data.max_sustained_wind_speed - 0.55 * data.speed
     )  # azimuthal mean Vmax [m/s]
     isotach_radii = data[
         [
@@ -1313,7 +1313,7 @@ def courtney_knaff_2009_Pc(data: DataFrame):
     """
 
     Vmax = data.max_sustained_wind_speed  # Vmax [kt]
-    Vsrm = Vmax - 1.5 * (data.speed * 1.9438) ** 0.63  # azimuthal mean Vmax [kt]
+    Vsrm = Vmax - 1.5 * data.speed**0.63  # azimuthal mean Vmax [kt]
     isotach_radii = data[
         [
             "isotach_radius_for_NEQ",
