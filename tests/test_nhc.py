@@ -10,7 +10,7 @@ import stormevents
 from stormevents.nhc.storms import nhc_storms
 from stormevents.nhc.storms import nhc_storms_gis_archive
 from stormevents.nhc.track import VortexTrack
-from stormevents.nhc.const import get_RMW_regression_coefs, RMWFillMethod
+from stormevents.nhc.const import get_RMW_regression_coefs, RMWFillMethod, PcFillMethod
 from tests import check_reference_directory
 from tests import INPUT_DIRECTORY
 from tests import OUTPUT_DIRECTORY
@@ -549,3 +549,37 @@ def test_rmw_fill_method_set_after_creation():
     ]["radius_of_maximum_winds"]
 
     assert (rmw1 != rmw2).any()
+
+
+def test_pc_fill_method_regression_chavas_2025():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        pc_fill=PcFillMethod.regression_chavas_2025,
+    )
+    assert tr_florence2018.pc_fill == PcFillMethod.regression_chavas_2025
+    data = tr_florence2018.data
+    i_uq_row = 40
+    pc = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "central_pressure"
+    ]
+    assert len(pc.unique()) == 11
+
+
+def test_pc_fill_method_regression_courtney_knaff_2009():
+    tr_florence2018 = VortexTrack.from_storm_name(
+        "Florence",
+        2018,
+        file_deck="a",
+        advisories=["OFCL"],
+        pc_fill=PcFillMethod.regression_courtney_knaff_2009,
+    )
+    assert tr_florence2018.pc_fill == PcFillMethod.regression_courtney_knaff_2009
+    data = tr_florence2018.data
+    i_uq_row = 40
+    pc = data.loc[data.track_start_time == data.track_start_time.unique()[i_uq_row]][
+        "central_pressure"
+    ]
+    assert len(pc.unique()) == 11

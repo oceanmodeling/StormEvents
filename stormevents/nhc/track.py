@@ -37,6 +37,14 @@ from stormevents.nhc.const import (
     get_RMW_regression_coefs,
     RMW_bias_correction,
     RMWFillMethod,
+    PcFillMethod,
+    OMEGA,
+    BETA_00,
+    BETA_V20,
+    BETA_fR,
+    BETA_fRdV,
+    BETA_01,
+    BETA_V21,
 )
 from stormevents.utilities import subset_time_interval
 
@@ -55,6 +63,7 @@ class VortexTrack:
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
         rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+        pc_fill: PcFillMethod = PcFillMethod.persistent_holland_b,
     ):
         """
         :param storm: storm ID, or storm name and year
@@ -110,6 +119,7 @@ class VortexTrack:
         self.advisories = advisories
         self.file_deck = file_deck
         self.rmw_fill = rmw_fill
+        self.pc_fill = pc_fill
 
         self.__previous_configuration = self.__configuration
 
@@ -129,6 +139,7 @@ class VortexTrack:
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
         rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+        pc_fill: PcFillMethod = PcFillMethod.persistent_holland_b,
     ) -> "VortexTrack":
         """
         :param name: storm name
@@ -153,6 +164,7 @@ class VortexTrack:
             advisories=advisories,
             forecast_time=forecast_time,
             rmw_fill=rmw_fill,
+            pc_fill=pc_fill,
         )
 
     @classmethod
@@ -165,6 +177,7 @@ class VortexTrack:
         advisories: List[ATCF_Advisory] = None,
         forecast_time: datetime = None,
         rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+        pc_fill: PcFillMethod = PcFillMethod.persistent_holland_b,
     ) -> "VortexTrack":
         """
         :param path: file path to ATCF data
@@ -197,6 +210,7 @@ class VortexTrack:
             advisories=advisories,
             forecast_time=forecast_time,
             rmw_fill=rmw_fill,
+            pc_fill=pc_fill,
         )
 
     @property
@@ -499,7 +513,7 @@ class VortexTrack:
     @property
     def rmw_fill(self) -> RMWFillMethod:
         """
-        :return: file path to read file (optional)
+        :return: RMW filling method
         """
 
         return self.__rmw_fill
@@ -510,6 +524,21 @@ class VortexTrack:
             rmw_fill = RMWFillMethod.none
 
         self.__rmw_fill = rmw_fill
+
+    @property
+    def pc_fill(self) -> PcFillMethod:
+        """
+        :return: Pc filling method
+        """
+
+        return self.__pc_fill
+
+    @pc_fill.setter
+    def pc_fill(self, pc_fill: PcFillMethod):
+        if pc_fill is None or not isinstance(pc_fill, PcFillMethod):
+            pc_fill = PcFillMethod.none
+
+        self.__pc_fill = pc_fill
 
     @property
     def data(self) -> DataFrame:
@@ -1068,7 +1097,7 @@ class VortexTrack:
             tracks = separate_tracks(dataframe)
             if all(adv in tracks for adv in ["OFCL", "CARQ"]):
                 tracks = correct_ofcl_based_on_carq_n_hollandb(
-                    tracks, rmw_fill=self.rmw_fill
+                    tracks, rmw_fill=self.rmw_fill, pc_fill=self.pc_fill
                 )
                 dataframe = combine_tracks(tracks)
 
@@ -1090,6 +1119,7 @@ class VortexTrack:
             "advisories": self.advisories,
             "filename": self.filename,
             "rmw_fill": self.rmw_fill,
+            "pc_fill": self.pc_fill,
         }
 
     @staticmethod
@@ -1148,7 +1178,7 @@ class VortexTrack:
             bearings.ffill(inplace=True)
             speeds.bfill(inplace=True)
             bearings.bfill(inplace=True)
-            advisory_data["speed"] = speeds
+            advisory_data["speed"] = speeds * 1.9438  # m/s to kt
             advisory_data["direction"] = bearings
 
             data.loc[data["advisory"] == advisory] = advisory_data
@@ -1226,6 +1256,95 @@ class HollandBRelation:
         )
 
 
+def chavas_2025_Pc(data: DataFrame):
+    """
+    perform the Chavas et al. (2025) regression method for filling in central pressure
+    Ref:
+    Chavas, D. R., Knaff, J. A., & Klotzbach, P. (2025).
+    A Simple Model for Predicting Tropical Cyclone Minimum Central Pressure from Intensity and Size.
+    Weather and Forecasting, 40, 333–346.
+    https://doi.org/10.1175/WAF-D-24-0031.1
+
+    :param data: data frame of track with missing entries
+    :return: central pressure values
+    """
+
+    fo2 = OMEGA * numpy.sin(numpy.deg2rad(data.latitude))  # half coriolis [1/s]
+    Vmax = 0.5144 * (
+        data.max_sustained_wind_speed - 0.55 * data.speed
+    )  # azimuthal mean Vmax [m/s]
+    isotach_radii = data[
+        [
+            "isotach_radius_for_NEQ",
+            "isotach_radius_for_SEQ",
+            "isotach_radius_for_NWQ",
+            "isotach_radius_for_SWQ",
+        ]
+    ]
+    # make any 0 value NaN
+    isotach_radii[isotach_radii == 0] = pandas.NA
+    R34 = 0.85 * isotach_radii.mean(axis=1) * 1852  # average R34 radius [m]
+    # forward fill to fill in 50-kt and 64-kt rows with the R34 value as
+    R34[data.isotach_radius > 35] = pandas.NA
+    R34[data.isotach_radius > 35] = R34.ffill()[data.isotach_radius > 35]
+    # equation where R34 is available
+    deltaP = (
+        BETA_00
+        + BETA_V20 * Vmax * Vmax
+        + BETA_fR * fo2 * R34
+        + BETA_fRdV * fo2 * R34 / Vmax
+    )  # [hPa]
+    # equation where R34 isn't available
+    deltaP[deltaP.isna()] = BETA_01 + BETA_V21 * Vmax * Vmax  # [hPa]
+    return data.background_pressure + 2 + deltaP  # Pc
+
+
+def courtney_knaff_2009_Pc(data: DataFrame):
+    """
+    perform the Courtney & Knaff (2009) regression method for filling in central pressure
+    Ref:
+    Courtney, J. & Knaff, J. (2009).
+    Adapting the Knaff and Zehr wind-pressure relationship for operational use in Tropical Cyclone Warning Centers.
+    Australian Meteorological and Oceanographic Journal, 58, 167-179.
+    https://connectsci.au/es/article/58/3/167/264593/Adapting-the-Knaff-and-Zehr-wind-pressure
+
+    :param data: data frame of track with missing entries
+    :return: central pressure values
+    """
+
+    Vmax = data.max_sustained_wind_speed  # Vmax [kt]
+    Vsrm = Vmax - 1.5 * data.speed**0.63  # azimuthal mean Vmax [kt]
+    isotach_radii = data[
+        [
+            "isotach_radius_for_NEQ",
+            "isotach_radius_for_SEQ",
+            "isotach_radius_for_NWQ",
+            "isotach_radius_for_SWQ",
+        ]
+    ]
+    # make any 0 value NaN
+    isotach_radii[isotach_radii == 0] = pandas.NA
+    R34 = 0.85 * isotach_radii.mean(axis=1)  # average R34 radius [n mi]
+    # forward fill to fill in 50-kt and 64-kt rows with the R34 value as
+    R34[data.isotach_radius > 35] = pandas.NA
+    R34[data.isotach_radius > 35] = R34.ffill()[data.isotach_radius > 35]
+    V500 = R34 / 9 - 3  # wind speed at 500 km radius
+    lat = data.latitude  # latitude [deg]
+    x = 0.1147 + 0.0055 * Vmax - 0.001 * (lat - 25)
+    Rmax = 66.785 - 0.09102 * Vmax + 1.0619 * (lat - 25)
+    V500c = Vmax * (Rmax / 500) ** x  #  climatological wind speed at 500 km radius
+    S = V500 / V500c  # normalized storm size
+    S[(S < 0.4) | (S.isna())] = 0.4  # lower bound/default value of 0.4
+    # equation for lat >= 18 deg
+    deltaP = (
+        23.286 - 0.483 * Vsrm - (Vsrm / 24.524) ** 2 - 12.587 * S - 0.483 * lat
+    )  # [hPa]
+    # equation for lat < 18 deg
+    deltaP_lo = 5.962 - 0.267 * Vsrm - (Vsrm / 18.26) ** 2 - 6.8 * S  # [hPa]
+    deltaP[lat < 18] = deltaP_lo[lat < 18]
+    return data.background_pressure + 2 + deltaP  # Pc
+
+
 def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
     """
     separate the given track data frame into advisories and tracks (forecasts / hindcasts)
@@ -1275,6 +1394,7 @@ def combine_tracks(tracks: Dict[str, Dict[str, DataFrame]]) -> DataFrame:
 def correct_ofcl_based_on_carq_n_hollandb(
     tracks: Dict[str, Dict[str, DataFrame]],
     rmw_fill: RMWFillMethod = RMWFillMethod.regression_penny_2023,
+    pc_fill: PcFillMethod = PcFillMethod.persistent_holland_b,
 ) -> Dict[str, Dict[str, DataFrame]]:
     """
     Correct official forecast using consensus track along with holland-b
@@ -1347,19 +1467,19 @@ def correct_ofcl_based_on_carq_n_hollandb(
         else:
             carq_forecast = carq_tracks[list(carq_tracks)[0]]
 
-        relation = HollandBRelation()
-        holland_b = relation.holland_b(
-            max_sustained_wind_speed=carq_forecast["max_sustained_wind_speed"],
-            background_pressure=carq_forecast["background_pressure"],
-            central_pressure=carq_forecast["central_pressure"],
-        )
-
-        holland_b[holland_b == numpy.inf] = numpy.nan
-        holland_b = numpy.nanmean(holland_b)
-
         # Get CARQ from forecast hour 0 and isotach 34kt (i.e. the first item)
         carq_ref = carq_forecast.loc[carq_forecast.forecast_hours == 0].iloc[0]
 
+        # get the Holland B parameter for filling in central pressure
+        # with persistent Holland B option
+        relation = HollandBRelation()
+        holland_b = relation.holland_b(
+            max_sustained_wind_speed=carq_ref["max_sustained_wind_speed"],
+            background_pressure=carq_ref["background_pressure"],
+            central_pressure=carq_ref["central_pressure"],
+        )
+
+        # find locations where the pertinent variables are missing
         columns_of_interest = forecast[
             ["radius_of_maximum_winds", "central_pressure", "background_pressure"]
         ]
@@ -1444,14 +1564,32 @@ def correct_ofcl_based_on_carq_n_hollandb(
             "background_pressure"
         ]
 
-        # fill OFCL central pressure (at sea level), preserving Holland B from 0-hr CARQ
-        forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
-            max_sustained_wind_speed=forecast.loc[
-                mslp_missing, "max_sustained_wind_speed"
-            ],
-            background_pressure=forecast.loc[mslp_missing, "background_pressure"],
-            holland_b=holland_b,
-        )
+        # fill OFCL central pressure (at sea level):
+        if pc_fill == PcFillMethod.persistent_holland_b:
+            # preserving Holland B from 0-hr CARQ
+            relation = HollandBRelation()
+            holland_b = relation.holland_b(
+                max_sustained_wind_speed=carq_ref["max_sustained_wind_speed"],
+                background_pressure=carq_ref["background_pressure"],
+                central_pressure=carq_ref["central_pressure"],
+            )
+            forecast.loc[mslp_missing, "central_pressure"] = relation.central_pressure(
+                max_sustained_wind_speed=forecast.loc[
+                    mslp_missing, "max_sustained_wind_speed"
+                ],
+                background_pressure=forecast.loc[mslp_missing, "background_pressure"],
+                holland_b=holland_b,
+            )
+        elif pc_fill == PcFillMethod.regression_chavas_2025:
+            # use the Chavas et al. (2025) regression method
+            forecast.loc[mslp_missing, "central_pressure"] = chavas_2025_Pc(
+                forecast.loc[mslp_missing, :]
+            )
+        elif pc_fill == PcFillMethod.regression_courtney_knaff_2009:
+            # use the Courtney & Knaff (2009) regression method
+            forecast.loc[mslp_missing, "central_pressure"] = courtney_knaff_2009_Pc(
+                forecast.loc[mslp_missing, :]
+            )
 
         corr_ofcl_tracks[initial_time] = forecast
 
