@@ -25,7 +25,8 @@ BETA_00 = -6.60
 BETA_V20 = -0.0127
 BETA_fR = -5.506
 BETA_fRdV = 109.013
-BETA_01 = -13.37
+BETA_01 = 20.23
+BETA_V11 = -1.54
 BETA_V21 = -0.0157
 
 # Bias correction values for the Rmax forecast

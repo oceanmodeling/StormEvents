@@ -44,7 +44,7 @@ from stormevents.nhc.const import (
     BETA_fR,
     BETA_fRdV,
     BETA_01,
-    BETA_V21,
+    BETA_V11,
 )
 from stormevents.utilities import subset_time_interval
 
@@ -640,6 +640,8 @@ class VortexTrack:
             atcf.loc[:, ["longitude", "latitude"]] * 10
         )
 
+        # forward fill here first before integer replacement
+        atcf["background_pressure"] = atcf["background_pressure"].ffill()
         float_columns = atcf.select_dtypes(include=["float"]).columns
         integer_na_value = -99999
         for column in float_columns:
@@ -692,7 +694,7 @@ class VortexTrack:
             atcf["isotach_radius_for_NWQ"].astype("string").str.pad(5)
         )
 
-        atcf["background_pressure"] = atcf["background_pressure"].ffill().astype(int)
+        atcf["background_pressure"] = atcf["background_pressure"].astype(int)
         atcf["central_pressure"] = atcf["central_pressure"].astype(int)
 
         press_cond_nobg = ~atcf["central_pressure"].isna() & (
@@ -1273,6 +1275,7 @@ def chavas_2025_Pc(data: DataFrame):
     Vmax = 0.5144 * (
         data.max_sustained_wind_speed - 0.55 * data.speed
     )  # azimuthal mean Vmax [m/s]
+    Vmax[Vmax < 20] = 20  # ensure Vmax doesn't go below 20 m/s
     isotach_radii = data[
         [
             "isotach_radius_for_NEQ",
@@ -1295,7 +1298,7 @@ def chavas_2025_Pc(data: DataFrame):
         + BETA_fRdV * fo2 * R34 / Vmax
     )  # [hPa]
     # equation where R34 isn't available
-    deltaP[deltaP.isna()] = BETA_01 + BETA_V21 * Vmax * Vmax  # [hPa]
+    deltaP[deltaP.isna()] = BETA_01 + BETA_V11 * Vmax  # [hPa]
     return data.background_pressure + 2 + deltaP  # Pc
 
 
@@ -1342,6 +1345,7 @@ def courtney_knaff_2009_Pc(data: DataFrame):
     # equation for lat < 18 deg
     deltaP_lo = 5.962 - 0.267 * Vsrm - (Vsrm / 18.26) ** 2 - 6.8 * S  # [hPa]
     deltaP[lat < 18] = deltaP_lo[lat < 18]
+    deltaP[deltaP > -5] = -5  # limit to being at least 5 hPa
     return data.background_pressure + 2 + deltaP  # Pc
 
 
