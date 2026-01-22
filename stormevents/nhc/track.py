@@ -1317,6 +1317,7 @@ def courtney_knaff_2009_Pc(data: DataFrame):
 
     Vmax = data.max_sustained_wind_speed  # Vmax [kt]
     Vsrm = Vmax - 1.5 * data.speed**0.63  # azimuthal mean Vmax [kt]
+    Vsrm[Vsrm < 25] = 25  # ensure Vsrm doesn't go below 25 kt
     isotach_radii = data[
         [
             "isotach_radius_for_NEQ",
@@ -1331,13 +1332,13 @@ def courtney_knaff_2009_Pc(data: DataFrame):
     # forward fill to fill in 50-kt and 64-kt rows with the R34 value as
     R34[data.isotach_radius > 35] = pandas.NA
     R34[data.isotach_radius > 35] = R34.ffill()[data.isotach_radius > 35]
-    V500 = R34 / 9 - 3  # wind speed at 500 km radius
+    V500 = R34.ffill().bfill() / 9 - 3  # wind speed at 500 km radius
     lat = data.latitude  # latitude [deg]
     x = 0.1147 + 0.0055 * Vmax - 0.001 * (lat - 25)
     Rmax = 66.785 - 0.09102 * Vmax + 1.0619 * (lat - 25)
     V500c = Vmax * (Rmax / 500) ** x  #  climatological wind speed at 500 km radius
     S = V500 / V500c  # normalized storm size
-    S[(S < 0.4) | (S.isna())] = 0.4  # lower bound/default value of 0.4
+    S[S < 0.4] = 0.4  # lower bound value of 0.4
     # equation for lat >= 18 deg
     deltaP = (
         23.286 - 0.483 * Vsrm - (Vsrm / 24.524) ** 2 - 12.587 * S - 0.483 * lat
@@ -1345,7 +1346,6 @@ def courtney_knaff_2009_Pc(data: DataFrame):
     # equation for lat < 18 deg
     deltaP_lo = 5.962 - 0.267 * Vsrm - (Vsrm / 18.26) ** 2 - 6.8 * S  # [hPa]
     deltaP[lat < 18] = deltaP_lo[lat < 18]
-    deltaP[deltaP > -5] = -5  # limit to being at least 5 hPa
     return data.background_pressure + 2 + deltaP  # Pc
 
 
