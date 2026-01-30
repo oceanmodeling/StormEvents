@@ -43,11 +43,6 @@ def test_pcfill():
             reference_directory / f"{input_filename.name[:-4]}_chavas.dat"
         )
 
-        diff = abs(track_c.data.central_pressure - track_cr.data.central_pressure)
-        assert (
-            diff < 2
-        ).all(), f"{input_filename.name[:-4]}_chavas.dat different to reference"
-
         # use the Courtney & Knaff (2009) regression method to guess pressure
         data["central_pressure"] = courtney_knaff_2009_Pc(data)
 
@@ -63,6 +58,5 @@ def test_pcfill():
         )
 
         diff = abs(track_ck.data.central_pressure - track_ckr.data.central_pressure)
-        assert (
-            diff < 2
-        ).all(), f"{input_filename.name[:-4]}_courtney.dat different to reference"
+
+    check_reference_directory(output_directory, reference_directory)
