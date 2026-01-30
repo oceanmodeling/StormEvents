@@ -1299,7 +1299,7 @@ def chavas_2025_Pc(data: DataFrame):
     )  # [hPa]
     # equation where R34 isn't available
     deltaP[deltaP.isna()] = BETA_01 + BETA_V11 * Vmax  # [hPa]
-    return data.background_pressure + 2 + deltaP  # Pc
+    return (data.background_pressure + 2 + deltaP).round()  # Pc
 
 
 def courtney_knaff_2009_Pc(data: DataFrame):
@@ -1346,7 +1346,7 @@ def courtney_knaff_2009_Pc(data: DataFrame):
     # equation for lat < 18 deg
     deltaP_lo = 5.962 - 0.267 * Vsrm - (Vsrm / 18.26) ** 2 - 6.8 * S  # [hPa]
     deltaP[lat < 18] = deltaP_lo[lat < 18]
-    return data.background_pressure + 2 + deltaP  # Pc
+    return (data.background_pressure + 2 + deltaP).round()  # Pc
 
 
 def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
