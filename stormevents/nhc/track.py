@@ -44,7 +44,7 @@ from stormevents.nhc.const import (
     BETA_fR,
     BETA_fRdV,
     BETA_01,
-    BETA_V21,
+    BETA_V11,
 )
 from stormevents.utilities import subset_time_interval
 
@@ -640,6 +640,8 @@ class VortexTrack:
             atcf.loc[:, ["longitude", "latitude"]] * 10
         )
 
+        # forward fill here first before integer replacement
+        atcf["background_pressure"] = atcf["background_pressure"].ffill()
         float_columns = atcf.select_dtypes(include=["float"]).columns
         integer_na_value = -99999
         for column in float_columns:
@@ -692,7 +694,7 @@ class VortexTrack:
             atcf["isotach_radius_for_NWQ"].astype("string").str.pad(5)
         )
 
-        atcf["background_pressure"] = atcf["background_pressure"].ffill().astype(int)
+        atcf["background_pressure"] = atcf["background_pressure"].astype(int)
         atcf["central_pressure"] = atcf["central_pressure"].astype(int)
 
         press_cond_nobg = ~atcf["central_pressure"].isna() & (
@@ -1273,6 +1275,7 @@ def chavas_2025_Pc(data: DataFrame):
     Vmax = 0.5144 * (
         data.max_sustained_wind_speed - 0.55 * data.speed
     )  # azimuthal mean Vmax [m/s]
+    Vmax[Vmax < 20] = 20  # ensure Vmax doesn't go below 20 m/s
     isotach_radii = data[
         [
             "isotach_radius_for_NEQ",
@@ -1295,8 +1298,8 @@ def chavas_2025_Pc(data: DataFrame):
         + BETA_fRdV * fo2 * R34 / Vmax
     )  # [hPa]
     # equation where R34 isn't available
-    deltaP[deltaP.isna()] = BETA_01 + BETA_V21 * Vmax * Vmax  # [hPa]
-    return data.background_pressure + 2 + deltaP  # Pc
+    deltaP[deltaP.isna()] = BETA_01 + BETA_V11 * Vmax  # [hPa]
+    return (data.background_pressure + 2 + deltaP).round()  # Pc
 
 
 def courtney_knaff_2009_Pc(data: DataFrame):
@@ -1314,6 +1317,7 @@ def courtney_knaff_2009_Pc(data: DataFrame):
 
     Vmax = data.max_sustained_wind_speed  # Vmax [kt]
     Vsrm = Vmax - 1.5 * data.speed**0.63  # azimuthal mean Vmax [kt]
+    Vsrm[Vsrm < 25] = 25  # ensure Vsrm doesn't go below 25 kt
     isotach_radii = data[
         [
             "isotach_radius_for_NEQ",
@@ -1328,13 +1332,13 @@ def courtney_knaff_2009_Pc(data: DataFrame):
     # forward fill to fill in 50-kt and 64-kt rows with the R34 value as
     R34[data.isotach_radius > 35] = pandas.NA
     R34[data.isotach_radius > 35] = R34.ffill()[data.isotach_radius > 35]
-    V500 = R34 / 9 - 3  # wind speed at 500 km radius
+    V500 = R34.ffill().bfill() / 9 - 3  # wind speed at 500 km radius
     lat = data.latitude  # latitude [deg]
     x = 0.1147 + 0.0055 * Vmax - 0.001 * (lat - 25)
     Rmax = 66.785 - 0.09102 * Vmax + 1.0619 * (lat - 25)
     V500c = Vmax * (Rmax / 500) ** x  #  climatological wind speed at 500 km radius
     S = V500 / V500c  # normalized storm size
-    S[(S < 0.4) | (S.isna())] = 0.4  # lower bound/default value of 0.4
+    S[S < 0.4] = 0.4  # lower bound value of 0.4
     # equation for lat >= 18 deg
     deltaP = (
         23.286 - 0.483 * Vsrm - (Vsrm / 24.524) ** 2 - 12.587 * S - 0.483 * lat
@@ -1342,7 +1346,7 @@ def courtney_knaff_2009_Pc(data: DataFrame):
     # equation for lat < 18 deg
     deltaP_lo = 5.962 - 0.267 * Vsrm - (Vsrm / 18.26) ** 2 - 6.8 * S  # [hPa]
     deltaP[lat < 18] = deltaP_lo[lat < 18]
-    return data.background_pressure + 2 + deltaP  # Pc
+    return (data.background_pressure + 2 + deltaP).round()  # Pc
 
 
 def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
