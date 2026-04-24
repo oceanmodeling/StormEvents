@@ -981,6 +981,8 @@ class VortexTrack:
                             ]
                         ).convex_hull
                     )
+                if len(isotach_times) == 1:
+                    convex_hulls.append(track_isotachs[isotach_times[0]])
 
                 if len(convex_hulls) > 0:
                     # get the union of polygons
