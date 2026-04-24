@@ -11,12 +11,12 @@ Hurricane Wilma was the most intense tropical cyclone ever recorded in the Atlan
 119,2015 Joaquin,2015,Hurricane/Tropical storm with intense waves predicted in the Atlantic,HURRICANE,COMPLETED,36,[],2022-09-09 16:08:59.765383,2062.0,2015-10-01 04:00:00,2015-10-08 04:00:00
 131,2016 Hermine,2016,Small deployment of Initial landfall of Hermine is in the Big Bend area of FL to assist NWS modeling,HURRICANE,COMPLETED,3,[],2022-09-09 16:23:30.939594,2062.0,2016-09-01 04:00:00,2016-09-07 04:00:00
 133,2003 Isabel,2003,"Hurricane Isabel formed near the Cape Verde Islands from a tropical wave on Sep. 6 and reached peak winds of 165 mph (265 km/h) on Sep. 11.  It made landfall on Sep. 18 in North Carolina, killing 16 and damaging over $5 billion of property.",HURRICANE,COMPLETED,515,[],2022-09-09 16:24:28.501226,2062.0,2003-09-06 04:00:00,2003-09-30 04:00:00
-135,2016 Matthew,2016,Hurricane Matthew,HURRICANE,COMPLETED,35,[],2022-09-09 16:25:00.672612,2062.0,2016-10-03 04:00:00,2016-10-30 04:00:00
-180,2017 Harvey,2017,Hurricane Harvey Texas Coast August 2017,HURRICANE,COMPLETED,35,[],2022-09-09 17:27:26.943616,2062.0,2017-08-24 04:00:00,2017-09-24 04:00:00
+135,2016 Matthew,2016,Hurricane Matthew,HURRICANE,COMPLETED,1817,[],2022-09-09 16:25:00.672612,2062.0,2016-10-03 04:00:00,2016-10-30 04:00:00
+180,2017 Harvey,2017,Hurricane Harvey Texas Coast August 2017,HURRICANE,COMPLETED,1817,[],2022-09-09 17:27:26.943616,2062.0,2017-08-24 04:00:00,2017-09-24 04:00:00
 182,2017 Irma,2017,"Hurricane affecting PR, USVI and maybe mainland US",HURRICANE,COMPLETED,36,[],2022-09-09 17:28:15.677235,2062.0,2017-09-03 04:00:00,2017-09-30 04:00:00
 189,2017 Maria,2017,TD15,HURRICANE,COMPLETED,36,[],2022-09-09 19:06:47.524544,2062.0,2017-09-17 04:00:00,2017-10-02 04:00:00
 190,2017 Jose,2017,Tropical storm impacting the northeast us,HURRICANE,COMPLETED,36,[],2022-09-09 19:07:05.868050,2062.0,2017-09-18 04:00:00,2017-09-25 04:00:00
 196,2017 Nate,2017,TD16 will be developing into Nate. North Gulf deployment,HURRICANE,COMPLETED,36,[],2022-09-09 19:08:52.507058,2062.0,2017-10-05 04:00:00,2017-10-14 04:00:00
-247,Atlantic Fury Exercise May 2018,2018,"*** Mock Data *** for interagency exercise around Hampton Roads, Virginia during the first two weeks of May, 2018",HURRICANE,COMPLETED,35,[],2018-09-07 15:06:34.421058,35.0,2018-04-23 05:00:00,2018-05-18 05:00:00
+247,Atlantic Fury Exercise May 2018,2018,"*** Mock Data *** for interagency exercise around Hampton Roads, Virginia during the first two weeks of May, 2018",HURRICANE,COMPLETED,1817,[],2018-09-07 15:06:34.421058,1817.0,2018-04-23 05:00:00,2018-05-18 05:00:00
 284,2018 Isaac,2018,,HURRICANE,COMPLETED,3,[],2022-09-09 19:33:02.531819,2062.0,2018-09-11 04:00:00,2018-09-18 04:00:00
 287,2018 Michael,2018,storm hit the Mexico Beach area of the Florida panhandle,HURRICANE,COMPLETED,3,[],2022-09-09 19:32:14.235677,2062.0,2018-10-08 04:00:00,2018-10-15 04:00:00
