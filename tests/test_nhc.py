@@ -140,7 +140,7 @@ def test_vortex_track_from_file():
         output_directory.mkdir(parents=True, exist_ok=True)
 
     track_1 = VortexTrack.from_file(input_directory / "irma2017_fort.22")
-    track_2 = VortexTrack.from_file(input_directory / "AL062018.dat")
+    track_2 = VortexTrack.from_file(input_directory / "BAL062018.dat")
 
     assert track_1.nhc_code == "AL112017"
     assert track_1.name == "IRMA"
@@ -304,7 +304,7 @@ def test_vortex_track_forecast_time_fromfile_arg():
     input_directory = INPUT_DIRECTORY / "test_vortex_track_from_file"
 
     track = VortexTrack.from_file(
-        input_directory / "AL062018.dat", file_deck="a", forecast_time="09-10-2018"
+        input_directory / "AAL062018.dat", file_deck="a", forecast_time="09-10-2018"
     )
 
     dates = track.data.track_start_time.unique()
