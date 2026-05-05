@@ -972,6 +972,7 @@ class VortexTrack:
             for track_start_time, track_isotachs in advisory_isotachs.items():
                 convex_hulls = []
                 isotach_times = list(track_isotachs)
+                convex_hulls.append(track_isotachs[isotach_times[0]])
                 for index in range(len(isotach_times) - 1):
                     convex_hulls.append(
                         ops.unary_union(
@@ -981,8 +982,6 @@ class VortexTrack:
                             ]
                         ).convex_hull
                     )
-                if len(isotach_times) == 1:
-                    convex_hulls.append(track_isotachs[isotach_times[0]])
 
                 if len(convex_hulls) > 0:
                     # get the union of polygons
