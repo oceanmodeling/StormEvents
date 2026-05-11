@@ -1168,6 +1168,8 @@ class VortexTrack:
                 .astype(float)
             )
             speeds = pandas.Series(distances / abs(intervals), index=indices)
+            # if Inf (interval is zero but distance != 0) set to NaN
+            speeds[speeds == numpy.inf] = numpy.nan
             bearings = pandas.Series(inverse_azimuths % 360, index=indices)
             # use forward azimuths for negative intervals
             bearings[intervals < 0] = pandas.Series(
