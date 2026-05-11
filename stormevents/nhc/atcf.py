@@ -238,10 +238,10 @@ def get_atcf_entry(
         storms = storms[storms["name"].str.fullmatch(storm_name.upper())]
 
     if len(storms) > 0:
-        storms["name"] = storms["name"].str.strip()
-        storms["class"] = storms["class"].str.strip()
-        storms["basin"] = storms["basin"].str.strip()
-        storms["source"] = storms["source"].str.strip()
+        storms.loc[:, "name"] = storms.loc[:, "name"].str.strip()
+        storms.loc[:, "class"] = storms.loc[:, "class"].str.strip()
+        storms.loc[:, "basin"] = storms.loc[:, "basin"].str.strip()
+        storms.loc[:, "source"] = storms.loc[:, "source"].str.strip()
         return storms.iloc[0]
     else:
         message = f"no storms with given info"
