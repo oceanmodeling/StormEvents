@@ -27,9 +27,9 @@ def subset_time_interval(
         raise ValueError(f'cannot parse time interval "{start} - {end}"')
 
     if not isinstance(start, datetime):
-        start = typepigeon.convert_value(start, datetime)
+        start = typepigeon.to_type(start, datetime)
     if not isinstance(end, datetime):
-        end = typepigeon.convert_value(end, datetime)
+        end = typepigeon.to_type(end, datetime)
 
     if start > end:
         raise ValueError(f'given start time ("{start}") ' f'exceeds end time ("{end}")')
@@ -85,21 +85,21 @@ def relative_to_time_interval(
         )
 
     if not isinstance(start, datetime):
-        start = typepigeon.convert_value(start, datetime)
+        start = typepigeon.to_type(start, datetime)
     if not isinstance(end, datetime):
-        end = typepigeon.convert_value(end, datetime)
+        end = typepigeon.to_type(end, datetime)
 
     if start > end:
         raise ValueError(f'given start time ("{start}") ' f'exceeds end time ("{end}")')
 
     if isinstance(relative, timedelta) or isinstance(relative, Number):
-        relative = typepigeon.convert_value(relative, timedelta)
+        relative = typepigeon.to_type(relative, timedelta)
         if relative >= timedelta(0):
             relative = start + relative
         else:
             relative = end + relative
     elif not isinstance(relative, datetime):
-        relative = typepigeon.convert_value(relative, datetime)
+        relative = typepigeon.to_type(relative, datetime)
 
     if start <= relative <= end:
         return relative
