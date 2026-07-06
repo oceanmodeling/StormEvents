@@ -1064,7 +1064,7 @@ class VortexTrack:
                 dataframe["advisory"] != "BEST", "datetime"
             ] += pandas.to_timedelta(
                 dataframe.loc[dataframe["advisory"] != "BEST", "forecast_hours"].astype(
-                    int
+                    float
                 ),
                 unit="hours",
             )
@@ -1361,7 +1361,7 @@ def separate_tracks(data: DataFrame) -> Dict[str, Dict[str, DataFrame]]:
     tracks = {}
     for advisory in pandas.unique(data["advisory"]):
         advisory_data = data[data["advisory"] == advisory]
-        advisory_data["forecast_hours"] = advisory_data.forecast_hours.astype(int)
+        advisory_data["forecast_hours"] = advisory_data.forecast_hours.astype(float)
 
         if advisory == "BEST":
             advisory_data = advisory_data.sort_values("datetime")
