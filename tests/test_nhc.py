@@ -312,6 +312,18 @@ def test_vortex_track_forecast_time_fromfile_arg():
     assert pandas.to_datetime(dates) == pandas.to_datetime("09-10-2018")
 
 
+def test_vortex_track_forecast_time_fromfile_subhourly_forecast_hours():
+    # Test from_file to accept forecast_time argument
+    input_directory = INPUT_DIRECTORY / "test_vortex_track_from_file"
+
+    track = VortexTrack.from_file(
+        input_directory / "michael2018_adv10.22", file_deck="a", advisories="OFCL"
+    )
+
+    # check the forecast_hours can be converted to floats (add 100 to make sure positive)
+    assert (track.data.forecast_hours.astype(float) + 100).all()
+
+
 # def test_vortex_track_forecast_time_outofbound_date():
 #     # Test it raises if forecast time is not between start and end
 #     msg = ""
